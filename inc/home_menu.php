@@ -19,7 +19,7 @@
               <li class="nav-item"><a class="nav-link <?php echo ($current_page === 'about.php') ? 'active' : ''; ?>" href="<?php echo BASE_URL; ?>/pages/about.php">About</a></li>
               <li class="nav-item"><a class="nav-link <?php echo ($current_page === 'doctors.php') ? 'active' : ''; ?>" href="<?php echo BASE_URL; ?>/pages/doctors.php">Doctors</a></li>
               <li class="nav-item"><a class="nav-link <?php echo ($current_page === 'our_team.php') ? 'active' : ''; ?>" href="<?php echo BASE_URL; ?>/pages/our_team.php">Our Team</a></li>
-              <li class="nav-item"><a class="nav-link <?php echo ($current_page === 'contact.php') ? 'active' : ''; ?>" href="<?php echo BASE_URL; ?>/pages/contact.php">Contact</a></li>
+              <li class="nav-item"><a class="nav-link <?php echo ($current_page === 'contact.php') ? 'active' : ''; ?>" href="<?php echo BASE_URL; ?>/pages/contact.php">Contact2</a></li>
             </ul>
             <a href="<?php echo BASE_URL; ?>/login.php" class="btn btn-primary"><i class="bi bi-person"></i>+</a>
           </div>
