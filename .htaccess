@@ -1,0 +1,11 @@
+RewriteEngine On
+RewriteBase /zamzam2/
+
+# Remove .php extension
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME}\.php -f
+RewriteRule ^(.*)$ $1.php [L]
+
+# Redirect from .php to extension-less URL (Optional)
+# RewriteCond %{THE_REQUEST} ^[A-Z]{3,7}\ /zamzam2/(.*?)\.php\ [HTTP/1.1]
+# RewriteRule ^(.*?)\.php$ $1 [R=301,L,NC]
