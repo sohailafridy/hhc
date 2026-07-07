@@ -18,11 +18,24 @@ define('DB_PASS', '');
 define('DB_NAME', 'hhc');
 define('CURRENCY', 'PKR ');
 
+
+// online configuration
+// define('DB_HOST', 'localhost');
+// define('DB_USER', 'u898904160_hhcs_user');
+// define('DB_PASS', 'r9$x:Oh7;Q');
+// define('DB_NAME', 'u898904160_hhcs');
+// define('CURRENCY', 'PKR ');
+// line no 39 $base_url = "$protocol://$host";
+
+
+
+
+
 // Application URL/Path Configuration
 // IMPORTANT: Update these values when moving to production
 $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http";
 $host = $_SERVER['HTTP_HOST'];
-$base_url = "$protocol://$host/hhs";
+$base_url = "$protocol://$host/hhc";
 define('BASE_URL', $base_url);
 define('BASE_PATH', __DIR__);
 
@@ -58,3 +71,8 @@ function check_auth() {
 }
 
 ?>
+
+
+
+
+
