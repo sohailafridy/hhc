@@ -1,0 +1,52 @@
+RewriteEngine On
+
+RewriteRule ^login$ login.php [L]
+RewriteRule ^logout$ logout.php [L]
+
+RewriteRule ^home$ pages/index.php [L]
+RewriteRule ^$ pages/index.php [L]
+
+RewriteRule ^doctors$ pages/doctors.php [L]
+RewriteRule ^doctor-detail$ pages/doctor-detail.php [L]
+
+
+RewriteRule ^hospitals$ pages/hospitals.php [L]
+RewriteRule ^hospital-detail$ pages/hospital-detail.php [L]
+
+
+RewriteRule ^labs$ pages/labs.php [L]
+RewriteRule ^lab-detail$ pages/lab-detail.php [L]
+
+
+
+RewriteRule ^blood-banks$ pages/blood-banks.php [L]
+RewriteRule ^blood-bank-detail$ pages/blood-bank-detail.php [L]
+
+RewriteRule ^about$ pages/about.php [L]
+RewriteRule ^contact$ pages/contact.php [L]
+
+
+
+
+
+RewriteRule ^fixit/dashboard$ fixit/dashboard.php [L]
+RewriteRule ^fixit/login$ fixit/login.php [L]
+RewriteRule ^fixit/logout$ fixit/logout.php [L]
+RewriteRule ^fixit$ fixit/index.php [L]
+RewriteRule ^fixit-hangu$ fixit/fixit-hangu.php [L]
+RewriteRule ^fixit/kohat$ fixit/fixit-kohat.php [L]
+
+RewriteRule ^fixit/donors/add$ fixit/pages/donor_add.php [L]
+RewriteRule ^fixit/donors/list$ fixit/pages/donor_list.php [L]
+
+RewriteRule ^fixit/activities/add$ fixit/pages/activity_add.php [L]
+RewriteRule ^fixit/activities/list$ fixit/pages/activity_list.php [L]
+
+RewriteRule ^fixit/expenses/add$ fixit/pages/expense_add.php [L]
+RewriteRule ^fixit/expenses/list$ fixit/pages/expense_list.php [L]
+
+RewriteRule ^fixit/donations/add$ fixit/pages/donation_add.php [L]
+RewriteRule ^fixit/donations/list$ fixit/pages/donation_list.php [L]
+
+
+
