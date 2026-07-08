@@ -298,6 +298,7 @@ if ($categories_result) {
                 <div class="col-lg-12 text-center">
                     <h1 class="display-4 fw-bold mb-3" data-aos="fade-up">Our Expert Doctors</h1>
                     <p class="lead mb-0" data-aos="fade-up" data-aos-delay="200">Meet our team of qualified medical professionals</p>
+                    <a href="<?php echo BASE_URL; ?>/pages/outside/add-doctor.php" class="btn btn-primary btn-lg">Add New Doctor</a>
                 </div>
             </div>
         </div>
