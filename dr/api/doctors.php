@@ -16,6 +16,7 @@ $lady_doctor    = $_GET['lady_doctor'] ?? '';
 // Base query
 $sql = "SELECT 
             d.doctor_id,
+            d.entity_id,
             d.doctor_name,
             d.gender,
             d.experience_years,

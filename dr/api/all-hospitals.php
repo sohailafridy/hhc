@@ -4,15 +4,21 @@ header("Access-Control-Allow-Origin: *");
 
 include "../config.php";
 
-$sql = "SELECT `hospital_id`,`hospital_name` FROM `hospitals` WHERE `status`=1";
+$sql = "SELECT hospitals.*,cities.city_name FROM `hospitals` 
+left join cities on cities.city_id=hospitals.city_id
+WHERE hospitals.status=1";
 $result = mysqli_query($con, $sql);
 
 $data = [];
 
 while ($row = mysqli_fetch_assoc($result)) {
     $data[] = [
-        "id" => $row['hospital_id'],
-        "hospital_name" => $row['hospital_name']
+        "entity_id" => $row['entity_id'],
+        "hospital_id" => $row['hospital_id'],
+        "hospital_name" => $row['hospital_name'],
+        "hospital_address" => $row['hospital_address'],
+        "hospital_phone" => $row['hospital_phone'],
+        "status" => $row['status']
     ];
 }
 
