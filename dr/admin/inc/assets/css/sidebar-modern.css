@@ -1,0 +1,220 @@
+/* =============================================================
+   Modern Sidebar Theme  —  animated / shaded / advanced look
+   Overrides the default AdminLTE-style sidebar (menu.css)
+   ============================================================= */
+
+:root {
+    --sb-bg-1: #1b2544;
+    --sb-bg-2: #101a34;
+    --sb-accent-1: #6366f1;
+    --sb-accent-2: #3b82f6;
+    --sb-text: rgba(233, 238, 252, 0.78);
+    --sb-text-dim: rgba(233, 238, 252, 0.45);
+    --sb-hover-bg: rgba(255, 255, 255, 0.06);
+}
+
+/* ---------- Sidebar shell ---------- */
+.main-sidebar {
+    background: linear-gradient(195deg, var(--sb-bg-1) 0%, var(--sb-bg-2) 100%) !important;
+    box-shadow: 4px 0 24px rgba(8, 15, 34, 0.35) !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.main-sidebar .sidebar {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
+}
+
+.main-sidebar .sidebar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.main-sidebar .sidebar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.18);
+    border-radius: 10px;
+}
+
+/* ---------- Section captions (Navigation / More) ---------- */
+.main-sidebar .nav-level {
+    color: var(--sb-text-dim) !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.07) !important;
+    text-transform: uppercase;
+    letter-spacing: 1.4px;
+    font-size: 11px !important;
+    font-weight: 600;
+    padding: 16px 22px 8px !important;
+}
+
+.main-sidebar .nav-level:first-child {
+    border-top: none !important;
+}
+
+/* ---------- Top level items ---------- */
+.main-sidebar .sidebar-menu > li {
+    margin: 2px 12px;
+}
+
+.main-sidebar .sidebar-menu > li > a {
+    color: var(--sb-text) !important;
+    background: transparent !important;
+    border-radius: 12px;
+    padding: 12px 14px !important;
+    font-size: 14.5px;
+    font-weight: 500;
+    letter-spacing: 0.2px;
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+    transition: color .25s ease, background .25s ease, transform .25s ease, box-shadow .25s ease;
+}
+
+/* animated sheen that sweeps on hover */
+.main-sidebar .sidebar-menu > li > a::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -120%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.10), transparent);
+    transition: left .6s ease;
+    pointer-events: none;
+}
+
+.main-sidebar .sidebar-menu > li > a:hover {
+    color: #fff !important;
+    background: var(--sb-hover-bg) !important;
+    transform: translateX(5px);
+}
+
+.main-sidebar .sidebar-menu > li > a:hover::before {
+    left: 120%;
+}
+
+/* icons */
+.main-sidebar .sidebar-menu > li > a > i:first-of-type {
+    font-size: 17px;
+    margin-right: 12px;
+    transition: transform .25s ease, color .25s ease;
+    background: transparent;
+}
+
+.main-sidebar .sidebar-menu > li > a:hover > i:first-of-type {
+    transform: scale(1.18);
+    color: #8ab4ff;
+}
+
+/* ---------- Active top level item ---------- */
+.main-sidebar .sidebar-menu > li.active > a {
+    color: #fff !important;
+    font-weight: 600 !important;
+    background: linear-gradient(135deg, var(--sb-accent-1), var(--sb-accent-2)) !important;
+    box-shadow: 0 8px 20px rgba(59, 130, 246, 0.35);
+}
+
+.main-sidebar .sidebar-menu > li.active > a > i:first-of-type {
+    color: #fff;
+}
+
+/* left accent bar on active */
+.main-sidebar .sidebar-menu > li.active > a::after {
+    content: "";
+    position: absolute;
+    left: -12px;
+    top: 50%;
+    transform: translateY(-50%);
+    height: 60%;
+    width: 4px;
+    border-radius: 0 4px 4px 0;
+    background: #8ab4ff;
+    box-shadow: 0 0 10px #8ab4ff;
+}
+
+/* dropdown caret */
+.main-sidebar .sidebar-menu li > a > .icon-arrow-down {
+    color: var(--sb-text-dim);
+    transition: transform .3s ease, color .25s ease;
+}
+
+.main-sidebar .sidebar-menu li.active > a > .icon-arrow-down {
+    color: #fff;
+}
+
+/* ---------- Submenu (treeview) ---------- */
+.main-sidebar .sidebar-menu .treeview-menu {
+    background: rgba(0, 0, 0, 0.18) !important;
+    border-radius: 10px;
+    margin: 4px 0 6px;
+    padding: 6px 0 !important;
+    overflow: hidden;
+}
+
+.main-sidebar .sidebar-menu .treeview-menu > li {
+    margin: 0 6px;
+}
+
+.main-sidebar .sidebar-menu .treeview-menu > li > a {
+    color: var(--sb-text) !important;
+    border-top: none !important;
+    border-radius: 8px;
+    padding: 8px 12px 8px 34px !important;
+    font-size: 13px;
+    transition: color .2s ease, background .2s ease, padding-left .2s ease;
+}
+
+.main-sidebar .sidebar-menu .treeview-menu > li > a:hover {
+    color: #fff !important;
+    background: var(--sb-hover-bg) !important;
+    padding-left: 40px !important;
+}
+
+.main-sidebar .sidebar-menu .treeview-menu > li.active > a {
+    color: #fff !important;
+    font-weight: 600 !important;
+    background: rgba(99, 102, 241, 0.28) !important;
+}
+
+.main-sidebar .sidebar-menu .treeview-menu > li > a > i {
+    transition: transform .2s ease;
+}
+
+.main-sidebar .sidebar-menu .treeview-menu > li > a:hover > i {
+    transform: translateX(3px);
+}
+
+/* staggered fade-in for open submenu items */
+.main-sidebar .sidebar-menu li.active > .treeview-menu > li {
+    animation: sbFadeIn .35s ease both;
+}
+
+.main-sidebar .sidebar-menu li.active > .treeview-menu > li:nth-child(1) { animation-delay: .04s; }
+.main-sidebar .sidebar-menu li.active > .treeview-menu > li:nth-child(2) { animation-delay: .10s; }
+.main-sidebar .sidebar-menu li.active > .treeview-menu > li:nth-child(3) { animation-delay: .16s; }
+.main-sidebar .sidebar-menu li.active > .treeview-menu > li:nth-child(4) { animation-delay: .22s; }
+
+@keyframes sbFadeIn {
+    from { opacity: 0; transform: translateX(-8px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+
+/* ---------- Logout accent ---------- */
+.main-sidebar .sidebar-menu > li > a.text-danger {
+    color: #ff8080 !important;
+}
+
+.main-sidebar .sidebar-menu > li > a.text-danger:hover {
+    color: #fff !important;
+    background: linear-gradient(135deg, #ef4444, #b91c1c) !important;
+    transform: translateX(5px);
+}
+
+.main-sidebar .sidebar-menu > li > a.text-danger:hover > i:first-of-type {
+    color: #fff;
+}
+
+/* ---------- Collapsed (mini) flyout tweaks ---------- */
+.sidebar-mini.sidebar-collapse .sidebar-menu > li:hover > a > span,
+.sidebar-mini.sidebar-collapse .sidebar-menu > li:hover > .treeview-menu {
+    background: var(--sb-bg-1) !important;
+    color: #fff !important;
+}
