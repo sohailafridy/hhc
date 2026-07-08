@@ -6,14 +6,13 @@ $entity_id = $_POST['entity_id'];
 $comment = $_POST['comment'];
 $email = $_POST['email'];
 $commenter_name = $_POST['commenter_name'];
-$commenter_gmail = $_POST['commenter_gmail'];
 $stars = $_POST['stars'];
 $status = 1;
 
 $sql = "INSERT INTO feedback
-(entity_id, comment, email, commenter_name, commenter_gmail, stars, status, created_at, updated_at)
+(entity_id, comment, email, commenter_name, stars, status, created_at, updated_at)
 VALUES
-('$entity_id', '$comment', '$email', '$commenter_name', '$commenter_gmail', '$stars', '$status', NOW(), NOW())";
+('$entity_id', '$comment', '$email', '$commenter_name', '$stars', '$status', NOW(), NOW())";
 
 if(mysqli_query($con, $sql)){
     echo json_encode([

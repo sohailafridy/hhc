@@ -503,6 +503,7 @@ if ($categories_result) {
             <div class="doctors-grid" id="doctorsContainer">
                 <?php
                 $where_clause = '';
+                $where_clause = ' AND d.approve = 1';
                 if (!empty($search)) {
                     $where_clause .= " AND d.doctor_name LIKE '%$search%' ";
                 }

@@ -61,7 +61,7 @@ if (!empty($search_city)) {
 if ($filter_status !== '') {
     $where_conditions[] = "bb.status = $filter_status";
 }
-
+$where_conditions[] = "bb.approve = 1";
 $where_clause = !empty($where_conditions) ? 'WHERE ' . implode(' AND ', $where_conditions) : '';
 
 // Count total records

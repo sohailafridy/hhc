@@ -1,6 +1,7 @@
 <?php include '../config.php'; ?>
 
 <?php
+
 // Handle delete operation - MUST be before any HTML output
 if (isset($_GET['delete_id']) && is_numeric($_GET['delete_id'])) {
     $delete_id = $_GET['delete_id'];
@@ -60,7 +61,7 @@ if (!empty($search_city)) {
 if ($filter_status !== '') {
     $where_conditions[] = "h.status = $filter_status";
 }
-
+$where_conditions[] = "h.approve = 1";
 $where_clause = !empty($where_conditions) ? 'WHERE ' . implode(' AND ', $where_conditions) : '';
 // Count total records
 $count_query = "SELECT COUNT(*) as total FROM hospitals h LEFT JOIN cities c ON h.city_id = c.city_id $where_clause";
@@ -68,10 +69,11 @@ $count_result = mysqli_query($con, $count_query);
 $total_records = mysqli_fetch_assoc($count_result)['total'];
 $total_pages = ceil($total_records / $records_per_page);
 // Fetch hospitals data
-$query = "SELECT h.entity_id, h.hospital_id, h.hospital_name, h.hospital_address, h.hospital_phone, h.hospital_pic, h.status, h.created_at, c.city_name 
+ $query = "SELECT h.entity_id, h.hospital_id, h.hospital_name, h.hospital_address, h.hospital_phone, h.hospital_pic, h.status, h.created_at, c.city_name 
           FROM hospitals h LEFT JOIN cities c ON h.city_id = c.city_id $where_clause 
           ORDER BY h.created_at DESC 
           LIMIT $offset, $records_per_page";
+         
 $result = mysqli_query($con, $query);
 ?>
 <div class="content-wrapper">

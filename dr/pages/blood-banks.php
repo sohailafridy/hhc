@@ -14,6 +14,7 @@
 
     // Build WHERE clause
     $where_clause = '';
+    $where_clause = ' AND bb.approve = 1';
     if (!empty($search)) {
         $where_clause .= " AND bb.bb_name LIKE '%$search%' ";
     }

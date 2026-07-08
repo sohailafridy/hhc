@@ -69,7 +69,7 @@ if ($filter_status !== '') {
 if ($filter_type !== '') {
     $where_conditions[] = "l.lab_type = $filter_type";
 }
-
+$where_conditions[] = "l.approve = 1";
 // Fetch cities for dropdown
 $cities_query = "SELECT city_id, city_name FROM cities WHERE status = 1 ORDER BY city_name ASC";
 $cities_result = mysqli_query($con, $cities_query);
@@ -94,7 +94,7 @@ $query = "SELECT l.*,
           FROM laboratories l
           LEFT JOIN cities c ON l.city_id = c.city_id
           LEFT JOIN hospitals h ON l.hospital_id = h.hospital_id
-          LEFT JOIN feedback f ON l.lab_id = f.lab_id
+          LEFT JOIN feedback f ON l.entity_id = f.entity_id
           $where_clause
           GROUP BY l.lab_id
           ORDER BY l.created_at DESC 

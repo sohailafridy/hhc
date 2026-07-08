@@ -56,7 +56,7 @@ if (!empty($search_city)) {
 if ($filter_status !== '') {
     $where_conditions[] = "status = $filter_status";
 }
-
+$where_conditions[] = "approve = 1";
 $where_clause = !empty($where_conditions) ? ' AND ' . implode(' AND ', $where_conditions) : '';
 // Count total records
 $count_query = "SELECT COUNT(*) as total FROM cities WHERE 1 $where_clause";

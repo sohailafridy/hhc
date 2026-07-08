@@ -94,7 +94,7 @@ if ($filter_emergency == '1') {
 if ($gender != '') {
     $where_conditions[] = "d.gender = '$gender'";
 }
-
+$where_conditions[] = "d.approve = 1";
 // Fetch cities for dropdown
 $cities_query = "SELECT city_id, city_name FROM cities WHERE status = 1 ORDER BY city_name ASC";
 $cities_result = mysqli_query($con, $cities_query);

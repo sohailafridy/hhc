@@ -80,8 +80,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $entity_id = mysqli_insert_id($con);
 
         // Insert new hospital
-        $insert_query = "INSERT INTO hospitals (entity_id,city_id, hospital_name, hospital_address, hospital_phone, hospital_pic, status, created_at) 
-                       VALUES ($entity_id,'$city_id', '$hospital_name', '$hospital_address', '$hospital_phone', '$hospital_pic', $status, NOW())";
+        $insert_query = "INSERT INTO hospitals (entity_id,city_id, hospital_name, hospital_address, hospital_phone, hospital_pic, status, approve, created_at) 
+                       VALUES ($entity_id,'$city_id', '$hospital_name', '$hospital_address', '$hospital_phone', '$hospital_pic', $status, 1, NOW())";
         
         if (mysqli_query($con, $insert_query)) {
             $success_msg = "Hospital added successfully!";

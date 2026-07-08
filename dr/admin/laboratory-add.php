@@ -103,8 +103,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         mysqli_query($con, $generate_ent_it);
         $entity_id = mysqli_insert_id($con);
 
-        $insert_query = "INSERT INTO laboratories (entity_id,city_id, hospital_id, lab_name, lab_address, lab_phone, lab_email, lab_type, lab_pic, status, created_at) 
-                       VALUES ($entity_id,'$city_id', $hospital_id_value, '$lab_name', '$lab_address', '$lab_phone', '$lab_email', '$lab_type', '$lab_pic', $status, NOW())";
+        $insert_query = "INSERT INTO laboratories (entity_id,city_id, hospital_id, lab_name, lab_address, lab_phone, lab_email, lab_type, lab_pic, status, approve, created_at) 
+                       VALUES ($entity_id,'$city_id', $hospital_id_value, '$lab_name', '$lab_address', '$lab_phone', '$lab_email', '$lab_type', '$lab_pic', $status, 1, NOW())";
         
         if (mysqli_query($con, $insert_query)) {
             $success_msg = "Laboratory added successfully!";

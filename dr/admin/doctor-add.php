@@ -145,8 +145,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
 
 
-         $insert_query = "INSERT INTO doctors (entity_id, city_id, hospital_id, doctor_name, short_detail, cat_type_id, experience_years, doctor_phone, doctor_email, doctor_type, clinic_name, clinic_address, doctor_pic, static_clinical_info, status, gender, other, created_at) 
-                       VALUES ($entity_id, '$city_id', $hospital_id_value, '$doctor_name', '$short_detail', '$specialization', '$experience_years', '$doctor_phone', '$doctor_email', '$doctor_type', '$clinic_name', '$clinic_address', '$doctor_pic', '$static_clinical_info', $status, '$gender', '$other', NOW())";
+         $insert_query = "INSERT INTO doctors (entity_id, city_id, hospital_id, doctor_name, short_detail, cat_type_id, experience_years, doctor_phone, doctor_email, doctor_type, clinic_name, clinic_address, doctor_pic, static_clinical_info, status, approve, gender, other, created_at) 
+                       VALUES ($entity_id, '$city_id', $hospital_id_value, '$doctor_name', '$short_detail', '$specialization', '$experience_years', '$doctor_phone', '$doctor_email', '$doctor_type', '$clinic_name', '$clinic_address', '$doctor_pic', '$static_clinical_info', $status, 1, '$gender', '$other', NOW())";
         
         if (mysqli_query($con, $insert_query)) {
             $last_insert_id = mysqli_insert_id($con);

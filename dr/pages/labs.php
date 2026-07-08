@@ -14,6 +14,7 @@
 
     // Build WHERE clause
     $where_clause = '';
+    $where_clause = ' AND l.approve = 1';
     if (!empty($search)) {
         $where_clause .= " AND l.lab_name LIKE '%$search%' ";
     }

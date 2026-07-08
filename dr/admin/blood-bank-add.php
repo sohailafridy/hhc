@@ -77,8 +77,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $entity_id = mysqli_insert_id($con);
 
         // Insert new blood bank
-        $insert_query = "INSERT INTO blood_bank (entity_id,city_id, bb_name, bb_address, bb_contact, bb_pic, bb_comment, status, created_at) 
-                       VALUES ($entity_id,'$city_id', '$bb_name', '$bb_address', '$bb_contact', '$bb_pic', '$bb_comment', $status, NOW())";
+        $insert_query = "INSERT INTO blood_bank (entity_id,city_id, bb_name, bb_address, bb_contact, bb_pic, bb_comment, status, approve, created_at) 
+                       VALUES ($entity_id,'$city_id', '$bb_name', '$bb_address', '$bb_contact', '$bb_pic', '$bb_comment', $status, 1, NOW())";
         
         if (mysqli_query($con, $insert_query)) {
             $success_msg = "Blood Bank added successfully!";

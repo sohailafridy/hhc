@@ -70,8 +70,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
     } else {
         // Insert new city
-        $insert_query = "INSERT INTO cities (city_name, province_id, city_pic, status, created_at) 
-                       VALUES ('$city_name', '$province_id', '$city_pic', $status, NOW())";
+        $insert_query = "INSERT INTO cities (city_name, province_id, city_pic, status, approve, created_at) 
+                       VALUES ('$city_name', '$province_id', '$city_pic', $status, 1, NOW())";
         
         if (mysqli_query($con, $insert_query)) {
             $success_msg = "City added successfully!";
