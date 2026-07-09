@@ -92,7 +92,7 @@ include_once(BASE_PATH . '/inc/header.php');
         <div class="card border-0 shadow-sm mb-4">
             <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center">
                 <h5 class="mb-0"><i class="fas fa-user-md me-2 text-primary"></i>Add New Doctor</h5>
-                <a href="doctor-list.php" class="btn btn-outline-primary btn-sm">
+                <a href="<?=BASE_URL?>/admin/doctor/list" class="btn btn-outline-primary btn-sm">
                     <i class="fas fa-arrow-left me-1"></i>Back to List
                 </a>
             </div>

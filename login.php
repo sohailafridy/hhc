@@ -3,7 +3,7 @@ require_once 'config.php';
 
 // Redirect to dashboard if already logged in
 if (isset($_SESSION['user_id'])) {
-    redirect('/admin/index.php');
+    redirect('/admin/dashboard');
 }
 
 $error = '';
@@ -33,13 +33,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['admin_name'] = $user['username'];
 
             if($_SESSION['user_type']==1){
-                redirect('/admin/index.php');
+                redirect('/admin/dashboard');
             }elseif($_SESSION['user_type']==2){
-                redirect('/doctor/index.php');
+                redirect('/doctor/dashboard');
             }elseif($_SESSION['user_type']==3){
-                redirect('/nurse/index.php');
+                redirect('/nurse/dashboard');
             }elseif($_SESSION['user_type']==4){
-                redirect('/manager/index.php');
+                redirect('/manager/dashboard');
             }
 
         } else {

@@ -1,5 +1,6 @@
 RewriteEngine On
 
+#website urls
 RewriteRule ^$ index.php [L]
 RewriteRule ^home$ index.php [L]
 RewriteRule ^services$ pages/services.php [L]
@@ -8,4 +9,19 @@ RewriteRule ^doctors$ pages/doctors.php [L]
 RewriteRule ^our-team$ pages/our_team.php [L]
 RewriteRule ^contact$ pages/contact.php [L]
 RewriteRule ^login$ login.php [L]
+
+
+#all admin dashboard urls
+RewriteRule ^admin/dashboard$ admin/index.php [L]
+RewriteRule ^doctor/dashboard$ doctor/index.php [L]
+RewriteRule ^nurse/dashboard$ nurse/index.php [L]
+RewriteRule ^manager/dashboard$ manager/index.php [L]
+
+#admin doctor url
+RewriteRule ^admin/doctor/add$ admin/doctor-add.php [L]
+RewriteRule ^admin/doctor/list$ admin/doctor-list.php [L]
+RewriteRule ^admin/doctor/edit$ admin/doctor-edit.php [L]
+
+
+
 

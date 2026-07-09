@@ -27,7 +27,7 @@
                     echo $is_clients_active ? 'active' : ''; 
                 ?>">
                 <?php
-                    $current_page = basename($_SERVER['PHP_SELF']);
+                      $current_page = basename($_SERVER['PHP_SELF']);
                 ?>
 
                 <a href="#clientsSubmenu"
@@ -41,15 +41,15 @@
                     id="clientsSubmenu">
 
                     <li class="<?php echo $current_page == 'doctor-add.php' ? 'active' : ''; ?>">
-                        <a href="<?php echo BASE_URL; ?>/admin/doctor-add.php"
+                        <a href="<?php echo BASE_URL; ?>/admin/doctor/add"
                            class="small py-2 <?php echo $current_page == 'doctor-add.php' ? 'active' : ''; ?>">
                             <i class="fas fa-user-tag me-2"></i> Add
                         </a>
                     </li>
 
                     <li class="<?php echo $current_page == 'doctor-list.php' || $current_page == 'doctor-edit.php' ? 'active' : ''; ?>">
-                        <a href="<?php echo BASE_URL; ?>/admin/doctor-list.php"
-                           class="small py-2 <?php echo $current_page == 'doctor-list.php' || $current_page == 'doctor-edit.php' ? 'active' : ''; ?>">
+                        <a href="<?php echo BASE_URL; ?>/admin/doctor/list"
+                           class="small py-2 <?php echo $current_page == 'admin/doctor/list' || $current_page == 'admin/doctor/edit' ? 'active' : ''; ?>">
                             <i class="fas fa-list-ul me-2"></i> List
                         </a>
                     </li>

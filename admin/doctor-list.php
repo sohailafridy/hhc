@@ -11,9 +11,9 @@ if (isset($_GET['del_id'])) {
     $stmt = $pdo->prepare($sql);
     $stmt->execute([$del_id]);
     if ($stmt->rowCount() > 0) {
-        echo '<script>alert("Doctor hidden successfully.");window.location.href="doctor-list.php";</script>';
+        echo '<script>alert("Doctor hidden successfully.");window.location.href="' . BASE_URL . '/admin/doctor/list";</script>';
     } else {
-        echo '<script>alert("Failed to hide doctor.");window.location.href="doctor-list.php";</script>';
+        echo '<script>alert("Failed to hide doctor.");window.location.href="'. BASE_URL .'/admin/doctor/list";</script>';
     }
 }
 
@@ -73,7 +73,7 @@ include_once(BASE_PATH . '/inc/header.php');
         <div class="card border-0 shadow-sm mb-4">
             <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center">
                 <h5 class="mb-0"><i class="fas fa-user-md me-2 text-primary"></i>Doctor List</h5>
-                <a href="doctor-add.php" class="btn btn-primary btn-sm">
+                <a href="<?=BASE_URL?>/admin/doctor/add" class="btn btn-primary btn-sm">
                     <i class="fas fa-plus me-1"></i>Add New Doctor
                 </a>
             </div>
@@ -134,8 +134,8 @@ include_once(BASE_PATH . '/inc/header.php');
                                         </td>
                                         <td><?php echo date('d-m-Y', strtotime($doctor['created_at'])); ?></td>
                                         <td>
-                                            <a href="doctor-edit.php?id=<?php echo $doctor['id']; ?>" class="btn btn-sm btn-outline-primary"><i class="fas fa-edit"></i></a>
-                                            <a href="doctor-list.php?del_id=<?php echo $doctor['user_id']; ?>" class="btn btn-sm btn-outline-danger"><i class="fas fa-trash"></i></a>
+                                            <a href="<?=BASE_URL?>/admin/doctor/edit?id=<?php echo $doctor['id']; ?>" class="btn btn-sm btn-outline-primary"><i class="fas fa-edit"></i></a>
+                                            <a href="<?=BASE_URL?>/admin/doctor/list?del_id=<?php echo $doctor['user_id']; ?>" class="btn btn-sm btn-outline-danger"><i class="fas fa-trash"></i></a>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>
