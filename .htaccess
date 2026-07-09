@@ -1,11 +1,11 @@
 RewriteEngine On
-RewriteBase /zamzam2/
 
-# Remove .php extension
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteCond %{REQUEST_FILENAME}\.php -f
-RewriteRule ^(.*)$ $1.php [L]
+RewriteRule ^$ index.php [L]
+RewriteRule ^home$ index.php [L]
+RewriteRule ^services$ pages/services.php [L]
+RewriteRule ^about-us$ pages/about.php [L]
+RewriteRule ^doctors$ pages/doctors.php [L]
+RewriteRule ^our-team$ pages/our_team.php [L]
+RewriteRule ^contact$ pages/contact.php [L]
+RewriteRule ^login$ login.php [L]
 
-# Redirect from .php to extension-less URL (Optional)
-# RewriteCond %{THE_REQUEST} ^[A-Z]{3,7}\ /zamzam2/(.*?)\.php\ [HTTP/1.1]
-# RewriteRule ^(.*?)\.php$ $1 [R=301,L,NC]

@@ -11,17 +11,23 @@
           <div class="collapse navbar-collapse" id="mainNav">
             <ul class="navbar-nav mx-auto gap-lg-3">
               <?php 
-                $current_page = basename($_SERVER['PHP_SELF']);
-                $is_home = ($current_page === 'index.php');
+                // $current_page = basename($_SERVER['PHP_SELF']);
+                // echo $current_page;exit;
+
+                $slug = trim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), '/');
+                $current_page = basename($slug);
+
+
+                $is_home = ($current_page === 'hhc' || $current_page =='home' || $current_page =='');
               ?>
               <li class="nav-item"><a class="nav-link <?php echo $is_home ? 'active' : ''; ?>" href="<?php echo BASE_URL; ?>">Home</a></li>
-              <li class="nav-item"><a class="nav-link <?php echo ($current_page === 'services.php') ? 'active' : ''; ?>" href="<?php echo BASE_URL; ?>/pages/services.php">Services</a></li>
-              <li class="nav-item"><a class="nav-link <?php echo ($current_page === 'about.php') ? 'active' : ''; ?>" href="<?php echo BASE_URL; ?>/pages/about.php">About</a></li>
-              <li class="nav-item"><a class="nav-link <?php echo ($current_page === 'doctors.php') ? 'active' : ''; ?>" href="<?php echo BASE_URL; ?>/pages/doctors.php">Doctors</a></li>
-              <li class="nav-item"><a class="nav-link <?php echo ($current_page === 'our_team.php') ? 'active' : ''; ?>" href="<?php echo BASE_URL; ?>/pages/our_team.php">Our Team</a></li>
-              <li class="nav-item"><a class="nav-link <?php echo ($current_page === 'contact.php') ? 'active' : ''; ?>" href="<?php echo BASE_URL; ?>/pages/contact.php">Contact</a></li>
+              <li class="nav-item"><a class="nav-link <?php echo ($current_page === 'services') ? 'active' : ''; ?>" href="<?php echo BASE_URL; ?>/services">Services</a></li>
+              <li class="nav-item"><a class="nav-link <?php echo ($current_page === 'about-us') ? 'active' : ''; ?>" href="<?php echo BASE_URL; ?>/about-us">About</a></li>
+              <li class="nav-item"><a class="nav-link <?php echo ($current_page === 'doctors') ? 'active' : ''; ?>" href="<?php echo BASE_URL; ?>/doctors">Doctors</a></li>
+              <li class="nav-item"><a class="nav-link <?php echo ($current_page === 'our-team') ? 'active' : ''; ?>" href="<?php echo BASE_URL; ?>/our-team">Our Team</a></li>
+              <li class="nav-item"><a class="nav-link <?php echo ($current_page === 'contact') ? 'active' : ''; ?>" href="<?php echo BASE_URL; ?>/contact">Contact</a></li>
             </ul>
-            <a href="<?php echo BASE_URL; ?>/login.php" class="btn btn-primary"><i class="bi bi-person"></i>+</a>
+            <a href="<?php echo BASE_URL; ?>/login" class="btn btn-primary"><i class="bi bi-person"></i>+</a>
           </div>
         </div>
       </nav>
