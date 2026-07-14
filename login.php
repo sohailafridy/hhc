@@ -40,6 +40,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 redirect('/nurse/dashboard');
             }elseif($_SESSION['user_type']==4){
                 redirect('/manager/dashboard');
+            }elseif($_SESSION['user_type']==5){
+                redirect('/patient/dashboard');
             }
 
         } else {

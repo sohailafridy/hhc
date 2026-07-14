@@ -23,5 +23,5 @@ RewriteRule ^admin/doctor/list$ admin/doctor-list.php [L]
 RewriteRule ^admin/doctor/edit$ admin/doctor-edit.php [L]
 
 
-
-
+#admin patient url
+RewriteRule ^patient/dashboard$ patient/index.php [L]

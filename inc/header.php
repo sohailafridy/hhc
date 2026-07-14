@@ -33,6 +33,8 @@
                 include_once(BASE_PATH . '/inc/nav-nurse.php');
             }elseif($_SESSION['user_type']==4){
                 include_once(BASE_PATH . '/inc/nav-manager.php');
+            }elseif($_SESSION['user_type']==5){
+                include_once(BASE_PATH . '/inc/nav-patient.php');
             }
         ?>
         <div id="content">
