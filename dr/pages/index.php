@@ -603,6 +603,18 @@
         background: linear-gradient(135deg, #c0392b, #ef6a5b);
     }
 
+    .no-record-found {
+        width: 100%;
+        padding: 18px 16px;
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.75);
+        border: 1px dashed rgba(79, 172, 254, 0.2);
+        text-align: center;
+        color: #5f6f81;
+        font-weight: 700;
+        box-shadow: 0 8px 18px rgba(15, 23, 42, 0.04);
+    }
+
     /* Entity Actions Styling */
     .entity-actions {
         margin-top: 15px;
@@ -1579,9 +1591,13 @@
                                             <?php
                                             $cities_query = "SELECT * FROM cities ORDER BY city_name ASC";
                                             $cities_result = mysqli_query($con, $cities_query);
-                                            while($city = mysqli_fetch_assoc($cities_result)) {
-                                                $selected = ($city['city_id'] == $city_id) ? 'selected' : '';
-                                                echo '<option value="' . $city['city_id'] . '" ' . $selected . '>' . htmlspecialchars($city['city_name']) . '</option>';
+                                            if ($cities_result && mysqli_num_rows($cities_result) > 0) {
+                                                while($city = mysqli_fetch_assoc($cities_result)) {
+                                                    $selected = ($city['city_id'] == $city_id) ? 'selected' : '';
+                                                    echo '<option value="' . $city['city_id'] . '" ' . $selected . '>' . htmlspecialchars($city['city_name']) . '</option>';
+                                                }
+                                            } else {
+                                                echo '<option value="" disabled>No Record Found</option>';
                                             }
                                             ?>
                                         </select>
@@ -1855,6 +1871,7 @@
                   
                  $hospitals_result = mysqli_query($con, $hospitals_query);
                 $hospital_index = 0;
+                if ($hospitals_result && mysqli_num_rows($hospitals_result) > 0) {
                 while($hospital = mysqli_fetch_assoc($hospitals_result)) {
                     $hosp_stars_q = mysqli_query($con, "SELECT AVG(stars) as stars FROM `feedback` WHERE entity_id='". $hospital['entity_id'] ."'");
                     $hosp_stars = mysqli_fetch_assoc($hosp_stars_q);
@@ -1882,6 +1899,11 @@
                             </a>
                         </div>
                     </div>
+                </div>
+                <?php }
+                } else { ?>
+                <div class="col-12">
+                    <div class="no-record-found">No Record Found</div>
                 </div>
                 <?php } ?>
             </div>
@@ -1912,6 +1934,7 @@
                 
                 $doctors_result = mysqli_query($con, $doctors_query);
                 $doctor_index = 0;
+                if ($doctors_result && mysqli_num_rows($doctors_result) > 0) {
                 while($doctor = mysqli_fetch_assoc($doctors_result)) {
                     $doct_stars_q = mysqli_query($con, "SELECT AVG(stars) as stars FROM `feedback` WHERE entity_id='". $doctor['entity_id'] ."'");
                     $doct_stars = mysqli_fetch_assoc($doct_stars_q);
@@ -1953,6 +1976,11 @@
                         </div>
                     </div>
                 </div>
+                <?php }
+                } else { ?>
+                <div class="col-12">
+                    <div class="no-record-found">No Record Found</div>
+                </div>
                 <?php } ?>
             </div>
             <div class="text-center mt-4" data-aos="fade-up">
@@ -1982,6 +2010,7 @@
                 
                 $labs_result = mysqli_query($con, $labs_query);
                 $lab_index = 0;
+                if ($labs_result && mysqli_num_rows($labs_result) > 0) {
                 while($lab = mysqli_fetch_assoc($labs_result)) {
                     $lab_stars_q = mysqli_query($con, "SELECT AVG(stars) as stars FROM `feedback` WHERE entity_id='". $lab['entity_id'] ."'");
                     $lab_stars = mysqli_fetch_assoc($lab_stars_q);
@@ -2022,6 +2051,11 @@
                         </div>
                     </div>
                 </div>
+                <?php }
+                } else { ?>
+                <div class="col-12">
+                    <div class="no-record-found">No Record Found</div>
+                </div>
                 <?php } ?>
             </div>
             <div class="text-center mt-4" data-aos="fade-up">
@@ -2051,6 +2085,7 @@
                 
                 $blood_banks_result = mysqli_query($con, $blood_banks_query);
                 $blood_index = 0;
+                if ($blood_banks_result && mysqli_num_rows($blood_banks_result) > 0) {
                 while($blood_bank = mysqli_fetch_assoc($blood_banks_result)) {
                     $bb_stars_q = mysqli_query($con, "SELECT AVG(stars) as stars FROM `feedback` WHERE entity_id='". $blood_bank['entity_id'] ."'");
                     $bb_stars = mysqli_fetch_assoc($bb_stars_q);
@@ -2090,6 +2125,11 @@
                             </div>
                         </div>
                     </div>
+                </div>
+                <?php }
+                } else { ?>
+                <div class="col-12">
+                    <div class="no-record-found">No Record Found</div>
                 </div>
                 <?php } ?>
             </div>
