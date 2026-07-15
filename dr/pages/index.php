@@ -1871,7 +1871,8 @@
                   
                  $hospitals_result = mysqli_query($con, $hospitals_query);
                 $hospital_index = 0;
-                if ($hospitals_result && mysqli_num_rows($hospitals_result) > 0) {
+                $has_hospitals = $hospitals_result && mysqli_num_rows($hospitals_result) > 0;
+                if ($has_hospitals) {
                 while($hospital = mysqli_fetch_assoc($hospitals_result)) {
                     $hosp_stars_q = mysqli_query($con, "SELECT AVG(stars) as stars FROM `feedback` WHERE entity_id='". $hospital['entity_id'] ."'");
                     $hosp_stars = mysqli_fetch_assoc($hosp_stars_q);
@@ -1907,12 +1908,14 @@
                 </div>
                 <?php } ?>
             </div>
+            <?php if ($has_hospitals): ?>
             <div class="text-center mt-4" data-aos="fade-up">
                 <a href="hospitals" class="btn-view-all btn-view-hospitals">
                     <i class="fas fa-hospital-alt"></i>
                     View All Hospitals
                 </a>
             </div>
+            <?php endif; ?>
         </div>
     </section>
 
@@ -1934,7 +1937,8 @@
                 
                 $doctors_result = mysqli_query($con, $doctors_query);
                 $doctor_index = 0;
-                if ($doctors_result && mysqli_num_rows($doctors_result) > 0) {
+                $has_doctors = $doctors_result && mysqli_num_rows($doctors_result) > 0;
+                if ($has_doctors) {
                 while($doctor = mysqli_fetch_assoc($doctors_result)) {
                     $doct_stars_q = mysqli_query($con, "SELECT AVG(stars) as stars FROM `feedback` WHERE entity_id='". $doctor['entity_id'] ."'");
                     $doct_stars = mysqli_fetch_assoc($doct_stars_q);
@@ -1983,12 +1987,14 @@
                 </div>
                 <?php } ?>
             </div>
+            <?php if ($has_doctors): ?>
             <div class="text-center mt-4" data-aos="fade-up">
                 <a href="doctors" class="btn-view-all btn-view-doctors">
                     <i class="fas fa-user-md"></i>
                     View All Doctors
                 </a>
             </div>
+            <?php endif; ?>
         </div>
     </section>
 
@@ -2010,7 +2016,8 @@
                 
                 $labs_result = mysqli_query($con, $labs_query);
                 $lab_index = 0;
-                if ($labs_result && mysqli_num_rows($labs_result) > 0) {
+                $has_labs = $labs_result && mysqli_num_rows($labs_result) > 0;
+                if ($has_labs) {
                 while($lab = mysqli_fetch_assoc($labs_result)) {
                     $lab_stars_q = mysqli_query($con, "SELECT AVG(stars) as stars FROM `feedback` WHERE entity_id='". $lab['entity_id'] ."'");
                     $lab_stars = mysqli_fetch_assoc($lab_stars_q);
@@ -2058,12 +2065,14 @@
                 </div>
                 <?php } ?>
             </div>
+            <?php if ($has_labs): ?>
             <div class="text-center mt-4" data-aos="fade-up">
                 <a href="labs" class="btn-view-all btn-view-labs">
                     <i class="fas fa-flask"></i>
                     View All Laboratories
                 </a>
             </div>
+            <?php endif; ?>
         </div>
     </section>
 
@@ -2085,7 +2094,8 @@
                 
                 $blood_banks_result = mysqli_query($con, $blood_banks_query);
                 $blood_index = 0;
-                if ($blood_banks_result && mysqli_num_rows($blood_banks_result) > 0) {
+                $has_blood_banks = $blood_banks_result && mysqli_num_rows($blood_banks_result) > 0;
+                if ($has_blood_banks) {
                 while($blood_bank = mysqli_fetch_assoc($blood_banks_result)) {
                     $bb_stars_q = mysqli_query($con, "SELECT AVG(stars) as stars FROM `feedback` WHERE entity_id='". $blood_bank['entity_id'] ."'");
                     $bb_stars = mysqli_fetch_assoc($bb_stars_q);
@@ -2133,12 +2143,14 @@
                 </div>
                 <?php } ?>
             </div>
+            <?php if ($has_blood_banks): ?>
             <div class="text-center mt-4" data-aos="fade-up">
                 <a href="blood-banks" class="btn-view-all btn-view-blood">
                     <i class="fas fa-tint"></i>
                     View All Blood Banks
                 </a>
             </div>
+            <?php endif; ?>
         </div>
     </section>
 
