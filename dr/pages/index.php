@@ -558,21 +558,49 @@
     }
 
     .btn-view-all {
-        background: var(--gradient);
         color: white;
         border: none;
-        padding: 12px 30px;
-        border-radius: 50px;
-        font-weight: 600;
+        padding: 8px 18px;
+        border-radius: 999px;
+        font-weight: 700;
+        font-size: 0.82rem;
+        letter-spacing: 0.02em;
         transition: all 0.3s ease;
-        text-decoration: none;
-        display: inline-block;
+        text-decoration: none !important;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        box-shadow: 0 8px 18px rgba(15, 23, 42, 0.12);
+    }
+
+    .btn-view-all i {
+        font-size: 0.8rem;
     }
     
     .btn-view-all:hover {
         transform: translateY(-2px);
-        box-shadow: 0 10px 20px rgba(79, 172, 254, 0.3);
+        box-shadow: 0 10px 22px rgba(15, 23, 42, 0.16);
         color: white;
+    }
+
+    .btn-view-specialities {
+        background: linear-gradient(135deg, #e74c3c, #ff7b72);
+    }
+
+    .btn-view-hospitals {
+        background: linear-gradient(135deg, #5b6df6, #7f8cff);
+    }
+
+    .btn-view-doctors {
+        background: linear-gradient(135deg, #315f97, #4a8be0);
+    }
+
+    .btn-view-labs {
+        background: linear-gradient(135deg, #136f63, #24a38f);
+    }
+
+    .btn-view-blood {
+        background: linear-gradient(135deg, #c0392b, #ef6a5b);
     }
 
     /* Entity Actions Styling */
@@ -1216,6 +1244,220 @@
         transform: scale(1.2);
     }
 
+    .hospital-mini-card .speciality-icon i {
+        font-size: 1.15rem;
+        color: #e74c3c;
+    }
+
+    .hospital-mini-location {
+        color: #5f6f81;
+        font-size: 0.72rem;
+        font-weight: 500;
+        margin-bottom: 8px;
+        line-height: 1.25;
+    }
+
+    .hospital-mini-location i,
+    .hospital-mini-rating i {
+        margin-right: 4px;
+    }
+
+    .hospital-mini-rating {
+        color: #2c3e50;
+        font-size: 0.7rem;
+        font-weight: 600;
+        margin-bottom: 10px;
+    }
+
+    .doctor-mini-card .speciality-card-body {
+        border: 1px solid rgba(79, 172, 254, 0.15);
+        padding: 0;
+        overflow: hidden;
+    }
+
+    .doctor-mini-media {
+        height: 140px;
+        background: linear-gradient(135deg, rgba(79, 172, 254, 0.16), rgba(103, 114, 229, 0.16));
+        overflow: hidden;
+    }
+
+    .doctor-mini-media img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+
+    .doctor-mini-content {
+        padding: 14px 10px 15px;
+    }
+
+    .doctor-mini-icon-wrap {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255, 255, 255, 0.55);
+    }
+
+    .doctor-mini-icon {
+        font-size: 2.2rem;
+        color: #3f7edb;
+    }
+
+    .doctor-mini-specialty {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 5px 10px;
+        margin-bottom: 10px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.9);
+        color: #315f97;
+        font-size: 0.62rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        line-height: 1.2;
+    }
+
+    .doctor-mini-specialty i {
+        color: #e74c3c;
+    }
+
+    .doctor-mini-meta {
+        color: #5f6f81;
+        font-size: 0.72rem;
+        font-weight: 500;
+        margin-bottom: 8px;
+        line-height: 1.25;
+    }
+
+    .doctor-mini-meta i,
+    .doctor-mini-rating i {
+        margin-right: 4px;
+    }
+
+    .doctor-mini-rating {
+        color: #2c3e50;
+        font-size: 0.7rem;
+        font-weight: 600;
+        margin-bottom: 10px;
+    }
+
+    .doctor-mini-card .speciality-btn {
+        color: #315f97;
+    }
+
+    .doctor-mini-card:hover .speciality-btn {
+        background: #315f97;
+        border-color: #315f97;
+    }
+
+    .service-mini-card .speciality-card-body {
+        border: 1px solid rgba(79, 172, 254, 0.12);
+        padding: 0;
+        overflow: hidden;
+    }
+
+    .service-mini-media {
+        height: 140px;
+        background: linear-gradient(135deg, rgba(79, 172, 254, 0.16), rgba(103, 114, 229, 0.16));
+        overflow: hidden;
+    }
+
+    .service-mini-media img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+
+    .service-mini-icon-wrap {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255, 255, 255, 0.55);
+    }
+
+    .service-mini-icon {
+        font-size: 2.2rem;
+        color: #3f7edb;
+    }
+
+    .service-mini-content {
+        padding: 14px 10px 15px;
+    }
+
+    .service-mini-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 5px 10px;
+        margin-bottom: 10px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.9);
+        color: #315f97;
+        font-size: 0.62rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        line-height: 1.2;
+    }
+
+    .service-mini-badge i {
+        color: #e74c3c;
+    }
+
+    .service-mini-meta {
+        color: #5f6f81;
+        font-size: 0.72rem;
+        font-weight: 500;
+        margin-bottom: 8px;
+        line-height: 1.3;
+    }
+
+    .service-mini-meta i,
+    .service-mini-rating i {
+        margin-right: 4px;
+    }
+
+    .service-mini-rating {
+        color: #2c3e50;
+        font-size: 0.7rem;
+        font-weight: 600;
+        margin-bottom: 10px;
+    }
+
+    .lab-mini-card .service-mini-badge {
+        color: #136f63;
+    }
+
+    .lab-mini-card .service-mini-badge i,
+    .lab-mini-card .service-mini-icon {
+        color: #136f63;
+    }
+
+    .lab-mini-card:hover .speciality-btn {
+        background: #136f63;
+        border-color: #136f63;
+    }
+
+    .blood-mini-card .service-mini-badge {
+        color: #c0392b;
+    }
+
+    .blood-mini-card .service-mini-badge i,
+    .blood-mini-card .service-mini-icon {
+        color: #c0392b;
+    }
+
+    .blood-mini-card:hover .speciality-btn {
+        background: #c0392b;
+        border-color: #c0392b;
+    }
+
     @media (max-width: 992px) {
         .speciality-card-body {
             padding: 12px 8px;
@@ -1256,6 +1498,44 @@
         
         .speciality-title {
             font-size: 0.7rem;
+        }
+
+        .hospital-mini-location,
+        .hospital-mini-rating {
+            font-size: 0.65rem;
+        }
+
+        .doctor-mini-specialty {
+            font-size: 0.58rem;
+            padding: 4px 8px;
+        }
+
+        .doctor-mini-media {
+            height: 120px;
+        }
+
+        .doctor-mini-content {
+            padding: 12px 8px 14px;
+        }
+
+        .service-mini-media {
+            height: 120px;
+        }
+
+        .service-mini-content {
+            padding: 12px 8px 14px;
+        }
+
+        .doctor-mini-meta,
+        .doctor-mini-rating,
+        .service-mini-meta,
+        .service-mini-rating {
+            font-size: 0.65rem;
+        }
+
+        .service-mini-badge {
+            font-size: 0.58rem;
+            padding: 4px 8px;
         }
         
         .speciality-btn {
@@ -1485,7 +1765,10 @@
             </div>
         </div>
         <div class="text-center mt-4" data-aos="fade-up">
-                <a href="doctors" class="btn-view-all">Explore All Specialities</a>
+                <a href="doctors" class="btn-view-all btn-view-specialities">
+                    <i class="fas fa-stethoscope"></i>
+                    Explore All Specialities
+                </a>
             </div>
     </section>
 
@@ -1563,6 +1846,7 @@
             </div>
             <div class="row g-3">
                 <?php
+                $hospital_card_colors = ['#fce4ec', '#ffebee', '#f3e5f5', '#fff9c4', '#e1f5fe', '#e0f2f1'];
                 if($city_id > 0){
                     $hospitals_query = "SELECT h.*, c.city_name FROM hospitals h LEFT JOIN cities c ON h.city_id = c.city_id WHERE h.status = 1 AND h.city_id = $city_id ORDER BY h.hospital_id DESC LIMIT 6";
                 }else{
@@ -1570,32 +1854,31 @@
                 }
                   
                  $hospitals_result = mysqli_query($con, $hospitals_query);
+                $hospital_index = 0;
                 while($hospital = mysqli_fetch_assoc($hospitals_result)) {
                     $hosp_stars_q = mysqli_query($con, "SELECT AVG(stars) as stars FROM `feedback` WHERE entity_id='". $hospital['entity_id'] ."'");
                     $hosp_stars = mysqli_fetch_assoc($hosp_stars_q);
                     $hosp_stars = $hosp_stars['stars'];
+                    $hospital_rating = $hosp_stars ? number_format((float)$hosp_stars, 1) : 'New';
+                    $hospital_bg = $hospital_card_colors[$hospital_index % count($hospital_card_colors)];
+                    $hospital_index++;
                 ?>
-                <div class="col-lg-2-3 col-md-2 col-6 mb-3" data-aos="fade-up" data-aos-delay="100">
-                    <div class="hospital-card-modern">
-                        <div class="hospital-image-modern">
-                            <?php if (!empty($hospital['hospital_pic'])): ?>
-                                <img src="<?php echo BASE_URL; ?>admin/inc/uploads/hospitals/<?php echo $hospital['hospital_pic']; ?>" 
-                                    alt="<?php echo $hospital['hospital_name']; ?>" class="img-fluid">
-                            <?php else: ?>
-                                <img src="<?php echo BASE_URL; ?>admin/inc/uploads/default/hosp.jpg" 
-                                    alt="No Image" class="img-fluid">
-                            <?php endif; ?>    
-                            <div class="hospital-badge">
-                                <i class="fas fa-star"></i> <?=number_format($hosp_stars,1)?>
+                <div class="col-lg-2 col-md-4 col-6" data-aos="fade-up" data-aos-delay="<?php echo 100 + ($hospital_index * 80); ?>">
+                    <div class="speciality-card hospital-mini-card">
+                        <div class="speciality-card-body" style="background-color: <?php echo $hospital_bg; ?>;">
+                            <div class="speciality-icon">
+                                <i class="fas fa-hospital-alt"></i>
                             </div>
-                        </div>
-                        <div class="hospital-content-modern">
-                            <h5 class="hospital-title-modern"><?php echo htmlspecialchars(substr($hospital['hospital_name'], 0, 25)); ?></h5>
-                            <p class="hospital-location-modern">
-                                <i class="fas fa-map-marker-alt"></i> <?php echo htmlspecialchars($hospital['city_name']); ?>
+                            <h4 class="speciality-title"><?php echo htmlspecialchars(substr($hospital['hospital_name'], 0, 25)); ?></h4>
+                            <p class="hospital-mini-location">
+                                <i class="fas fa-map-marker-alt"></i><?php echo htmlspecialchars($hospital['city_name']); ?>
                             </p>
-                            <a href="hospital-detail?hospital_id=<?php echo $hospital['hospital_id']; ?>" class="hospital-btn-modern">
+                            <div class="hospital-mini-rating">
+                                <i class="fas fa-star text-warning"></i><?php echo $hospital_rating; ?> Rating
+                            </div>
+                            <a href="hospital-detail?hospital_id=<?php echo $hospital['hospital_id']; ?>" class="speciality-btn">
                                 <i class="fas fa-arrow-right"></i>
+                                DETAILS
                             </a>
                         </div>
                     </div>
@@ -1603,7 +1886,10 @@
                 <?php } ?>
             </div>
             <div class="text-center mt-4" data-aos="fade-up">
-                <a href="hospitals" class="btn-view-all detail-btns">View All Hospitals</a>
+                <a href="hospitals" class="btn-view-all btn-view-hospitals">
+                    <i class="fas fa-hospital-alt"></i>
+                    View All Hospitals
+                </a>
             </div>
         </div>
     </section>
@@ -1615,8 +1901,9 @@
                 <h2 class="section-title heading-color">Top Doctors</h2>
                 <p class="section-subtitle normal-color">Connect with experienced medical professionals</p>
             </div>
-            <div class="row">
+            <div class="row g-3 justify-content-center">
                 <?php
+                $doctor_card_colors = ['#eef6ff', '#f3efff', '#eefbf5', '#fff6e8', '#fceef3', '#edf8ff'];
                 if($city_id > 0){
                     $doctors_query = "SELECT d.*, c.city_name, dct.type as specialization FROM doctors d LEFT JOIN cities c ON d.city_id = c.city_id LEFT JOIN dr_cat_types dct ON d.cat_type_id = dct.dr_cat_id WHERE d.status = 1 AND d.city_id=$city_id ORDER BY d.doctor_id DESC LIMIT 4";
                 }else{
@@ -1632,45 +1919,36 @@
                     $doctor_index++;
                     $doctor_rating = $doct_stars ? number_format((float)$doct_stars, 1) : 'New';
                     $doctor_specialization = !empty($doctor['specialization']) ? $doctor['specialization'] : 'Medical Specialist';
-                    $doctor_summary = !empty($doctor['short_detail']) ? substr(strip_tags($doctor['short_detail']), 0, 88) : 'Trusted healthcare professional offering patient-focused care and consultation.';
-                    if (!empty($doctor['short_detail']) && strlen(strip_tags($doctor['short_detail'])) > 88) {
-                        $doctor_summary .= '...';
-                    }
+                    $doctor_bg = $doctor_card_colors[($doctor_index - 1) % count($doctor_card_colors)];
                 ?>
-                <div class="col-xl-3 col-lg-4 col-md-6 mb-4" data-aos="fade-up" data-aos-delay="<?php echo 100 + ($doctor_index * 80); ?>">
-                    <div class="entity-card doctor-card-premium">
-                        <div class="doctor-card-badge">
-                            <i class="fas fa-sparkles"></i> Top Specialist
-                        </div>
-                        <div class="entity-image doctor-card-image">
-                            <?php if (!empty($doctor['doctor_pic'])): ?>
-                                <img src="<?php echo BASE_URL; ?>admin/inc/uploads/doctors/<?php echo $doctor['doctor_pic']; ?>" 
-                                    alt="<?php echo $doctor['doctor_name']; ?>" class="img-fluid" style="max-height: 300px;">
-                            <?php else: ?>
-                                <img src="<?php echo BASE_URL; ?>admin/inc/uploads/default/doctor.jpg" 
-                                    alt="No Image" class="img-fluid" style="max-height: 300px;">
-                            <?php endif; ?>
-                            <div class="doctor-card-floating">
-                                <span class="doctor-card-chip">
-                                    <i class="fas fa-star text-warning"></i><?php echo $doctor_rating; ?> Rating
-                                </span>
+                <div class="col-lg-2 col-md-4 col-6" data-aos="fade-up" data-aos-delay="<?php echo 100 + ($doctor_index * 80); ?>">
+                    <div class="speciality-card doctor-mini-card">
+                        <div class="speciality-card-body" style="background-color: <?php echo $doctor_bg; ?>;">
+                            <div class="doctor-mini-media">
+                                <?php if (!empty($doctor['doctor_pic'])): ?>
+                                    <img src="<?php echo BASE_URL; ?>admin/inc/uploads/doctors/<?php echo $doctor['doctor_pic']; ?>" 
+                                        alt="<?php echo $doctor['doctor_name']; ?>" class="img-fluid">
+                                <?php else: ?>
+                                    <div class="doctor-mini-icon-wrap">
+                                        <i class="fas fa-user-md doctor-mini-icon"></i>
+                                    </div>
+                                <?php endif; ?>
                             </div>
-                        </div>
-                        <div class="entity-content doctor-card-content">
-                            <div class="doctor-card-specialty">
-                                <i class="fas fa-user-md"></i><?php echo htmlspecialchars($doctor_specialization); ?>
-                            </div>
-                            <h5 class="entity-title heading-color doctor-card-title"><?php echo htmlspecialchars($doctor['doctor_name']); ?></h5>
-                            <div class="doctor-card-meta">
-                                <span class="doctor-card-meta-item">
+                            <div class="doctor-mini-content">
+                                <div class="doctor-mini-specialty">
+                                    <i class="fas fa-user-md"></i><?php echo htmlspecialchars($doctor_specialization); ?>
+                                </div>
+                                <h4 class="speciality-title"><?php echo htmlspecialchars($doctor['doctor_name']); ?></h4>
+                                <div class="doctor-mini-meta">
                                     <i class="fas fa-location-dot"></i><?php echo htmlspecialchars($doctor['city_name']); ?>
-                                </span>
-                                <span class="doctor-card-meta-item">
-                                    <i class="fas fa-star"></i><?php echo $doctor_rating; ?>/5
-                                </span>
-                            </div>
-                            <div class="doctor-card-actions">
-                                <a href="doctor-detail?doctor_id=<?php echo $doctor['doctor_id']; ?>" class="btn detail-btns doctor-detail-btn">View Details</a>
+                                </div>
+                                <div class="doctor-mini-rating">
+                                    <i class="fas fa-star text-warning"></i><?php echo $doctor_rating; ?> Rating
+                                </div>
+                                <a href="doctor-detail?doctor_id=<?php echo $doctor['doctor_id']; ?>" class="speciality-btn">
+                                    <i class="fas fa-stethoscope"></i>
+                                    PROFILE
+                                </a>
                             </div>
                         </div>
                     </div>
@@ -1678,7 +1956,10 @@
                 <?php } ?>
             </div>
             <div class="text-center mt-4" data-aos="fade-up">
-                <a href="doctors" class="btn-view-all">View All Doctors</a>
+                <a href="doctors" class="btn-view-all btn-view-doctors">
+                    <i class="fas fa-user-md"></i>
+                    View All Doctors
+                </a>
             </div>
         </div>
     </section>
@@ -1690,8 +1971,9 @@
                 <h2 class="section-title heading-color">Laboratories</h2>
                 <p class="section-subtitle normal-color">Advanced diagnostic and testing services</p>
             </div>
-            <div class="row">
+            <div class="row g-3 justify-content-center">
                 <?php
+                $lab_card_colors = ['#e8fff9', '#eef8ff', '#f3efff', '#eefbf5', '#fff6e8', '#edf8ff'];
                 if($city_id > 0){
                     $labs_query = "SELECT l.*, c.city_name FROM laboratories l LEFT JOIN cities c ON l.city_id = c.city_id WHERE l.status AND l.city_id=$city_id ORDER BY l.lab_id DESC LIMIT 6";
                 }else{
@@ -1699,31 +1981,43 @@
                 }
                 
                 $labs_result = mysqli_query($con, $labs_query);
+                $lab_index = 0;
                 while($lab = mysqli_fetch_assoc($labs_result)) {
                     $lab_stars_q = mysqli_query($con, "SELECT AVG(stars) as stars FROM `feedback` WHERE entity_id='". $lab['entity_id'] ."'");
                     $lab_stars = mysqli_fetch_assoc($lab_stars_q);
                     $lab_stars = $lab_stars['stars'];
+                    $lab_index++;
+                    $lab_rating = $lab_stars ? number_format((float)$lab_stars, 1) : 'New';
+                    $lab_bg = $lab_card_colors[($lab_index - 1) % count($lab_card_colors)];
                 ?>
-                <div class="col-lg-4 col-md-6 mb-4" data-aos="fade-up" data-aos-delay="100">
-                    <div class="entity-card">
-                        <div class="entity-image">
-                             <?php if (!empty($lab['lab_pic'])): ?>
-                                <img src="<?php echo BASE_URL; ?>admin/inc/uploads/labs/<?php echo $lab['lab_pic']; ?>" 
-                                    alt="<?php echo $lab['lab_name']; ?>" class="img-fluid" style="max-height: 300px;">
-                            <?php else: ?>
-                                <img src="<?php echo BASE_URL; ?>admin/inc/uploads/default/lab.jpg" 
-                                    alt="No Image" class="img-fluid" style="max-height: 300px;">
-                            <?php endif; ?>     
-                        </div>
-                        <div class="entity-content">
-                            <h5 class="entity-title heading-color"><?php echo htmlspecialchars($lab['lab_name']); ?></h5>
-                            <p class="entity-description normal-color"><?php echo htmlspecialchars(substr($lab['lab_address'], 0, 100)) . '...'; ?></p>
-                            <div class="entity-meta">
-                                <span><i class="fas fa-map-marker-alt me-1 normal-color"></i><?php echo htmlspecialchars($lab['city_name']); ?></span>
-                                <span><i class="fas fa-star text-warning me-1"></i><?=number_format($lab_stars,1)?></span>
+                <div class="col-lg-2 col-md-4 col-6" data-aos="fade-up" data-aos-delay="<?php echo 100 + ($lab_index * 80); ?>">
+                    <div class="speciality-card service-mini-card lab-mini-card">
+                        <div class="speciality-card-body" style="background-color: <?php echo $lab_bg; ?>;">
+                            <div class="service-mini-media">
+                                <?php if (!empty($lab['lab_pic'])): ?>
+                                    <img src="<?php echo BASE_URL; ?>admin/inc/uploads/labs/<?php echo $lab['lab_pic']; ?>" 
+                                        alt="<?php echo $lab['lab_name']; ?>" class="img-fluid">
+                                <?php else: ?>
+                                    <div class="service-mini-icon-wrap">
+                                        <i class="fas fa-flask service-mini-icon"></i>
+                                    </div>
+                                <?php endif; ?>
                             </div>
-                            <div class="entity-actions">
-                                <a href="lab-detail?lab_id=<?php echo $lab['lab_id']; ?>" class="btn detail-btns">View Details</a>
+                            <div class="service-mini-content">
+                                <div class="service-mini-badge">
+                                    <i class="fas fa-flask"></i>LABORATORY
+                                </div>
+                                <h4 class="speciality-title"><?php echo htmlspecialchars($lab['lab_name']); ?></h4>
+                                <div class="service-mini-meta">
+                                    <i class="fas fa-location-dot"></i><?php echo htmlspecialchars($lab['city_name']); ?>
+                                </div>
+                                <div class="service-mini-rating">
+                                    <i class="fas fa-star text-warning"></i><?php echo $lab_rating; ?> Rating
+                                </div>
+                                <a href="lab-detail?lab_id=<?php echo $lab['lab_id']; ?>" class="speciality-btn">
+                                    <i class="fas fa-vial"></i>
+                                    DETAILS
+                                </a>
                             </div>
                         </div>
                     </div>
@@ -1731,7 +2025,10 @@
                 <?php } ?>
             </div>
             <div class="text-center mt-4" data-aos="fade-up">
-                <a href="labs" class="btn-view-all">View All Laboratories</a>
+                <a href="labs" class="btn-view-all btn-view-labs">
+                    <i class="fas fa-flask"></i>
+                    View All Laboratories
+                </a>
             </div>
         </div>
     </section>
@@ -1743,8 +2040,9 @@
                 <h2 class="section-title heading-color">Blood Banks</h2>
                 <p class="section-subtitle normal-color">Life-saving blood donation and supply services</p>
             </div>
-            <div class="row">
+            <div class="row g-3 justify-content-center">
                 <?php
+                $blood_card_colors = ['#fff1f1', '#fff6e8', '#fceef3', '#eef6ff', '#f3efff', '#edf8ff'];
                 if($city_id > 0){
                     $blood_banks_query = "SELECT bb.*, c.city_name FROM blood_bank bb LEFT JOIN cities c ON bb.city_id = c.city_id WHERE bb.status = 1 AND bb.city_id=$city_id ORDER BY bb.bb_id DESC LIMIT 6";
                 }else{
@@ -1752,32 +2050,43 @@
                 }
                 
                 $blood_banks_result = mysqli_query($con, $blood_banks_query);
+                $blood_index = 0;
                 while($blood_bank = mysqli_fetch_assoc($blood_banks_result)) {
                     $bb_stars_q = mysqli_query($con, "SELECT AVG(stars) as stars FROM `feedback` WHERE entity_id='". $blood_bank['entity_id'] ."'");
                     $bb_stars = mysqli_fetch_assoc($bb_stars_q);
                     $bb_stars = $bb_stars['stars'];
+                    $blood_index++;
+                    $blood_rating = $bb_stars ? number_format((float)$bb_stars, 1) : 'New';
+                    $blood_bg = $blood_card_colors[($blood_index - 1) % count($blood_card_colors)];
                 ?>
-                <div class="col-lg-4 col-md-6 mb-4" data-aos="fade-up" data-aos-delay="100">
-                    <div class="entity-card">
-                        <div class="entity-image">
-                             <?php if (!empty($blood_bank['bb_pic'])): ?>
-                                <img src="<?php echo BASE_URL; ?>admin/inc/uploads/blood-banks/<?php echo $blood_bank['bb_pic']; ?>" 
-                                    alt="<?php echo $blood_bank['blood_bank_name']; ?>" class="img-fluid" style="max-height: 300px;">
-                            <?php else: ?>
-                                <img src="<?php echo BASE_URL; ?>admin/inc/uploads/default/bb.jpg" 
-                                    alt="No Image" class="img-fluid" style="max-height: 300px;">
-                            <?php endif; ?>     
-                        </div>
-                        <div class="entity-content">
-                            <h5 class="entity-title heading-color"><?php echo htmlspecialchars($blood_bank['bb_name']); ?></h5>
-                            <p class="entity-description normal-color"><?php echo htmlspecialchars(substr($blood_bank['bb_address'], 0, 100)) . '...'; ?></p>
-                            <div class="entity-meta">
-                                <span><i class="fas fa-map-marker-alt me-1 normal-color"></i><?php echo htmlspecialchars($blood_bank['city_name']); ?></span>
-                                <span><i class="fas fa-phone me-1 normal-color"></i>Emergency: <?php echo htmlspecialchars($blood_bank['bb_contact']); ?></span>
-                                <span><i class="fas fa-star text-warning me-1"></i><?=number_format($bb_stars,1)?></span>
+                <div class="col-lg-2 col-md-4 col-6" data-aos="fade-up" data-aos-delay="<?php echo 100 + ($blood_index * 80); ?>">
+                    <div class="speciality-card service-mini-card blood-mini-card">
+                        <div class="speciality-card-body" style="background-color: <?php echo $blood_bg; ?>;">
+                            <div class="service-mini-media">
+                                <?php if (!empty($blood_bank['bb_pic'])): ?>
+                                    <img src="<?php echo BASE_URL; ?>admin/inc/uploads/blood-banks/<?php echo $blood_bank['bb_pic']; ?>" 
+                                        alt="<?php echo $blood_bank['bb_name']; ?>" class="img-fluid">
+                                <?php else: ?>
+                                    <div class="service-mini-icon-wrap">
+                                        <i class="fas fa-tint service-mini-icon"></i>
+                                    </div>
+                                <?php endif; ?>
                             </div>
-                            <div class="entity-actions">
-                                <a href="blood-bank-detail?blood_bankid=<?php echo $blood_bank['bb_id']; ?>" class="btn detail-btns">View Details</a>
+                            <div class="service-mini-content">
+                                <div class="service-mini-badge">
+                                    <i class="fas fa-tint"></i>BLOOD BANK
+                                </div>
+                                <h4 class="speciality-title"><?php echo htmlspecialchars($blood_bank['bb_name']); ?></h4>
+                                <div class="service-mini-meta">
+                                    <i class="fas fa-location-dot"></i><?php echo htmlspecialchars($blood_bank['city_name']); ?>
+                                </div>
+                                <div class="service-mini-rating">
+                                    <i class="fas fa-star text-warning"></i><?php echo $blood_rating; ?> Rating
+                                </div>
+                                <a href="blood-bank-detail?blood_bankid=<?php echo $blood_bank['bb_id']; ?>" class="speciality-btn">
+                                    <i class="fas fa-droplet"></i>
+                                    DETAILS
+                                </a>
                             </div>
                         </div>
                     </div>
@@ -1785,13 +2094,16 @@
                 <?php } ?>
             </div>
             <div class="text-center mt-4" data-aos="fade-up">
-                <a href="blood-banks" class="btn-view-all">View All Blood Banks</a>
+                <a href="blood-banks" class="btn-view-all btn-view-blood">
+                    <i class="fas fa-tint"></i>
+                    View All Blood Banks
+                </a>
             </div>
         </div>
     </section>
 
     <!-- Reviews Section -->
-    <section class="section-padding" id="reviews" style="background-color: var(--light);">
+    <section class="section-padding d-none" id="reviews" style="background-color: var(--light);">
         <div class="container">
             <div class="section-header" data-aos="fade-up">
                 <h2 class="section-title heading-color">Patient Reviews</h2>
