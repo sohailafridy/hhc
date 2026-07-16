@@ -116,92 +116,6 @@ $average_rating = $review_count > 0 ? number_format($total_stars / $review_count
         </div>
     </div>
 </section>
-
-<section class="about-story-section section-padding">
-    <div class="container">
-        <div class="row g-4 align-items-stretch">
-            <div class="col-lg-7" data-aos="fade-up">
-                <div class="content-panel content-panel-dark about-parallax-card">
-                    <span class="section-chip section-chip-soft">
-                        <i class="fas fa-user-shield"></i>
-                        About the founder
-                    </span>
-                    <h2 class="section-title about-section-title">A focused digital mission for easier healthcare access</h2>
-                    <div class="story-copy">
-                        <p class="lead">
-                            Doctor App ka maqsad healthcare information ko zyada accessible, organized aur reliable banana hai, taake users apna qeemti waqt bachate hue behtar decisions le saken.
-                        </p>
-                        <p>
-                            Main is system ko lagataar improve karne par kaam kar raha hoon, aur users ki feedback mere liye bohat aham hai kyun ke isi ki bunyaad par platform ko aur zyada useful, modern aur user-friendly banaya ja sakta hai.
-                        </p>
-                    </div>
-
-                    <div class="value-grid">
-                        <div class="value-card">
-                            <span><i class="fas fa-lightbulb"></i></span>
-                            <h4>Purpose-driven thinking</h4>
-                            <p>Har feature ko real user need aur practical use-case ke saath plan kiya jata hai.</p>
-                        </div>
-                        <div class="value-card">
-                            <span><i class="fas fa-users"></i></span>
-                            <h4>User-first experience</h4>
-                            <p>Simple discovery, clean information flow aur accessible design is product ka core hai.</p>
-                        </div>
-                        <div class="value-card">
-                            <span><i class="fas fa-layer-group"></i></span>
-                            <h4>Organized healthcare data</h4>
-                            <p>Different service categories ko aik jagah structured form mein dikhaya jata hai.</p>
-                        </div>
-                        <div class="value-card">
-                            <span><i class="fas fa-rotate"></i></span>
-                            <h4>Always evolving</h4>
-                            <p>Platform ko future mobile app aur wider coverage ke liye continuously scale kiya ja raha hai.</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-lg-5" data-aos="fade-up" data-aos-delay="150">
-                <div class="insight-stack">
-                    <div class="content-panel insight-panel about-parallax-card">
-                        <span class="mini-label">Platform mindset</span>
-                        <h3>Healthcare search should feel fast, clear and dependable</h3>
-                        <p>Directory, discovery aur trust ko ek hi user journey mein merge karna Doctor App ki strongest value proposition hai.</p>
-                    </div>
-                    <div class="content-panel insight-panel accent-panel about-parallax-card">
-                        <span class="mini-label">Feedback loop</span>
-                        <h3><?= htmlspecialchars($average_rating) ?> / 5 average sentiment</h3>
-                        <p><?= $review_count > 0 ? $review_count . ' users ne direct feedback share kiya hai.' : 'Abhi reviews ka silsila start ho raha hai.' ?></p>
-                    </div>
-                    <div class="content-panel roadmap-panel about-parallax-card">
-                        <div class="roadmap-point">
-                            <span class="roadmap-dot"></span>
-                            <div>
-                                <h5>Current phase</h5>
-                                <p>Reliable healthcare listing experience</p>
-                            </div>
-                        </div>
-                        <div class="roadmap-point">
-                            <span class="roadmap-dot"></span>
-                            <div>
-                                <h5>Next step</h5>
-                                <p>Wider city coverage and stronger data verification</p>
-                            </div>
-                        </div>
-                        <div class="roadmap-point">
-                            <span class="roadmap-dot"></span>
-                            <div>
-                                <h5>Future vision</h5>
-                                <p>Dedicated mobile application for easier nationwide access</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-
 <section class="cofounder-section section-padding">
     <div class="container">
         <div class="cofounder-shell about-parallax-card" data-aos="fade-up">
@@ -288,6 +202,92 @@ $average_rating = $review_count > 0 ? number_format($total_stars / $review_count
         </div>
     </div>
 </section>
+<section class="about-story-section section-padding">
+    <div class="container">
+        <div class="row g-4 align-items-stretch">
+            <div class="col-lg-7" data-aos="fade-up">
+                <div class="content-panel content-panel-dark about-parallax-card">
+                    <span class="section-chip section-chip-soft">
+                        <i class="fas fa-user-shield"></i>
+                        About the founder
+                    </span>
+                    <h2 class="section-title about-section-title">A focused digital mission for easier healthcare access</h2>
+                    <div class="story-copy">
+                        <p class="lead">
+                            Doctor App ka maqsad healthcare information ko zyada accessible, organized aur reliable banana hai, taake users apna qeemti waqt bachate hue behtar decisions le saken.
+                        </p>
+                        <p>
+                            Main is system ko lagataar improve karne par kaam kar raha hoon, aur users ki feedback mere liye bohat aham hai kyun ke isi ki bunyaad par platform ko aur zyada useful, modern aur user-friendly banaya ja sakta hai.
+                        </p>
+                    </div>
+
+                    <div class="value-grid">
+                        <div class="value-card">
+                            <span><i class="fas fa-lightbulb"></i></span>
+                            <h4>Purpose-driven thinking</h4>
+                            <p>Har feature ko real user need aur practical use-case ke saath plan kiya jata hai.</p>
+                        </div>
+                        <div class="value-card">
+                            <span><i class="fas fa-users"></i></span>
+                            <h4>User-first experience</h4>
+                            <p>Simple discovery, clean information flow aur accessible design is product ka core hai.</p>
+                        </div>
+                        <div class="value-card">
+                            <span><i class="fas fa-layer-group"></i></span>
+                            <h4>Organized healthcare data</h4>
+                            <p>Different service categories ko aik jagah structured form mein dikhaya jata hai.</p>
+                        </div>
+                        <div class="value-card">
+                            <span><i class="fas fa-rotate"></i></span>
+                            <h4>Always evolving</h4>
+                            <p>Platform ko future mobile app aur wider coverage ke liye continuously scale kiya ja raha hai.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-5" data-aos="fade-up" data-aos-delay="150">
+                <div class="insight-stack">
+                    <div class="content-panel insight-panel about-parallax-card">
+                        <span class="mini-label">Platform mindset</span>
+                        <h3>Healthcare search should feel fast, clear and dependable</h3>
+                        <p>Directory, discovery aur trust ko ek hi user journey mein merge karna Doctor App ki strongest value proposition hai.</p>
+                    </div>
+                    <div class="content-panel insight-panel accent-panel about-parallax-card">
+                        <span class="mini-label">Feedback loop</span>
+                        <h3><?= htmlspecialchars($average_rating) ?> / 5 average sentiment</h3>
+                        <p><?= $review_count > 0 ? $review_count . ' users ne direct feedback share kiya hai.' : 'Abhi reviews ka silsila start ho raha hai.' ?></p>
+                    </div>
+                    <div class="content-panel roadmap-panel about-parallax-card">
+                        <div class="roadmap-point">
+                            <span class="roadmap-dot"></span>
+                            <div>
+                                <h5>Current phase</h5>
+                                <p>Reliable healthcare listing experience</p>
+                            </div>
+                        </div>
+                        <div class="roadmap-point">
+                            <span class="roadmap-dot"></span>
+                            <div>
+                                <h5>Next step</h5>
+                                <p>Wider city coverage and stronger data verification</p>
+                            </div>
+                        </div>
+                        <div class="roadmap-point">
+                            <span class="roadmap-dot"></span>
+                            <div>
+                                <h5>Future vision</h5>
+                                <p>Dedicated mobile application for easier nationwide access</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+
 
 <section class="mission-section section-padding">
     <div class="container">
