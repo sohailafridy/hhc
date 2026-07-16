@@ -72,11 +72,11 @@
                 <form method="GET" action="">
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label class="form-label text-muted small">Search by Hospital Name</label>
+                            <label class="form-label"><i class="fas fa-search"></i> Search by Hospital Name</label>
                             <input type="text" class="form-control" name="search" value="<?php echo htmlspecialchars($search); ?>" placeholder="Enter hospital name...">
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label text-muted small">Filter by City</label>
+                            <label class="form-label"><i class="fas fa-map-marker-alt"></i> Filter by City</label>
                             <select class="form-select select2-bootstrap-5-theme" name="city" id="citySelect" data-dropdown-css-class="select2-bootstrap-5-dropdown">
                                 <option value="">All Cities</option>
                                 <?php
@@ -90,12 +90,12 @@
                             </select>
                         </div>
                         <div class="col-md-12">
-                            <div class="d-flex gap-2">
-                                <button type="submit" class="btn btn-primary">
-                                    <i class="fas fa-search me-2"></i>Search Hospitals
+                            <div class="d-flex gap-2 mt-2">
+                                <button type="submit" class="btn-search-custom">
+                                    <i class="fas fa-search"></i> Search Hospitals
                                 </button>
-                                <a href="hospitals" class="btn btn-outline-secondary">
-                                    <i class="fas fa-redo me-2"></i>Reset All
+                                <a href="hospitals" class="btn-reset-custom">
+                                    <i class="fas fa-redo"></i> Reset All
                                 </a>
                             </div>
                         </div>
@@ -104,7 +104,7 @@
             </div>
 
             <!-- Hospitals Grid -->
-            <div class="hospitals-grid" id="hospitalsContainer">
+            <div class="row g-3" id="hospitalsContainer">
                 <?php
                 $hospital_card_colors = ['#fce4ec', '#ffebee', '#f3e5f5', '#fff9c4', '#e1f5fe', '#e0f2f1'];
                 $hospital_index = 0;
@@ -117,22 +117,24 @@
                         $hospital_bg = $hospital_card_colors[$hospital_index % count($hospital_card_colors)];
                         $hospital_index++;
                         ?>
-                        <div class="speciality-card hospital-mini-card" data-aos="fade-up">
-                            <div class="speciality-card-body" style="background-color: <?php echo $hospital_bg; ?>;">
-                                <div class="speciality-icon">
-                                    <i class="fas fa-hospital-alt"></i>
+                        <div class="col-lg-3 col-md-4 col-6" data-aos="fade-up" data-aos-delay="<?php echo 100 + ($hospital_index * 80); ?>">
+                            <div class="speciality-card hospital-mini-card">
+                                <div class="speciality-card-body" style="background-color: <?php echo $hospital_bg; ?>;">
+                                    <div class="speciality-icon">
+                                        <i class="fas fa-hospital-alt"></i>
+                                    </div>
+                                    <h4 class="speciality-title"><?php echo htmlspecialchars($row['hospital_name']); ?></h4>
+                                    <p class="hospital-mini-location">
+                                        <i class="fas fa-map-marker-alt"></i><?php echo htmlspecialchars($row['city_name']); ?>
+                                    </p>
+                                    <div class="hospital-mini-rating">
+                                        <i class="fas fa-star text-warning"></i><?php echo $hospital_rating; ?> Rating
+                                    </div>
+                                    <a href="hospital-detail?hospital_id=<?php echo $row['hospital_id']; ?>" class="speciality-btn">
+                                        <i class="fas fa-arrow-right"></i>
+                                        DETAILS
+                                    </a>
                                 </div>
-                                <h4 class="speciality-title"><?php echo htmlspecialchars($row['hospital_name']); ?></h4>
-                                <p class="hospital-mini-location">
-                                    <i class="fas fa-map-marker-alt"></i><?php echo htmlspecialchars($row['city_name']); ?>
-                                </p>
-                                <div class="hospital-mini-rating">
-                                    <i class="fas fa-star text-warning"></i><?php echo $hospital_rating; ?> Rating
-                                </div>
-                                <a href="hospital-detail?hospital_id=<?php echo $row['hospital_id']; ?>" class="speciality-btn">
-                                    <i class="fas fa-arrow-right"></i>
-                                    DETAILS
-                                </a>
                             </div>
                         </div>
                         <?php
@@ -140,8 +142,8 @@
                 } else {
                     ?>
                     <div class="col-12">
-                        <div class="no-hospitals">
-                            <i class="fas fa-hospital"></i>
+                        <div class="no-hospitals text-center py-5">
+                            <i class="fas fa-hospital fa-3x text-primary mb-3"></i>
                             <h3>No Hospitals Found</h3>
                             <p class="text-muted">No hospitals match your search criteria. Please try different filters.</p>
                         </div>
@@ -248,46 +250,217 @@ $(document).ready(function() {
     </script>
 
     <style>
-        .hospitals-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-            gap: 24px;
-            margin-top: 40px;
+        /* Premium Filter Section Custom Styling */
+        .filter-section {
+            background: rgba(255, 255, 255, 0.85) !important;
+            backdrop-filter: blur(20px) !important;
+            border-radius: 24px !important;
+            padding: 30px !important;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.6) !important;
+            border: 1px solid rgba(255, 255, 255, 0.5) !important;
+            margin-bottom: 40px !important;
+            transition: all 0.3s ease !important;
         }
 
-        /* Hospital card — matches "Top Hospitals" speciality cards */
+        .filter-section:hover {
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.08) !important;
+            background: rgba(255, 255, 255, 0.95) !important;
+        }
+
+        .filter-section .form-label {
+            font-weight: 700 !important;
+            color: #4a5568 !important;
+            text-transform: uppercase !important;
+            font-size: 0.72rem !important;
+            letter-spacing: 0.8px !important;
+            margin-bottom: 8px !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: 6px !important;
+        }
+
+        .filter-section .form-label i {
+            color: var(--primary) !important;
+            font-size: 0.8rem !important;
+        }
+
+        .filter-section .form-control {
+            border: 2px solid #e2e8f0 !important;
+            border-radius: 12px !important;
+            padding: 11px 16px !important;
+            font-size: 0.9rem !important;
+            font-weight: 500 !important;
+            color: #2d3748 !important;
+            background-color: rgba(255, 255, 255, 0.9) !important;
+            transition: all 0.3s ease !important;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02) !important;
+            height: 48px !important;
+        }
+
+        .filter-section .form-control:focus {
+            border-color: var(--primary) !important;
+            background-color: #fff !important;
+            box-shadow: 0 0 0 4px rgba(13, 110, 253, 0.15), 0 4px 10px rgba(0, 0, 0, 0.05) !important;
+            outline: none !important;
+        }
+
+        /* Select2 Premium Customization */
+        .filter-section .select2-container--bootstrap-5 {
+            display: block;
+            width: 100% !important;
+        }
+
+        .filter-section .select2-container--bootstrap-5 .select2-selection {
+            border: 2px solid #e2e8f0 !important;
+            border-radius: 12px !important;
+            min-height: 48px !important;
+            padding: 8px 16px !important;
+            font-size: 0.9rem !important;
+            font-weight: 500 !important;
+            color: #2d3748 !important;
+            background-color: rgba(255, 255, 255, 0.9) !important;
+            transition: all 0.3s ease !important;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02) !important;
+            display: flex;
+            align-items: center;
+        }
+
+        .filter-section .select2-container--bootstrap-5.select2-container--focus .select2-selection,
+        .filter-section .select2-container--bootstrap-5.select2-container--open .select2-selection {
+            border-color: var(--primary) !important;
+            background-color: #fff !important;
+            box-shadow: 0 0 0 4px rgba(13, 110, 253, 0.15), 0 4px 10px rgba(0, 0, 0, 0.05) !important;
+            outline: none !important;
+        }
+
+        .filter-section .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
+            padding-left: 0 !important;
+            color: #2d3748 !important;
+            font-weight: 500 !important;
+            line-height: normal !important;
+        }
+
+        .filter-section .select2-container--bootstrap-5 .select2-selection--single .select2-selection__clear {
+            margin-right: 10px !important;
+            font-size: 0.9rem !important;
+            color: #a0aec0 !important;
+        }
+
+        .filter-section .select2-container--bootstrap-5 .select2-selection--single .select2-selection__clear:hover {
+            color: #e74c3c !important;
+        }
+
+        .filter-section .select2-container--bootstrap-5 .select2-selection__arrow {
+            position: absolute !important;
+            top: 50% !important;
+            right: 15px !important;
+            transform: translateY(-50%) !important;
+            width: auto !important;
+            height: auto !important;
+        }
+
+        /* Custom Buttons */
+        .filter-section .btn-search-custom {
+            background: linear-gradient(135deg, var(--primary) 0%, #0b5ed7 100%) !important;
+            color: white !important;
+            border: none !important;
+            border-radius: 12px !important;
+            padding: 10px 24px !important;
+            font-weight: 700 !important;
+            font-size: 0.85rem !important;
+            letter-spacing: 0.5px !important;
+            transition: all 0.3s ease !important;
+            box-shadow: 0 4px 12px rgba(13, 110, 253, 0.25) !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 8px !important;
+        }
+
+        .filter-section .btn-search-custom:hover {
+            transform: translateY(-2px) !important;
+            box-shadow: 0 6px 18px rgba(13, 110, 253, 0.35) !important;
+            background: linear-gradient(135deg, #0b5ed7 0%, #0a58ca 100%) !important;
+        }
+
+        .filter-section .btn-search-custom i {
+            font-size: 0.85rem !important;
+        }
+
+        .filter-section .btn-reset-custom {
+            background: #ffffff !important;
+            color: #4a5568 !important;
+            border: 2px solid #e2e8f0 !important;
+            border-radius: 12px !important;
+            padding: 10px 24px !important;
+            font-weight: 700 !important;
+            font-size: 0.85rem !important;
+            letter-spacing: 0.5px !important;
+            transition: all 0.3s ease !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 8px !important;
+            text-decoration: none !important;
+        }
+
+        .filter-section .btn-reset-custom:hover {
+            background: #f7fafc !important;
+            color: #2d3748 !important;
+            border-color: #cbd5e0 !important;
+            transform: translateY(-2px) !important;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05) !important;
+        }
+
+        .filter-section .btn-reset-custom:hover i {
+            transform: rotate(-180deg) !important;
+        }
+
+        .filter-section .btn-reset-custom i {
+            transition: transform 0.5s ease !important;
+            font-size: 0.85rem !important;
+        }
+
+        .filter-section .btn-search-custom:active,
+        .filter-section .btn-reset-custom:active {
+            transform: translateY(0) !important;
+        }
+
+        /* Specialities Cards Styles for Hospitals */
         .speciality-card {
             transition: all 0.3s ease;
             height: 100%;
         }
 
         .speciality-card-body {
-            border-radius: 20px;
-            padding: 30px 20px;
+            border-radius: 12px;
+            padding: 20px 15px;
             text-align: center;
             height: 100%;
             transition: all 0.3s ease;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
             position: relative;
             overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            min-height: 220px;
         }
 
         .speciality-card:hover .speciality-card-body {
             transform: translateY(-5px);
-            box-shadow: 0 10px 24px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
         }
 
         .speciality-icon {
-            width: 64px;
-            height: 64px;
-            margin: 0 auto 16px;
+            width: 50px;
+            height: 50px;
+            margin: 0 auto 15px;
             background: rgba(255, 255, 255, 0.85);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
         }
 
         .speciality-card:hover .speciality-icon {
@@ -295,16 +468,16 @@ $(document).ready(function() {
             background: rgba(255, 255, 255, 1);
         }
 
-        .hospital-mini-card .speciality-icon i {
-            font-size: 1.6rem;
+        .speciality-icon i {
+            font-size: 1.25rem;
             color: #e74c3c;
         }
 
         .speciality-title {
             color: #2c3e50;
-            font-size: 1.15rem;
+            font-size: 0.95rem;
             font-weight: 700;
-            margin-bottom: 12px;
+            margin-bottom: 8px;
             transition: color 0.3s ease;
             line-height: 1.3;
         }
@@ -315,54 +488,59 @@ $(document).ready(function() {
 
         .hospital-mini-location {
             color: #5f6f81;
-            font-size: 0.95rem;
+            font-size: 0.8rem;
             font-weight: 500;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             line-height: 1.25;
+            display: flex;
+            align-items: center;
+            gap: 4px;
         }
 
-        .hospital-mini-location i,
-        .hospital-mini-rating i {
-            margin-right: 6px;
+        .hospital-mini-location i {
+            color: #5f6f81;
         }
 
         .hospital-mini-rating {
             color: #2c3e50;
-            font-size: 0.95rem;
+            font-size: 0.78rem;
             font-weight: 600;
-            margin-bottom: 18px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
         }
 
         .speciality-btn {
-            background: rgba(255, 255, 255, 0.95);
+            background: rgba(255, 255, 255, 0.9);
             border: 2px solid transparent;
-            border-radius: 999px;
-            padding: 8px 20px;
-            font-size: 0.85rem;
+            border-radius: 20px;
+            padding: 6px 15px;
+            font-size: 0.72rem;
             font-weight: 700;
             color: #e74c3c;
+            text-decoration: none;
             cursor: pointer;
             transition: all 0.3s ease;
             display: inline-flex;
             align-items: center;
-            gap: 8px;
-            text-decoration: none;
-            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.06);
+            gap: 6px;
+            margin-top: auto;
         }
 
         .speciality-btn i {
-            font-size: 0.85rem;
+            font-size: 0.75rem;
             transition: transform 0.3s ease;
         }
 
         .speciality-card:hover .speciality-btn {
             background: #e74c3c;
-            color: #fff;
+            color: white;
             border-color: #e74c3c;
         }
 
         .speciality-card:hover .speciality-btn i {
-            transform: translateX(3px);
+            transform: scale(1.2) translateX(2px);
         }
 
         .no-hospitals {
@@ -382,10 +560,57 @@ $(document).ready(function() {
             margin-bottom: 10px;
         }
 
+        @media (max-width: 992px) {
+            .speciality-card-body {
+                padding: 15px 10px;
+                min-height: 200px;
+            }
+            
+            .speciality-icon {
+                width: 45px;
+                height: 45px;
+                margin-bottom: 10px;
+            }
+            
+            .speciality-title {
+                font-size: 0.85rem;
+            }
+            
+            .speciality-btn {
+                padding: 4px 12px;
+                font-size: 0.65rem;
+            }
+        }
+
         @media (max-width: 768px) {
-            .hospitals-grid {
-                grid-template-columns: 1fr;
-                gap: 20px;
+            .speciality-card-body {
+                padding: 12px 8px;
+                min-height: 180px;
+            }
+            
+            .speciality-icon {
+                width: 40px;
+                height: 40px;
+                margin-bottom: 8px;
+            }
+
+            .speciality-icon i {
+                font-size: 1.1rem;
+            }
+            
+            .speciality-title {
+                font-size: 0.8rem;
+            }
+
+            .hospital-mini-location,
+            .hospital-mini-rating {
+                font-size: 0.7rem;
+                margin-bottom: 8px;
+            }
+            
+            .speciality-btn {
+                padding: 3px 8px;
+                font-size: 0.6rem;
             }
         }
     </style>
