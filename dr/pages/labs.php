@@ -68,11 +68,11 @@
                 <form method="GET" action="">
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label class="form-label text-muted small">Search by Laboratory Name</label>
+                            <label class="form-label"><i class="fas fa-flask"></i> Search by Laboratory Name</label>
                             <input type="text" class="form-control" name="search" value="<?php echo htmlspecialchars($search); ?>" placeholder="Enter laboratory name...">
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label text-muted small">Filter by City</label>
+                            <label class="form-label"><i class="fas fa-map-marker-alt"></i> Filter by City</label>
                             <select class="form-select select2-bootstrap-5-theme" name="city" id="citySelect" data-dropdown-css-class="select2-bootstrap-5-dropdown">
                                 <option value="">All Cities</option>
                                 <?php
@@ -86,12 +86,12 @@
                             </select>
                         </div>
                         <div class="col-md-12">
-                            <div class="d-flex gap-2">
-                                <button type="submit" class="btn search-btn">
-                                    <i class="fas fa-search me-2"></i>Search Laboratories
+                            <div class="d-flex gap-2 mt-2">
+                                <button type="submit" class="btn-search-custom">
+                                    <i class="fas fa-search"></i> Search Laboratories
                                 </button>
-                                <a href="laboratories" class="btn btn-outline-secondary">
-                                    <i class="fas fa-redo me-2"></i>Reset All
+                                <a href="laboratories" class="btn-reset-custom">
+                                    <i class="fas fa-redo"></i> Reset All
                                 </a>
                             </div>
                         </div>
@@ -100,48 +100,37 @@
             </div>
 
             <!-- Laboratories Grid -->
-            <div class="laboratories-grid" id="laboratoriesContainer">
+            <div class="row g-3" id="laboratoriesContainer">
                 <?php
+                $lab_card_colors = ['#e8fff9', '#eef8ff', '#f3efff', '#eefbf5', '#fff6e8', '#edf8ff'];
+                $lab_index = 0;
                 if (mysqli_num_rows($result) > 0) {
                     while($row = mysqli_fetch_assoc($result)) {
-                        $laboratory_image = !empty($row['laboratory_pic']) ? BASE_URL.'admin/inc/uploads/laboratories/'.$row['laboratory_pic'] : BASE_URL.'admin/inc/uploads/default/lab.jpg';
+                        $lab_stars_q = mysqli_query($con, "SELECT AVG(stars) as stars FROM `feedback` WHERE entity_id='". $row['entity_id'] ."'");
+                        $lab_stars = mysqli_fetch_assoc($lab_stars_q);
+                        $lab_stars = $lab_stars['stars'];
+                        $lab_rating = $lab_stars ? number_format((float)$lab_stars, 1) : 'New';
+                        $lab_bg = $lab_card_colors[$lab_index % count($lab_card_colors)];
+                        $lab_index++;
                         ?>
-                        <div class="laboratory-card" data-aos="fade-up">
-                            <div class="laboratory-img-wrapper">
-                                <img src="<?php echo $laboratory_image; ?>" alt="<?php echo $row['lab_name']; ?>">
-                            </div>
-                            <div class="laboratory-info">
-                                <h3 class="laboratory-name" style="text-align: center;"><?php echo $row['lab_name']; ?></h3>
-                                
-                                <div class="laboratory-contact">
-                                    <div class="contact-item">
-                                        <i class="fas fa-map-marker-alt"></i>
-                                        <span><?php echo $row['city_name']; ?></span>
+                        <div class="col-lg-3 col-md-4 col-6" data-aos="fade-up" data-aos-delay="<?php echo 100 + ($lab_index * 80); ?>">
+                            <div class="speciality-card lab-mini-card">
+                                <div class="speciality-card-body" style="background-color: <?php echo $lab_bg; ?>;">
+                                    <div class="speciality-icon">
+                                        <i class="fas fa-flask"></i>
                                     </div>
-                                    <?php if(!empty($row['lab_phone'])) { ?>
-                                    <div class="contact-item">
-                                        <i class="fas fa-phone"></i>
-                                        <span><?php echo $row['lab_phone']; ?></span>
+                                    <h4 class="speciality-title"><?php echo htmlspecialchars($row['lab_name']); ?></h4>
+                                    <p class="hospital-mini-location">
+                                        <i class="fas fa-map-marker-alt"></i><?php echo htmlspecialchars($row['city_name']); ?>
+                                    </p>
+                                    <div class="hospital-mini-rating">
+                                        <i class="fas fa-star text-warning"></i><?php echo $lab_rating; ?> Rating
                                     </div>
-                                    <?php } ?>
-                                    <?php if(!empty($row['lab_email'])) { ?>
-                                    <div class="contact-item">
-                                        <i class="fas fa-envelope"></i>
-                                        <span><?php echo $row['lab_email']; ?></span>
-                                    </div>
-                                    <?php } ?>
+                                    <a href="lab-detail?lab_id=<?php echo $row['lab_id']; ?>" class="speciality-btn">
+                                        <i class="fas fa-arrow-right"></i>
+                                        DETAILS
+                                    </a>
                                 </div>
-                                
-                                <?php if(!empty($row['lab_address'])) { ?>
-                                <div class="laboratory-address mb-2">
-                                    <i class="fas fa-location-dot me-1 text-primary"></i>
-                                    <span class="text-muted small"><?php echo $row['lab_address']; ?></span>
-                                </div>
-                                <?php } ?>
-                                
-                                <a class="btn btn-appointment w-100" href="lab-detail?lab_id=<?php echo $row['lab_id']; ?>">
-                                    <i class="fas fa-calendar-check me-1"></i>Detail
-                                </a>
                             </div>
                         </div>
                         <?php
@@ -149,8 +138,8 @@
                 } else {
                     ?>
                     <div class="col-12">
-                        <div class="no-laboratories">
-                            <i class="fas fa-flask"></i>
+                        <div class="no-laboratories text-center py-5">
+                            <i class="fas fa-flask fa-3x text-primary mb-3"></i>
                             <h3>No Laboratories Found</h3>
                             <p class="text-muted">No laboratories match your search criteria. Please try different filters.</p>
                         </div>
@@ -257,63 +246,297 @@ $(document).ready(function() {
     </script>
 
     <style>
-        .laboratories-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-            gap: 30px;
-            margin-top: 40px;
+        /* Premium Filter Section Custom Styling */
+        .filter-section {
+            background: rgba(255, 255, 255, 0.85) !important;
+            backdrop-filter: blur(20px) !important;
+            border-radius: 24px !important;
+            padding: 30px !important;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.6) !important;
+            border: 1px solid rgba(255, 255, 255, 0.5) !important;
+            margin-bottom: 40px !important;
+            transition: all 0.3s ease !important;
         }
 
-        .laboratory-card {
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 20px;
-            overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        .filter-section:hover {
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.08) !important;
+            background: rgba(255, 255, 255, 0.95) !important;
+        }
+
+        .filter-section .form-label {
+            font-weight: 700 !important;
+            color: #4a5568 !important;
+            text-transform: uppercase !important;
+            font-size: 0.72rem !important;
+            letter-spacing: 0.8px !important;
+            margin-bottom: 8px !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: 6px !important;
+        }
+
+        .filter-section .form-label i {
+            color: var(--primary) !important;
+            font-size: 0.8rem !important;
+        }
+
+        .filter-section .form-control {
+            border: 2px solid #e2e8f0 !important;
+            border-radius: 12px !important;
+            padding: 11px 16px !important;
+            font-size: 0.9rem !important;
+            font-weight: 500 !important;
+            color: #2d3748 !important;
+            background-color: rgba(255, 255, 255, 0.9) !important;
+            transition: all 0.3s ease !important;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02) !important;
+            height: 48px !important;
+        }
+
+        .filter-section .form-control:focus {
+            border-color: var(--primary) !important;
+            background-color: #fff !important;
+            box-shadow: 0 0 0 4px rgba(13, 110, 253, 0.15), 0 4px 10px rgba(0, 0, 0, 0.05) !important;
+            outline: none !important;
+        }
+
+        /* Select2 Premium Customization */
+        .filter-section .select2-container--bootstrap-5 {
+            display: block;
+            width: 100% !important;
+        }
+
+        .filter-section .select2-container--bootstrap-5 .select2-selection {
+            border: 2px solid #e2e8f0 !important;
+            border-radius: 12px !important;
+            min-height: 48px !important;
+            padding: 8px 16px !important;
+            font-size: 0.9rem !important;
+            font-weight: 500 !important;
+            color: #2d3748 !important;
+            background-color: rgba(255, 255, 255, 0.9) !important;
+            transition: all 0.3s ease !important;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02) !important;
+            display: flex;
+            align-items: center;
+        }
+
+        .filter-section .select2-container--bootstrap-5.select2-container--focus .select2-selection,
+        .filter-section .select2-container--bootstrap-5.select2-container--open .select2-selection {
+            border-color: var(--primary) !important;
+            background-color: #fff !important;
+            box-shadow: 0 0 0 4px rgba(13, 110, 253, 0.15), 0 4px 10px rgba(0, 0, 0, 0.05) !important;
+            outline: none !important;
+        }
+
+        .filter-section .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
+            padding-left: 0 !important;
+            color: #2d3748 !important;
+            font-weight: 500 !important;
+            line-height: normal !important;
+        }
+
+        .filter-section .select2-container--bootstrap-5 .select2-selection--single .select2-selection__clear {
+            margin-right: 10px !important;
+            font-size: 0.9rem !important;
+            color: #a0aec0 !important;
+        }
+
+        .filter-section .select2-container--bootstrap-5 .select2-selection--single .select2-selection__clear:hover {
+            color: #e74c3c !important;
+        }
+
+        .filter-section .select2-container--bootstrap-5 .select2-selection__arrow {
+            position: absolute !important;
+            top: 50% !important;
+            right: 15px !important;
+            transform: translateY(-50%) !important;
+            width: auto !important;
+            height: auto !important;
+        }
+
+        /* Custom Buttons */
+        .filter-section .btn-search-custom {
+            background: linear-gradient(135deg, var(--primary) 0%, #0b5ed7 100%) !important;
+            color: white !important;
+            border: none !important;
+            border-radius: 12px !important;
+            padding: 10px 24px !important;
+            font-weight: 700 !important;
+            font-size: 0.85rem !important;
+            letter-spacing: 0.5px !important;
+            transition: all 0.3s ease !important;
+            box-shadow: 0 4px 12px rgba(13, 110, 253, 0.25) !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 8px !important;
+        }
+
+        .filter-section .btn-search-custom:hover {
+            transform: translateY(-2px) !important;
+            box-shadow: 0 6px 18px rgba(13, 110, 253, 0.35) !important;
+            background: linear-gradient(135deg, #0b5ed7 0%, #0a58ca 100%) !important;
+        }
+
+        .filter-section .btn-search-custom i {
+            font-size: 0.85rem !important;
+        }
+
+        .filter-section .btn-reset-custom {
+            background: #ffffff !important;
+            color: #4a5568 !important;
+            border: 2px solid #e2e8f0 !important;
+            border-radius: 12px !important;
+            padding: 10px 24px !important;
+            font-weight: 700 !important;
+            font-size: 0.85rem !important;
+            letter-spacing: 0.5px !important;
+            transition: all 0.3s ease !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 8px !important;
+            text-decoration: none !important;
+        }
+
+        .filter-section .btn-reset-custom:hover {
+            background: #f7fafc !important;
+            color: #2d3748 !important;
+            border-color: #cbd5e0 !important;
+            transform: translateY(-2px) !important;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05) !important;
+        }
+
+        .filter-section .btn-reset-custom:hover i {
+            transform: rotate(-180deg) !important;
+        }
+
+        .filter-section .btn-reset-custom i {
+            transition: transform 0.5s ease !important;
+            font-size: 0.85rem !important;
+        }
+
+        .filter-section .btn-search-custom:active,
+        .filter-section .btn-reset-custom:active {
+            transform: translateY(0) !important;
+        }
+
+        /* Specialities Cards Styles for Laboratories */
+        .speciality-card {
             transition: all 0.3s ease;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .laboratory-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
-        }
-
-        .laboratory-img-wrapper {
-            height: 200px;
-            overflow: hidden;
-            position: relative;
-        }
-
-        .laboratory-img-wrapper img {
-            width: 100%;
             height: 100%;
-            object-fit: cover;
-            transition: transform 0.3s ease;
         }
 
-        .laboratory-card:hover .laboratory-img-wrapper img {
+        .speciality-card-body {
+            border-radius: 12px;
+            padding: 20px 15px;
+            text-align: center;
+            height: 100%;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            min-height: 220px;
+        }
+
+        .speciality-card:hover .speciality-card-body {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .speciality-icon {
+            width: 50px;
+            height: 50px;
+            margin: 0 auto 15px;
+            background: rgba(255, 255, 255, 0.85);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .speciality-card:hover .speciality-icon {
             transform: scale(1.1);
+            background: rgba(255, 255, 255, 1);
         }
 
-        .laboratory-info {
-            padding: 25px;
+        .speciality-icon i {
+            font-size: 1.25rem;
+            color: #136f63;
         }
 
-        .laboratory-name {
-            font-size: 1.3rem;
+        .speciality-title {
+            color: #2c3e50;
+            font-size: 0.95rem;
             font-weight: 700;
-            color: var(--dark-blue);
-            margin-bottom: 15px;
+            margin-bottom: 8px;
+            transition: color 0.3s ease;
             line-height: 1.3;
         }
 
-        .laboratory-contact {
-            margin-bottom: 20px;
+        .speciality-card:hover .speciality-title {
+            color: #136f63;
         }
 
-        .laboratory-address {
-            margin-bottom: 20px;
+        .hospital-mini-location {
+            color: #5f6f81;
+            font-size: 0.8rem;
+            font-weight: 500;
+            margin-bottom: 8px;
+            line-height: 1.25;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .hospital-mini-location i {
+            color: #5f6f81;
+        }
+
+        .hospital-mini-rating {
+            color: #2c3e50;
+            font-size: 0.78rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .speciality-btn {
+            background: rgba(255, 255, 255, 0.9);
+            border: 2px solid transparent;
+            border-radius: 20px;
+            padding: 6px 15px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: #136f63;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: auto;
+        }
+
+        .speciality-btn i {
+            font-size: 0.75rem;
+            transition: transform 0.3s ease;
+        }
+
+        .speciality-card:hover .speciality-btn {
+            background: #136f63;
+            color: white;
+            border-color: #136f63;
+        }
+
+        .speciality-card:hover .speciality-btn i {
+            transform: scale(1.2) translateX(2px);
         }
 
         .no-laboratories {
@@ -333,16 +556,58 @@ $(document).ready(function() {
             margin-bottom: 10px;
         }
 
-        @media (max-width: 768px) {
-            .laboratories-grid {
-                grid-template-columns: 1fr;
-                gap: 20px;
+        @media (max-width: 992px) {
+            .speciality-card-body {
+                padding: 15px 10px;
+                min-height: 200px;
+            }
+            
+            .speciality-icon {
+                width: 45px;
+                height: 45px;
+                margin-bottom: 10px;
+            }
+            
+            .speciality-title {
+                font-size: 0.85rem;
+            }
+            
+            .speciality-btn {
+                padding: 4px 12px;
+                font-size: 0.65rem;
             }
         }
-        .search-btn{
-            background: var(--gradient);
-            color: #fff;
-            font-weight: 600;
+
+        @media (max-width: 768px) {
+            .speciality-card-body {
+                padding: 12px 8px;
+                min-height: 180px;
+            }
+            
+            .speciality-icon {
+                width: 40px;
+                height: 40px;
+                margin-bottom: 8px;
+            }
+
+            .speciality-icon i {
+                font-size: 1.1rem;
+            }
+            
+            .speciality-title {
+                font-size: 0.8rem;
+            }
+
+            .hospital-mini-location,
+            .hospital-mini-rating {
+                font-size: 0.7rem;
+                margin-bottom: 8px;
+            }
+            
+            .speciality-btn {
+                padding: 3px 8px;
+                font-size: 0.6rem;
+            }
         }
     </style>
 </body>
