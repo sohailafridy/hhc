@@ -106,45 +106,32 @@
             <!-- Hospitals Grid -->
             <div class="hospitals-grid" id="hospitalsContainer">
                 <?php
+                $hospital_card_colors = ['#fce4ec', '#ffebee', '#f3e5f5', '#fff9c4', '#e1f5fe', '#e0f2f1'];
+                $hospital_index = 0;
                 if (mysqli_num_rows($result) > 0) {
                     while($row = mysqli_fetch_assoc($result)) {
-                        $hospital_image = !empty($row['hospital_pic']) ? BASE_URL.'admin/inc/uploads/hospitals/'.$row['hospital_pic'] : BASE_URL.'admin/inc/uploads/default/hosp.jpg';
+                        $hosp_stars_q = mysqli_query($con, "SELECT AVG(stars) as stars FROM `feedback` WHERE entity_id='". $row['entity_id'] ."'");
+                        $hosp_stars = mysqli_fetch_assoc($hosp_stars_q);
+                        $hosp_stars = $hosp_stars['stars'];
+                        $hospital_rating = $hosp_stars ? number_format((float)$hosp_stars, 1) : 'New';
+                        $hospital_bg = $hospital_card_colors[$hospital_index % count($hospital_card_colors)];
+                        $hospital_index++;
                         ?>
-                        <div class="hospital-card" data-aos="fade-up">
-                            <div class="hospital-img-wrapper">
-                                <img src="<?php echo $hospital_image; ?>" alt="<?php echo $row['hospital_name']; ?>">
-                            </div>
-                            <div class="hospital-info">
-                                <h3 class="hospital-name"><?php echo $row['hospital_name']; ?></h3>
-                                
-                                <div class="hospital-contact">
-                                    <div class="contact-item">
-                                        <i class="fas fa-map-marker-alt"></i>
-                                        <span><?php echo $row['city_name']; ?></span>
-                                    </div>
-                                    <?php if(!empty($row['hospital_phone'])) { ?>
-                                    <div class="contact-item">
-                                        <i class="fas fa-phone"></i>
-                                        <span><?php echo $row['hospital_phone']; ?></span>
-                                    </div>
-                                    <?php } ?>
-                                    <?php if(!empty($row['hospital_email'])) { ?>
-                                    <div class="contact-item">
-                                        <i class="fas fa-envelope"></i>
-                                        <span><?php echo $row['hospital_email']; ?></span>
-                                    </div>
-                                    <?php } ?>
+                        <div class="speciality-card hospital-mini-card" data-aos="fade-up">
+                            <div class="speciality-card-body" style="background-color: <?php echo $hospital_bg; ?>;">
+                                <div class="speciality-icon">
+                                    <i class="fas fa-hospital-alt"></i>
                                 </div>
-                                
-                                <?php if(!empty($row['hospital_address'])) { ?>
-                                <div class="hospital-address mb-2">
-                                    <i class="fas fa-location-dot me-1 text-primary"></i>
-                                    <span class="text-muted small"><?php echo $row['hospital_address']; ?></span>
+                                <h4 class="speciality-title"><?php echo htmlspecialchars($row['hospital_name']); ?></h4>
+                                <p class="hospital-mini-location">
+                                    <i class="fas fa-map-marker-alt"></i><?php echo htmlspecialchars($row['city_name']); ?>
+                                </p>
+                                <div class="hospital-mini-rating">
+                                    <i class="fas fa-star text-warning"></i><?php echo $hospital_rating; ?> Rating
                                 </div>
-                                <?php } ?>
-                                
-                                <a class="btn btn-appointment w-100" href="hospital-detail?hospital_id=<?php echo $row['hospital_id']; ?>">
-                                    <i class="fas fa-calendar-check me-1"></i>Detail
+                                <a href="hospital-detail?hospital_id=<?php echo $row['hospital_id']; ?>" class="speciality-btn">
+                                    <i class="fas fa-arrow-right"></i>
+                                    DETAILS
                                 </a>
                             </div>
                         </div>
@@ -263,199 +250,119 @@ $(document).ready(function() {
     <style>
         .hospitals-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-            gap: 30px;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 24px;
             margin-top: 40px;
         }
 
-        .hospital-card {
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(248, 249, 250, 0.9));
-            border-radius: 24px;
-            overflow: hidden;
-            box-shadow: 
-                0 20px 40px rgba(15, 23, 42, 0.08),
-                0 8px 16px rgba(79, 172, 254, 0.12);
-            transition: all 0.4s ease;
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.8);
-            position: relative;
-        }
-
-        .hospital-card::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            right: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(79, 172, 254, 0.05) 0%, transparent 70%);
-            pointer-events: none;
-            transition: transform 0.6s ease;
-        }
-
-        .hospital-card:hover {
-            transform: translateY(-8px) scale(1.02);
-            box-shadow: 
-                0 30px 60px rgba(15, 23, 42, 0.12),
-                0 15px 30px rgba(79, 172, 254, 0.2);
-            border-color: rgba(79, 172, 254, 0.3);
-        }
-
-        .hospital-card:hover::before {
-            transform: translate(-20%, -20%) rotate(45deg);
-        }
-
-        .hospital-img-wrapper {
-            height: 200px;
-            overflow: hidden;
-            position: relative;
-            border-radius: 24px;
-            margin-bottom: 20px;
-            box-shadow: 
-                0 15px 35px rgba(79, 172, 254, 0.2),
-                0 8px 16px rgba(0, 0, 0, 0.1);
-            border: 4px solid rgba(255, 255, 255, 0.9);
-            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
-            padding: 3px;
-            transition: all 0.4s ease;
-        }
-
-        .hospital-card:hover .hospital-img-wrapper {
-            transform: scale(1.05) rotate(2deg);
-            box-shadow: 
-                0 20px 40px rgba(79, 172, 254, 0.3),
-                0 10px 20px rgba(0, 0, 0, 0.15);
-        }
-
-        .hospital-img-wrapper img {
-            width: 100%;
+        /* Hospital card — matches "Top Hospitals" speciality cards */
+        .speciality-card {
+            transition: all 0.3s ease;
             height: 100%;
-            object-fit: cover;
+        }
+
+        .speciality-card-body {
             border-radius: 20px;
-            transition: transform 0.4s ease;
-        }
-
-        .hospital-card:hover .hospital-img-wrapper img {
-            transform: scale(1.05);
-        }
-
-        .hospital-info {
-            padding: 30px;
+            padding: 30px 20px;
+            text-align: center;
+            height: 100%;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
             position: relative;
-            z-index: 2;
+            overflow: hidden;
         }
 
-        .hospital-name {
-            font-size: 1.4rem;
-            font-weight: 700;
-            margin-bottom: 15px;
-            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            transition: all 0.3s ease;
+        .speciality-card:hover .speciality-card-body {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 24px rgba(0, 0, 0, 0.15);
         }
 
-        .hospital-card:hover .hospital-name {
-            transform: translateY(-2px);
-        }
-
-        .hospital-contact {
+        .speciality-icon {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 16px;
+            background: rgba(255, 255, 255, 0.85);
+            border-radius: 50%;
             display: flex;
-            flex-direction: column;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-
-        .contact-item {
-            display: flex;
-            align-items: center;
-            justify-content: flex-start;
-            gap: 8px;
-            padding: 8px 15px;
-            background: rgba(79, 172, 254, 0.08);
-            border-radius: 12px;
-            border: 1px solid rgba(79, 172, 254, 0.15);
-            font-size: 0.9rem;
-            transition: all 0.3s ease;
-            color: var(--dark-blue);
-        }
-
-        .hospital-card:hover .contact-item {
-            background: rgba(79, 172, 254, 0.12);
-            border-color: rgba(79, 172, 254, 0.25);
-            transform: translateX(5px);
-        }
-
-        .contact-item i {
-            width: 20px;
-            margin-right: 0;
-            color: var(--primary);
-        }
-
-        .hospital-address {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 15px;
-            background: rgba(79, 172, 254, 0.08);
-            border-radius: 12px;
-            border: 1px solid rgba(79, 172, 254, 0.15);
-            font-size: 0.9rem;
-            transition: all 0.3s ease;
-            color: var(--dark-blue);
-            margin-bottom: 20px;
-        }
-
-        .hospital-card:hover .hospital-address {
-            background: rgba(79, 172, 254, 0.12);
-            border-color: rgba(79, 172, 254, 0.25);
-            transform: translateX(5px);
-        }
-
-        .hospital-address i {
-            width: 20px;
-            margin-right: 0;
-            color: var(--primary);
-        }
-
-        .btn-appointment {
-            display: inline-flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
-            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 25px;
-            font-weight: 600;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(79, 172, 254, 0.3);
-            position: relative;
-            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+        }
+
+        .speciality-card:hover .speciality-icon {
+            transform: scale(1.1);
+            background: rgba(255, 255, 255, 1);
+        }
+
+        .hospital-mini-card .speciality-icon i {
+            font-size: 1.6rem;
+            color: #e74c3c;
+        }
+
+        .speciality-title {
+            color: #2c3e50;
+            font-size: 1.15rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+            transition: color 0.3s ease;
+            line-height: 1.3;
+        }
+
+        .speciality-card:hover .speciality-title {
+            color: #e74c3c;
+        }
+
+        .hospital-mini-location {
+            color: #5f6f81;
+            font-size: 0.95rem;
+            font-weight: 500;
+            margin-bottom: 10px;
+            line-height: 1.25;
+        }
+
+        .hospital-mini-location i,
+        .hospital-mini-rating i {
+            margin-right: 6px;
+        }
+
+        .hospital-mini-rating {
+            color: #2c3e50;
+            font-size: 0.95rem;
+            font-weight: 600;
+            margin-bottom: 18px;
+        }
+
+        .speciality-btn {
+            background: rgba(255, 255, 255, 0.95);
+            border: 2px solid transparent;
+            border-radius: 999px;
+            padding: 8px 20px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #e74c3c;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
             text-decoration: none;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.06);
         }
 
-        .btn-appointment::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.1) 100%);
-            transition: left 0.3s ease;
+        .speciality-btn i {
+            font-size: 0.85rem;
+            transition: transform 0.3s ease;
         }
 
-        .btn-appointment:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 25px rgba(79, 172, 254, 0.4);
-            color: white;
-            text-decoration: none;
+        .speciality-card:hover .speciality-btn {
+            background: #e74c3c;
+            color: #fff;
+            border-color: #e74c3c;
         }
 
-        .btn-appointment:hover::before {
-            left: 100%;
+        .speciality-card:hover .speciality-btn i {
+            transform: translateX(3px);
         }
 
         .no-hospitals {
