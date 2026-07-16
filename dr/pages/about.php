@@ -94,7 +94,7 @@ $average_rating = $review_count > 0 ? number_format($total_stars / $review_count
                             Vision-led product design
                         </div>
                         <div class="hero-profile-image">
-                            <img src="<?=BASE_URL?>includes/uploads/about-me.jpg" alt="Founder of Doctor App" class="img-fluid">
+                            <img src="<?=BASE_URL?>includes/uploads/founder.jpg" alt="Founder of Doctor App" class="img-fluid">
                         </div>
                         <div class="hero-floating-card floating-card-top">
                             <span class="floating-card-icon"><i class="fas fa-bolt"></i></span>
@@ -202,6 +202,93 @@ $average_rating = $review_count > 0 ? number_format($total_stars / $review_count
     </div>
 </section>
 
+<section class="cofounder-section section-padding">
+    <div class="container">
+        <div class="cofounder-shell about-parallax-card" data-aos="fade-up">
+            <div class="row g-4 align-items-center">
+                <div class="col-lg-6" data-aos="fade-right" data-aos-delay="50">
+                    <div class="cofounder-copy">
+                        <span class="section-chip section-chip-soft">
+                            <i class="fas fa-users"></i>
+                            Co-Founder spotlight
+                        </span>
+                        <h2 class="section-title about-section-title">Abdul Qadir Afridi ki mobile app development mein aham contribution</h2>
+                        <p class="support-lead">
+                            Co-Founder Abdul Qadir Afridi aik skilled mobile app developer hain jinhon ne is project ke liye mobile application develop ki hai. Unhon ne app ko is tarah design aur build kiya ke aik user ko jo essential features darkar hote hain, woh sab us mein asaani ke saath available hon.
+                        </p>
+
+                        <div class="cofounder-highlights">
+                            <div class="cofounder-highlight-card">
+                                <span><i class="fas fa-handshake"></i></span>
+                                <div>
+                                    <h4>App-focused collaboration</h4>
+                                    <p>Web platform ko mobile experience ke saath connect karne mein unka role bohat important raha hai.</p>
+                                </div>
+                            </div>
+                            <div class="cofounder-highlight-card">
+                                <span><i class="fas fa-comments"></i></span>
+                                <div>
+                                    <h4>User-friendly features</h4>
+                                    <p>Mobile app mein woh tamam zaroori features include kiye gaye hain jo aik normal user ke liye useful aur practical hain.</p>
+                                </div>
+                            </div>
+                            <div class="cofounder-highlight-card">
+                                <span><i class="fas fa-chart-line"></i></span>
+                                <div>
+                                    <h4>Digital growth support</h4>
+                                    <p>Unki development support ne Doctor App ko web se aage barha kar mobile accessibility tak pohanchaya hai.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-6" data-aos="fade-left" data-aos-delay="100">
+                    <div class="cofounder-visual-card">
+                        <div class="cofounder-image-wrap">
+                            <img src="<?=BASE_URL?>includes/uploads/co-founder.jpeg" alt="Co-Founder" class="img-fluid">
+                            <div class="cofounder-image-caption">
+                                <i class="fas fa-user-tie"></i>
+                                Co-Founder Profile
+                            </div>
+                        </div>
+
+                        <div class="cofounder-profile-panel">
+                            <div class="cofounder-avatar">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <div>
+                                <span class="mini-label">Leadership role</span>
+                                <h3>Abdul Qadir Afridi</h3>
+                                <p>Mobile app developer</p>
+                            </div>
+                        </div>
+
+                        <div class="cofounder-metrics">
+                            <div class="cofounder-metric">
+                                <strong>Vision</strong>
+                                <p>Useful mobile experience for every user</p>
+                            </div>
+                            <div class="cofounder-metric">
+                                <strong>Support</strong>
+                                <p>Mobile app design and development</p>
+                            </div>
+                            <div class="cofounder-metric">
+                                <strong>Impact</strong>
+                                <p>User needs ke mutabiq feature delivery</p>
+                            </div>
+                        </div>
+
+                        <div class="cofounder-note">
+                            Abdul Qadir Afridi ne is project ke mobile side ko strong banaya hai, taake users ko web ke saath aik complete app-based experience bhi mil sake.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
 <section class="mission-section section-padding">
     <div class="container">
         <div class="section-heading text-center" data-aos="fade-up">
@@ -264,7 +351,7 @@ $average_rating = $review_count > 0 ? number_format($total_stars / $review_count
                             <i class="fas fa-hands-helping"></i>
                             Help & support
                         </span>
-                        <h2 class="section-title about-section-title">Aik mission ke liye humara saath dein</h2>
+                        <h2 class="section-title about-section-title">Es mission ke liye humara saath dein</h2>
                         <p class="support-lead">
                             Is project ke liye bohat zyada data aur authentic maloomat ki zaroorat hoti hai, aur har jagah physically jana mere liye mumkin nahi hota.
                         </p>
@@ -522,9 +609,10 @@ $average_rating = $review_count > 0 ? number_format($total_stars / $review_count
 .about-hero-section {
     padding: 110px 0 70px;
     background:
-        radial-gradient(circle at top left, rgba(25, 135, 84, 0.18), transparent 28%),
-        radial-gradient(circle at 85% 15%, rgba(13, 110, 253, 0.22), transparent 24%),
-        linear-gradient(135deg, #071124 0%, #0d1c37 40%, #102952 100%);
+        radial-gradient(circle at top left, rgba(25, 135, 84, 0.10), transparent 28%),
+        radial-gradient(circle at 85% 15%, rgba(13, 110, 253, 0.12), transparent 24%),
+        linear-gradient(135deg, #f8fbff 0%, #edf5ff 42%, #e7f0ff 100%);
+    border-bottom: 1px solid rgba(148, 163, 184, 0.14);
 }
 
 .about-page-orb {
@@ -541,7 +629,7 @@ $average_rating = $review_count > 0 ? number_format($total_stars / $review_count
     height: 280px;
     top: 80px;
     left: -60px;
-    background: rgba(67, 97, 238, 0.35);
+    background: rgba(67, 97, 238, 0.14);
 }
 
 .orb-two {
@@ -549,7 +637,7 @@ $average_rating = $review_count > 0 ? number_format($total_stars / $review_count
     height: 220px;
     right: -40px;
     bottom: 70px;
-    background: rgba(25, 135, 84, 0.32);
+    background: rgba(25, 135, 84, 0.12);
     animation-delay: -4s;
 }
 
@@ -557,11 +645,18 @@ $average_rating = $review_count > 0 ? number_format($total_stars / $review_count
     position: absolute;
     inset: 0;
     background-image:
-        linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+        linear-gradient(rgba(13,110,253,0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(13,110,253,0.05) 1px, transparent 1px);
     background-size: 44px 44px;
     mask-image: linear-gradient(to bottom, rgba(0,0,0,0.9), transparent);
     pointer-events: none;
+}
+
+.about-hero-section .section-chip {
+    color: var(--primary);
+    background: rgba(255, 255, 255, 0.88);
+    border: 1px solid rgba(13, 110, 253, 0.12);
+    box-shadow: 0 14px 34px rgba(13, 110, 253, 0.08);
 }
 
 .about-hero-shell {
@@ -598,7 +693,7 @@ $average_rating = $review_count > 0 ? number_format($total_stars / $review_count
 }
 
 .hero-copy {
-    color: #f8fbff;
+    color: #0f172a;
 }
 
 .hero-title {
@@ -607,7 +702,7 @@ $average_rating = $review_count > 0 ? number_format($total_stars / $review_count
     font-weight: 800;
     letter-spacing: -0.04em;
     margin: 20px 0 22px;
-    color: #fff;
+    color: #0f172a;
     max-width: 11ch;
 }
 
@@ -616,7 +711,7 @@ $average_rating = $review_count > 0 ? number_format($total_stars / $review_count
     max-width: 640px;
     font-size: 1.08rem;
     line-height: 1.85;
-    color: rgba(235, 244, 255, 0.86);
+    color: #475569;
 }
 
 .hero-subtext {
@@ -653,17 +748,18 @@ $average_rating = $review_count > 0 ? number_format($total_stars / $review_count
 }
 
 .about-btn-outline {
-    border: 1px solid rgba(255,255,255,0.2);
-    color: #fff;
-    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(13,110,253,0.16);
+    color: #0f172a;
+    background: rgba(255,255,255,0.9);
     backdrop-filter: blur(10px);
+    box-shadow: 0 14px 34px rgba(15, 23, 42, 0.06);
 }
 
 .about-btn-outline:hover {
-    color: #fff;
+    color: var(--primary);
     transform: translateY(-2px);
-    border-color: rgba(255,255,255,0.32);
-    background: rgba(255,255,255,0.12);
+    border-color: rgba(13,110,253,0.28);
+    background: #ffffff;
 }
 
 .about-btn-outline-light {
@@ -688,23 +784,23 @@ $average_rating = $review_count > 0 ? number_format($total_stars / $review_count
 .hero-stat-card {
     padding: 20px;
     border-radius: 24px;
-    background: rgba(255,255,255,0.08);
-    border: 1px solid rgba(255,255,255,0.12);
-    box-shadow: 0 22px 60px rgba(0, 8, 30, 0.18);
+    background: rgba(255,255,255,0.94);
+    border: 1px solid rgba(148, 163, 184, 0.14);
+    box-shadow: 0 18px 40px rgba(15, 23, 42, 0.07);
     backdrop-filter: blur(12px);
 }
 
 .hero-stat-value {
     font-size: 2.35rem;
     font-weight: 800;
-    color: #fff;
+    color: #0f172a;
     line-height: 1;
     margin-bottom: 8px;
 }
 
 .hero-stat-card p {
     margin: 0;
-    color: rgba(229, 239, 255, 0.82);
+    color: #64748b;
     line-height: 1.5;
     font-size: 0.95rem;
 }
@@ -723,15 +819,16 @@ $average_rating = $review_count > 0 ? number_format($total_stars / $review_count
 .hero-visual-card {
     padding: 26px;
     min-height: 640px;
-    background: linear-gradient(180deg, rgba(255,255,255,0.14), rgba(255,255,255,0.06));
-    box-shadow: 0 28px 90px rgba(2, 7, 22, 0.42);
+    background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(241,247,255,0.95));
+    border: 1px solid rgba(148, 163, 184, 0.14);
+    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.09);
     backdrop-filter: blur(16px);
 }
 
 .hero-visual-glow {
     position: absolute;
     inset: 0;
-    background: linear-gradient(160deg, rgba(13,110,253,0.18), transparent 38%, rgba(25,135,84,0.14));
+    background: linear-gradient(160deg, rgba(13,110,253,0.08), transparent 38%, rgba(25,135,84,0.08));
     pointer-events: none;
 }
 
@@ -743,8 +840,9 @@ $average_rating = $review_count > 0 ? number_format($total_stars / $review_count
     gap: 10px;
     padding: 11px 16px;
     border-radius: 999px;
-    background: rgba(255,255,255,0.14);
-    color: #fff;
+    background: rgba(13,110,253,0.08);
+    color: #0f172a;
+    border: 1px solid rgba(13,110,253,0.12);
     font-weight: 600;
 }
 
@@ -759,8 +857,8 @@ $average_rating = $review_count > 0 ? number_format($total_stars / $review_count
     min-height: 480px;
     object-fit: cover;
     border-radius: 26px;
-    border: 1px solid rgba(255,255,255,0.18);
-    box-shadow: 0 24px 60px rgba(0, 8, 30, 0.35);
+    border: 1px solid rgba(148, 163, 184, 0.14);
+    box-shadow: 0 20px 45px rgba(15, 23, 42, 0.10);
 }
 
 .hero-floating-card {
@@ -772,10 +870,10 @@ $average_rating = $review_count > 0 ? number_format($total_stars / $review_count
     width: min(270px, calc(100% - 36px));
     padding: 16px 18px;
     border-radius: 22px;
-    background: rgba(9, 20, 39, 0.82);
-    color: #fff;
-    border: 1px solid rgba(255,255,255,0.08);
-    box-shadow: 0 24px 50px rgba(4, 8, 22, 0.35);
+    background: rgba(255, 255, 255, 0.95);
+    color: #0f172a;
+    border: 1px solid rgba(148, 163, 184, 0.14);
+    box-shadow: 0 18px 36px rgba(15, 23, 42, 0.08);
     backdrop-filter: blur(18px);
     animation: floatCard 7s ease-in-out infinite;
 }
@@ -800,6 +898,10 @@ $average_rating = $review_count > 0 ? number_format($total_stars / $review_count
     justify-content: center;
     background: linear-gradient(135deg, #0d6efd, #198754);
     flex-shrink: 0;
+}
+
+.hero-floating-card p {
+    color: #475569;
 }
 
 .hero-floating-card strong,
@@ -830,6 +932,174 @@ $average_rating = $review_count > 0 ? number_format($total_stars / $review_count
 
 .about-story-section {
     background: linear-gradient(180deg, #f6f9ff 0%, #eff5ff 100%);
+}
+
+.cofounder-section {
+    background:
+        radial-gradient(circle at 15% 20%, rgba(13,110,253,0.08), transparent 20%),
+        radial-gradient(circle at 85% 70%, rgba(25,135,84,0.08), transparent 18%),
+        linear-gradient(180deg, #ffffff 0%, #f7fbff 100%);
+}
+
+.cofounder-shell {
+    padding: 12px;
+    border-radius: 34px;
+    background: linear-gradient(135deg, rgba(13,110,253,0.08), rgba(25,135,84,0.08));
+    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.08);
+}
+
+.cofounder-copy,
+.cofounder-visual-card {
+    height: 100%;
+    padding: 34px;
+    border-radius: 28px;
+    background: rgba(255,255,255,0.92);
+    border: 1px solid rgba(148, 163, 184, 0.14);
+    box-shadow: 0 20px 50px rgba(15, 23, 42, 0.08);
+}
+
+.cofounder-highlights {
+    display: grid;
+    gap: 16px;
+    margin-top: 24px;
+}
+
+.cofounder-highlight-card {
+    display: flex;
+    gap: 16px;
+    padding: 18px;
+    border-radius: 22px;
+    background: rgba(248, 250, 252, 0.95);
+    border: 1px solid rgba(148, 163, 184, 0.14);
+}
+
+.cofounder-highlight-card span {
+    width: 52px;
+    height: 52px;
+    border-radius: 18px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, rgba(13,110,253,0.14), rgba(25,135,84,0.16));
+    color: var(--primary);
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+.cofounder-highlight-card h4 {
+    margin: 0 0 6px;
+    color: #0f172a;
+    font-size: 1.05rem;
+    font-weight: 700;
+}
+
+.cofounder-highlight-card p,
+.cofounder-profile-panel p,
+.cofounder-metric p,
+.cofounder-note {
+    margin: 0;
+    color: #475569;
+    line-height: 1.8;
+}
+
+.cofounder-visual-card {
+    background:
+        radial-gradient(circle at top right, rgba(13,110,253,0.08), transparent 24%),
+        linear-gradient(180deg, rgba(255,255,255,0.95), rgba(244,248,255,0.95));
+}
+
+.cofounder-image-wrap {
+    position: relative;
+    overflow: hidden;
+    border-radius: 26px;
+    margin-bottom: 24px;
+    border: 1px solid rgba(148, 163, 184, 0.14);
+    box-shadow: 0 20px 45px rgba(15, 23, 42, 0.1);
+}
+
+.cofounder-image-wrap img {
+    width: 100%;
+    height: 340px;
+    object-fit: cover;
+    display: block;
+}
+
+.cofounder-image-caption {
+    position: absolute;
+    left: 18px;
+    bottom: 18px;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    border-radius: 999px;
+    background: rgba(9, 20, 39, 0.78);
+    color: #fff;
+    font-weight: 700;
+    backdrop-filter: blur(12px);
+}
+
+.cofounder-profile-panel {
+    display: flex;
+    gap: 18px;
+    align-items: center;
+    padding: 22px;
+    border-radius: 24px;
+    background: #fff;
+    border: 1px solid rgba(148, 163, 184, 0.14);
+    box-shadow: 0 18px 40px rgba(15, 23, 42, 0.06);
+}
+
+.cofounder-avatar {
+    width: 82px;
+    height: 82px;
+    border-radius: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #0d6efd, #198754);
+    color: #fff;
+    font-size: 2rem;
+    flex-shrink: 0;
+    box-shadow: 0 16px 35px rgba(13, 110, 253, 0.22);
+}
+
+.cofounder-profile-panel h3 {
+    margin: 4px 0 8px;
+    color: #0f172a;
+    font-size: 1.5rem;
+    font-weight: 800;
+}
+
+.cofounder-metrics {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+    margin-top: 22px;
+}
+
+.cofounder-metric {
+    padding: 20px 18px;
+    border-radius: 20px;
+    background: #fff;
+    border: 1px solid rgba(148, 163, 184, 0.14);
+    box-shadow: 0 18px 40px rgba(15, 23, 42, 0.05);
+}
+
+.cofounder-metric strong {
+    display: block;
+    color: #0f172a;
+    font-size: 1.05rem;
+    margin-bottom: 6px;
+}
+
+.cofounder-note {
+    margin-top: 20px;
+    padding: 18px 20px;
+    border-radius: 20px;
+    background: linear-gradient(135deg, rgba(13,110,253,0.08), rgba(25,135,84,0.08));
+    border-left: 4px solid #0d6efd;
+    font-weight: 600;
 }
 
 .content-panel {
@@ -1048,8 +1318,9 @@ $average_rating = $review_count > 0 ? number_format($total_stars / $review_count
     position: relative;
     border-radius: 34px;
     padding: 12px;
-    background: linear-gradient(135deg, rgba(13,110,253,0.08), rgba(25,135,84,0.08));
-    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.08);
+    background: linear-gradient(135deg, rgba(255,255,255,0.78), rgba(239,246,255,0.9));
+    border: 1px solid rgba(148, 163, 184, 0.12);
+    box-shadow: 0 20px 45px rgba(15, 23, 42, 0.06);
 }
 
 .support-copy-panel {
@@ -1072,8 +1343,9 @@ $average_rating = $review_count > 0 ? number_format($total_stars / $review_count
     gap: 18px;
     padding: 18px;
     border-radius: 22px;
-    background: rgba(248, 250, 252, 0.95);
-    border: 1px solid rgba(148, 163, 184, 0.14);
+    background: #ffffff;
+    border: 1px solid rgba(148, 163, 184, 0.12);
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.04);
 }
 
 .support-step-number {
@@ -1116,9 +1388,9 @@ $average_rating = $review_count > 0 ? number_format($total_stars / $review_count
     text-decoration: none;
     padding: 28px;
     border-radius: 28px;
-    background: rgba(255,255,255,0.92);
-    border: 1px solid rgba(148, 163, 184, 0.14);
-    box-shadow: 0 24px 50px rgba(15, 23, 42, 0.08);
+    background: rgba(255,255,255,0.98);
+    border: 1px solid rgba(148, 163, 184, 0.12);
+    box-shadow: 0 18px 36px rgba(15, 23, 42, 0.06);
     color: inherit;
 }
 
@@ -1128,14 +1400,22 @@ $average_rating = $review_count > 0 ? number_format($total_stars / $review_count
 }
 
 .support-side-note {
-    background: linear-gradient(180deg, rgba(13,110,253,0.95), rgba(15, 23, 42, 0.95));
+    background:
+        radial-gradient(circle at top right, rgba(13,110,253,0.10), transparent 28%),
+        linear-gradient(180deg, rgba(255,255,255,0.98), rgba(240,247,255,0.98));
+    border: 1px solid rgba(148, 163, 184, 0.14);
+    box-shadow: 0 18px 36px rgba(15, 23, 42, 0.06);
 }
 
 .support-side-note,
 .support-side-note .mini-label,
 .support-side-note h4,
 .support-side-note p {
-    color: #fff;
+    color: #0f172a;
+}
+
+.support-side-note p {
+    color: #475569;
 }
 
 .reviews-section {
@@ -1449,7 +1729,8 @@ textarea.form-control {
     .hero-stats-grid,
     .value-grid,
     .mission-card-grid,
-    .review-summary-grid {
+    .review-summary-grid,
+    .cofounder-metrics {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
@@ -1509,17 +1790,26 @@ textarea.form-control {
     .hero-stats-grid,
     .value-grid,
     .mission-card-grid,
-    .review-summary-grid {
+    .review-summary-grid,
+    .cofounder-metrics {
         grid-template-columns: 1fr;
     }
 
     .content-panel,
+    .cofounder-copy,
+    .cofounder-visual-card,
     .review-form-card,
     .reviews-showcase,
     .contact-cta-card,
     .hero-visual-card {
         padding: 24px;
         border-radius: 24px;
+    }
+
+    .cofounder-profile-panel,
+    .cofounder-highlight-card {
+        flex-direction: column;
+        align-items: flex-start;
     }
 
     .hero-profile-image img,
