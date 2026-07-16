@@ -7,7 +7,7 @@
         <h4 class="mb-0 fw-bold text-primary">HHC</h4>
     </div>
 
-    <ul class="list-unstyled components py-3">
+    <ul class="list-unstyled components py-3" style="display: none;">
 
 
             <li class="<?php echo basename($_SERVER['PHP_SELF']) == 'index.php' ? 'active' : ''; ?>">
