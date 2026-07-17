@@ -26,8 +26,9 @@ if (isset($_REQUEST['entity_id']) AND $_REQUEST['entity_id'] !=0) {
 // Fetch blood bank details
 $bb_query = "SELECT bb.*, c.city_name 
                FROM blood_bank bb 
-               LEFT JOIN cities c ON bb.city_id = c.city_id 
-               WHERE bb.bb_id = $bb_id AND bb.status = 1";
+               LEFT JOIN cities c ON bb.city_id = c.city_id
+               LEFT JOIN entities e ON e.entity_id = bb.entity_id 
+               WHERE bb.bb_id = $bb_id AND e.status = 1 AND bb.approve=1";
 $bb_result = mysqli_query($con, $bb_query);
 $bb = mysqli_fetch_assoc($bb_result);
 $entity_id = $bb['entity_id'];

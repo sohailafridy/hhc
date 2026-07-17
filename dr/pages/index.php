@@ -1860,13 +1860,13 @@
                 <h2 class="section-title heading-color"><i class="fas fa-hospital-alt me-3"></i>Top Hospitals</h2>
                 <p class="section-subtitle normal-color">Find the best healthcare facilities in your area</p>
             </div>
-            <div class="row g-3">
+            <div class="row g-3 justify-content-center">
                 <?php
                 $hospital_card_colors = ['#fce4ec', '#ffebee', '#f3e5f5', '#fff9c4', '#e1f5fe', '#e0f2f1'];
                 if($city_id > 0){
-                    $hospitals_query = "SELECT h.*, c.city_name FROM hospitals h LEFT JOIN cities c ON h.city_id = c.city_id WHERE h.status = 1 AND h.city_id = $city_id ORDER BY h.hospital_id DESC LIMIT 6";
+                    $hospitals_query = "SELECT h.*, c.city_name FROM hospitals h LEFT JOIN cities c ON h.city_id = c.city_id LEFT JOIN entities e ON e.entity_id = h.entity_id WHERE e.status = 1 AND h.approve = 1 AND h.city_id = $city_id ORDER BY h.hospital_id DESC LIMIT 6";
                 }else{
-                    $hospitals_query = "SELECT h.*, c.city_name FROM hospitals h LEFT JOIN cities c ON h.city_id = c.city_id WHERE h.status = 1 ORDER BY h.hospital_id DESC LIMIT 6";
+                    $hospitals_query = "SELECT h.*, c.city_name FROM hospitals h LEFT JOIN cities c ON h.city_id = c.city_id LEFT JOIN entities e ON e.entity_id = h.entity_id WHERE e.status = 1 AND h.approve = 1 ORDER BY h.hospital_id DESC LIMIT 6";
                 }
                   
                  $hospitals_result = mysqli_query($con, $hospitals_query);
@@ -1930,9 +1930,9 @@
                 <?php
                 $doctor_card_colors = ['#eef6ff', '#f3efff', '#eefbf5', '#fff6e8', '#fceef3', '#edf8ff'];
                 if($city_id > 0){
-                    $doctors_query = "SELECT d.*, c.city_name, dct.type as specialization FROM doctors d LEFT JOIN cities c ON d.city_id = c.city_id LEFT JOIN dr_cat_types dct ON d.cat_type_id = dct.dr_cat_id WHERE d.status = 1 AND d.city_id=$city_id ORDER BY d.doctor_id DESC LIMIT 4";
+                     $doctors_query = "SELECT d.*, c.city_name, dct.type as specialization FROM doctors d LEFT JOIN cities c ON d.city_id = c.city_id LEFT JOIN dr_cat_types dct ON d.cat_type_id = dct.dr_cat_id LEFT JOIN entities e ON d.entity_id = e.entity_id WHERE e.status = 1 AND d.approve=1 AND d.city_id=$city_id ORDER BY d.doctor_id DESC LIMIT 4";
                 }else{
-                    $doctors_query = "SELECT d.*, c.city_name, dct.type as specialization FROM doctors d LEFT JOIN cities c ON d.city_id = c.city_id LEFT JOIN dr_cat_types dct ON d.cat_type_id = dct.dr_cat_id WHERE d.status = 1 ORDER BY d.doctor_id DESC LIMIT 6";
+                     $doctors_query = "SELECT d.*, c.city_name, dct.type as specialization FROM doctors d LEFT JOIN cities c ON d.city_id = c.city_id LEFT JOIN dr_cat_types dct ON d.cat_type_id = dct.dr_cat_id LEFT JOIN entities e ON d.entity_id = e.entity_id WHERE e.status = 1 AND d.approve=1 ORDER BY d.doctor_id DESC LIMIT 6";
                 }
                 
                 $doctors_result = mysqli_query($con, $doctors_query);
@@ -1948,7 +1948,7 @@
                     $doctor_specialization = !empty($doctor['specialization']) ? $doctor['specialization'] : 'Medical Specialist';
                     $doctor_bg = $doctor_card_colors[($doctor_index - 1) % count($doctor_card_colors)];
                 ?>
-                <div class="col-lg-2 col-md-4 col-6" data-aos="fade-up" data-aos-delay="<?php echo 100 + ($doctor_index * 80); ?>">
+                <div class="col-lg-2 col-md-3 col-6" data-aos="fade-up" data-aos-delay="<?php echo 100 + ($doctor_index * 80); ?>">
                     <div class="speciality-card doctor-mini-card">
                         <div class="speciality-card-body" style="background-color: <?php echo $doctor_bg; ?>;">
                             <div class="doctor-mini-media">
@@ -2009,9 +2009,9 @@
                 <?php
                 $lab_card_colors = ['#e8fff9', '#eef8ff', '#f3efff', '#eefbf5', '#fff6e8', '#edf8ff'];
                 if($city_id > 0){
-                    $labs_query = "SELECT l.*, c.city_name FROM laboratories l LEFT JOIN cities c ON l.city_id = c.city_id WHERE l.status AND l.city_id=$city_id ORDER BY l.lab_id DESC LIMIT 6";
+                    $labs_query = "SELECT l.*, c.city_name FROM laboratories l LEFT JOIN cities c ON l.city_id = c.city_id LEFT JOIN entities e ON e.entity_id = l.entity_id WHERE e.status AND l.approve = 1 AND l.city_id=$city_id ORDER BY l.lab_id DESC LIMIT 6";
                 }else{
-                    $labs_query = "SELECT l.*, c.city_name FROM laboratories l LEFT JOIN cities c ON l.city_id = c.city_id WHERE l.status ORDER BY l.lab_id DESC LIMIT 6";
+                    $labs_query = "SELECT l.*, c.city_name FROM laboratories l LEFT JOIN cities c ON l.city_id = c.city_id LEFT JOIN entities e ON e.entity_id = l.entity_id WHERE e.status AND l.approve = 1 ORDER BY l.lab_id DESC LIMIT 6";
                 }
                 
                 $labs_result = mysqli_query($con, $labs_query);
@@ -2087,9 +2087,9 @@
                 <?php
                 $blood_card_colors = ['#fff1f1', '#fff6e8', '#fceef3', '#eef6ff', '#f3efff', '#edf8ff'];
                 if($city_id > 0){
-                    $blood_banks_query = "SELECT bb.*, c.city_name FROM blood_bank bb LEFT JOIN cities c ON bb.city_id = c.city_id WHERE bb.status = 1 AND bb.city_id=$city_id ORDER BY bb.bb_id DESC LIMIT 6";
+                    $blood_banks_query = "SELECT bb.*, c.city_name FROM blood_bank bb LEFT JOIN cities c ON bb.city_id = c.city_id LEFT JOIN entities e ON e.entity_id = bb.entity_id WHERE e.status = 1 AND bb.approve = 1 AND bb.city_id=$city_id ORDER BY bb.bb_id DESC LIMIT 6";
                 }else{
-                    $blood_banks_query = "SELECT bb.*, c.city_name FROM blood_bank bb LEFT JOIN cities c ON bb.city_id = c.city_id WHERE bb.status = 1 ORDER BY bb.bb_id DESC LIMIT 6";
+                    $blood_banks_query = "SELECT bb.*, c.city_name FROM blood_bank bb LEFT JOIN cities c ON bb.city_id = c.city_id LEFT JOIN entities e ON e.entity_id = bb.entity_id WHERE e.status = 1 AND bb.approve = 1 ORDER BY bb.bb_id DESC LIMIT 6";
                 }
                 
                 $blood_banks_result = mysqli_query($con, $blood_banks_query);

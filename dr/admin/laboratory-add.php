@@ -99,7 +99,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         // Insert new lab
         $hospital_id_value = ($lab_type == 1 && !empty($hospital_id)) ? "'" . $hospital_id . "'" : "NULL";
             
-        $generate_ent_it = "INSERT INTO entities (entity_type, created_at) VALUES ('lab',date('Y-m-d'))";
+        $generate_ent_it = "INSERT INTO entities (entity_type,status, created_at) VALUES ('lab',1,date('Y-m-d'))";
         mysqli_query($con, $generate_ent_it);
         $entity_id = mysqli_insert_id($con);
 

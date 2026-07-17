@@ -586,14 +586,16 @@ if ($categories_result) {
                                     if($city !=0){
                                         $hospital_query = "SELECT DISTINCT h.hospital_id, h.hospital_name 
                                                     FROM hospitals h 
-                                                    WHERE h.status = 1 
+                                                    LEFT JOIN entities e ON e.entity_id = h.entity_id
+                                                    WHERE e.status = 1 
                                                     AND h.city_id = '$city'
                                                     
                                                     ORDER BY h.hospital_name ASC"; 
                                     }else{
                                         $hospital_query = "SELECT DISTINCT h.hospital_id, h.hospital_name 
                                                     FROM hospitals h 
-                                                    WHERE h.status = 1 
+                                                    LEFT JOIN entities e ON e.entity_id = h.entity_id
+                                                    WHERE e.status = 1 
                                                     ORDER BY h.hospital_name ASC";
                                     }
                                      
@@ -778,16 +780,21 @@ if ($categories_result) {
                          LEFT JOIN dr_cat_types dct ON d.cat_type_id = dct.dr_cat_type_id 
                          LEFT JOIN cities c ON d.city_id = c.city_id 
                          LEFT JOIN hospitals h ON d.hospital_id = h.hospital_id 
-                         WHERE d.status = 1 $where_clause
+                         LEFT JOIN entities e ON e.entity_id = d.entity_id
+                         WHERE e.status = 1 AND d.approve = 1 $where_clause
                          ORDER BY d.doctor_name ASC
                          LIMIT $per_page OFFSET $offset";
+
+
 
                     $all_doctors = mysqli_query($con,"SELECT d.*, dct.type as doctor_of, c.city_name, h.hospital_name 
                          FROM doctors d 
                          LEFT JOIN dr_cat_types dct ON d.cat_type_id = dct.dr_cat_type_id 
                          LEFT JOIN cities c ON d.city_id = c.city_id 
+                         LEFT JOIN entities e ON d.entity_id = e.entity_id 
                          LEFT JOIN hospitals h ON d.hospital_id = h.hospital_id 
-                         WHERE d.status = 1 $where_clause");
+                         WHERE e.status = 1 AND d.approve = 1 $where_clause");
+
                     $total_doctors = mysqli_num_rows($all_doctors);
                     $total_pages = ceil($total_doctors / $per_page);
                 $result = mysqli_query($con, $query);

@@ -25,8 +25,9 @@
     // Count total blood banks for pagination
     $count_query = "SELECT COUNT(*) as total 
                     FROM blood_bank bb 
-                    LEFT JOIN cities c ON bb.city_id = c.city_id 
-                    WHERE bb.status = 1 $where_clause";
+                    LEFT JOIN cities c ON bb.city_id = c.city_id
+                    LEFT JOIN entities e ON e.entity_id = bb.entity_id 
+                    WHERE e.status = 1 AND bb.approve = 1 $where_clause";
     $count_result = mysqli_query($con, $count_query);
     $total_row = mysqli_fetch_assoc($count_result);
     $total_blood_banks = $total_row['total'];
@@ -35,8 +36,9 @@
     // Fetch blood banks with pagination
     $query = "SELECT bb.*, c.city_name 
              FROM blood_bank bb 
-             LEFT JOIN cities c ON bb.city_id = c.city_id 
-             WHERE bb.status = 1 $where_clause
+             LEFT JOIN cities c ON bb.city_id = c.city_id
+             LEFT JOIN entities e ON e.entity_id = bb.entity_id 
+             WHERE e.status = 1 AND bb.approve = 1 $where_clause
              ORDER BY bb.bb_name ASC
              LIMIT $per_page OFFSET $offset";
     

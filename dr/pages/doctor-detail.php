@@ -10,7 +10,8 @@
                  FROM doctors d 
                  LEFT JOIN cities c ON d.city_id = c.city_id 
                  LEFT JOIN hospitals h ON d.hospital_id = h.hospital_id 
-                 WHERE d.doctor_id = $doctor_id AND d.status = 1";
+                 LEFT JOIN entities e ON e.entity_id = d.entity_id
+                 WHERE d.doctor_id = $doctor_id AND e.status = 1 AND d.approve=1";
         $result = mysqli_query($con, $query);
         $doctor = mysqli_fetch_assoc($result);
     }

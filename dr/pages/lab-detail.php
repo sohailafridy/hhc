@@ -28,8 +28,9 @@ if (isset($_REQUEST['entity_id']) AND $_REQUEST['entity_id'] !=0) {
 // Fetch lab details
 $lab_query = "SELECT l.*, c.city_name 
                FROM laboratories l 
-               LEFT JOIN cities c ON l.city_id = c.city_id 
-               WHERE l.lab_id = $lab_id AND l.status = 1";
+               LEFT JOIN cities c ON l.city_id = c.city_id
+               LEFT JOIN entities e ON e.entity_id = l.entity_id 
+               WHERE l.lab_id = $lab_id AND e.status = 1 AND l.approve=1";
 $lab_result = mysqli_query($con, $lab_query);
 $lab = mysqli_fetch_assoc($lab_result);
 $entity_id = $lab['entity_id'];

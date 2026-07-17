@@ -75,7 +75,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
     } else {
 
-        $generate_ent_it = "INSERT INTO entities (entity_type, created_at) VALUES ('hospital',date('Y-m-d'))";
+        $generate_ent_it = "INSERT INTO entities (entity_type,status, created_at) VALUES ('hospital',1,date('Y-m-d'))";
         mysqli_query($con, $generate_ent_it);
         $entity_id = mysqli_insert_id($con);
 

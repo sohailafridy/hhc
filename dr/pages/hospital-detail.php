@@ -33,7 +33,8 @@ $hospital_id = isset($_GET['hospital_id']) ? (int)$_GET['hospital_id'] : 0;
 $hospital_query = "SELECT h.*, c.city_name 
                    FROM hospitals h 
                    LEFT JOIN cities c ON h.city_id = c.city_id 
-                   WHERE h.hospital_id = $hospital_id AND h.status = 1";
+                   LEFT JOIN entities e ON e.entity_id = h.entity_id
+                   WHERE h.hospital_id = $hospital_id AND e.status = 1 AND h.approve=1";
 $hospital_result = mysqli_query($con, $hospital_query);
 $hospital = mysqli_fetch_assoc($hospital_result);
 $entity_id = $hospital['entity_id'];
@@ -53,7 +54,8 @@ $doctors_query = "SELECT d.*, dct.type as doctor_of, c.city_name
                   FROM doctors d 
                   LEFT JOIN dr_cat_types dct ON d.cat_type_id = dct.dr_cat_type_id 
                   LEFT JOIN cities c ON d.city_id = c.city_id 
-                  WHERE d.hospital_id = $hospital_id AND d.status = 1 
+                  LEFT JOIN entities e ON e.entity_id = d.entity_id
+                  WHERE d.hospital_id = $hospital_id AND e.status = 1 AND d.approve=1 
                   ORDER BY d.doctor_name ASC";
 $doctors_result = mysqli_query($con, $doctors_query);
 ?>

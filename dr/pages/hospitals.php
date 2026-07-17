@@ -30,7 +30,8 @@
     $count_query = "SELECT COUNT(*) as total 
                     FROM hospitals h 
                     LEFT JOIN cities c ON h.city_id = c.city_id 
-                    WHERE h.status = 1 $where_clause";
+                    LEFT JOIN entities e ON e.entity_id = h.entity_id
+                    WHERE e.status = 1 AND h.approve = 1 $where_clause";
     $count_result = mysqli_query($con, $count_query);
     $total_row = mysqli_fetch_assoc($count_result);
     $total_hospitals = $total_row['total'];
@@ -40,7 +41,8 @@
     $query = "SELECT h.*, c.city_name 
              FROM hospitals h 
              LEFT JOIN cities c ON h.city_id = c.city_id 
-             WHERE h.status = 1 $where_clause
+             LEFT JOIN entities e ON e.entity_id = h.entity_id
+             WHERE e.status = 1 AND h.approve = 1 $where_clause
              ORDER BY h.hospital_name ASC
              LIMIT $per_page OFFSET $offset";
     

@@ -83,7 +83,7 @@ $per_page = 10;
 $offset = ($page - 1) * $per_page;
 
 // Build query with filters
-$where_conditions = ["d.status = 1"];
+$where_conditions = ["e.status = 1"];
 
 if (!empty($search)) {
     $where_conditions[] = "(d.doctor_name LIKE '%$search%' OR dct.type LIKE '%$search%')";
@@ -130,6 +130,7 @@ $count_query = "SELECT COUNT(*) as total
                 FROM doctors d 
                 LEFT JOIN dr_cat_types dct ON d.cat_type_id = dct.dr_cat_id 
                 LEFT JOIN cities c ON d.city_id = c.city_id 
+                LEFT JOIN entities e ON e.entity_id = d.entity_id 
                 LEFT JOIN hospitals h ON d.hospital_id = h.hospital_id 
                 $where_clause";
 

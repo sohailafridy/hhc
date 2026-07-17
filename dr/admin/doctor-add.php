@@ -139,7 +139,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         // Insert new doctor
         $hospital_id_value = ($doctor_type == 1 && !empty($hospital_id)) ? "'" . $hospital_id . "'" : "NULL";
         
-        $generate_ent_it = "INSERT INTO entities (entity_type, created_at) VALUES ('doctor',date('Y-m-d'))";
+        $generate_ent_it = "INSERT INTO entities (entity_type,status, created_at) VALUES ('doctor',1,date('Y-m-d'))";
         mysqli_query($con, $generate_ent_it);
         $entity_id = mysqli_insert_id($con);
 
