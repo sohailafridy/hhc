@@ -26,11 +26,12 @@ $cities_query = "SELECT city_id, city_name FROM cities WHERE status = 1 ORDER BY
 $cities_result = mysqli_query($con, $cities_query);
 
 // Fetch hospitals for dropdown with city_id for filtering
-$hospitals_query = "SELECT hospital_id, hospital_name, hospitals.city_id,cities.city_name
+$hospitals_query = "SELECT hospitals.entity_id,hospital_id, hospital_name, hospitals.city_id,cities.city_name
 FROM 
 hospitals
 LEFT JOIN cities ON hospitals.city_id = cities.city_id
- WHERE hospitals.status = 1 ORDER BY hospital_name ASC";
+LEFT JOIN entities e ON e.entity_id = hospitals.entity_id
+ WHERE e.status = 1 AND hospitals.approve=1 ORDER BY hospital_name ASC";
 $hospitals_result = mysqli_query($con, $hospitals_query);
 
 // Handle form submission
@@ -51,6 +52,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
   
     $city_id = mysqli_real_escape_string($con, $_POST['city_id']);
+    $user_name = mysqli_real_escape_string($con, $_POST['user_name']);
+    $pass = mysqli_real_escape_string($con, $_POST['password']);
+    $password = base64_encode($pass);
+
     $doctor_name = mysqli_real_escape_string($con, $_POST['doctor_name']);
     $short_detail = mysqli_real_escape_string($con, $_POST['short_detail']);
     $experience_years = mysqli_real_escape_string($con, $_POST['experience_years']);
@@ -145,8 +150,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
 
 
-         $insert_query = "INSERT INTO doctors (entity_id, city_id, hospital_id, doctor_name, short_detail, cat_type_id, experience_years, doctor_phone, doctor_email, doctor_type, clinic_name, clinic_address, doctor_pic, static_clinical_info, status, approve, gender, other, created_at) 
-                       VALUES ($entity_id, '$city_id', $hospital_id_value, '$doctor_name', '$short_detail', '$specialization', '$experience_years', '$doctor_phone', '$doctor_email', '$doctor_type', '$clinic_name', '$clinic_address', '$doctor_pic', '$static_clinical_info', $status, 1, '$gender', '$other', NOW())";
+        $generate_user_id = "INSERT INTO users (username,email, password,user_type_id, created_at) VALUES ($user_name,$doctor_email,$password,2,date('Y-m-d'))";
+        mysqli_query($con, $generate_user_id);
+        $userid = mysqli_insert_id($con);
+
+
+
+         $insert_query = "INSERT INTO doctors (entity_id, user_id, city_id, hospital_id, doctor_name, short_detail, cat_type_id, experience_years, doctor_phone, doctor_email, doctor_type, clinic_name, clinic_address, doctor_pic, static_clinical_info, status, approve, gender, other, created_at) 
+                       VALUES ($entity_id,$userid, '$city_id', $hospital_id_value, '$doctor_name', '$short_detail', '$specialization', '$experience_years', '$doctor_phone', '$doctor_email', '$doctor_type', '$clinic_name', '$clinic_address', '$doctor_pic', '$static_clinical_info', $status, 1, '$gender', '$other', NOW())";
         
         if (mysqli_query($con, $insert_query)) {
             $last_insert_id = mysqli_insert_id($con);

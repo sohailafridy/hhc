@@ -12,16 +12,16 @@ if (isset($_GET['delete_id']) && is_numeric($_GET['delete_id'])) {
     $lab_pic = $lab_pic_data ? $lab_pic_data['lab_pic'] : '';
     
     // Delete laboratory from database
-    $delete_query = "DELETE FROM laboratories WHERE lab_id = $delete_id";
+    $delete_query = "UPDATE entities set status=0 WHERE entity_id = $delete_id";
     
     if (mysqli_query($con, $delete_query)) {
         // Delete picture file if it exists
-        if (!empty($lab_pic)) {
-            $pic_path = BASE_PATH."/admin/inc/uploads/laboratories/".$lab_pic;
-            if (file_exists($pic_path)) {
-                unlink($pic_path);
-            }
-        }
+        // if (!empty($lab_pic)) {
+        //     $pic_path = BASE_PATH."/admin/inc/uploads/laboratories/".$lab_pic;
+        //     if (file_exists($pic_path)) {
+        //         unlink($pic_path);
+        //     }
+        // }
         $_SESSION['success_msg'] = "Laboratory deleted successfully!";
     } else {
         $_SESSION['error_msg'] = "Error: " . mysqli_error($con);
@@ -51,10 +51,13 @@ $lab_id = $_GET['id'];
 // Fetch laboratory details with related information
 $query = "SELECT l.*, 
                 c.city_name,
-                h.hospital_name
+                h.hospital_name,
+                e.status as estatus,
+                e.entity_id as e_id
           FROM laboratories l 
           LEFT JOIN cities c ON l.city_id = c.city_id
           LEFT JOIN hospitals h ON l.hospital_id = h.hospital_id
+          LEFT JOIN entities e ON e.entity_id = l.entity_id
           WHERE l.lab_id = $lab_id";
 $result = mysqli_query($con, $query);
 
@@ -64,9 +67,10 @@ if (mysqli_num_rows($result) == 0) {
 }
 
 $laboratory = mysqli_fetch_assoc($result);
-
+$entity_id = $laboratory['entity_id'];
 // Fetch feedbacks for this laboratory
-$feedback_query = "SELECT f.* FROM feedback f WHERE f.lab_id = $lab_id ORDER BY f.created_at DESC LIMIT 10";
+$feedback_query = "SELECT f.* FROM feedback f 
+WHERE f.entity_id = $entity_id ORDER BY f.created_at DESC LIMIT 10";
 $feedback_result = mysqli_query($con, $feedback_query);
 
 ?>
@@ -331,7 +335,7 @@ $feedback_result = mysqli_query($con, $feedback_query);
                   <div class="info-item">
                      <span class="info-label">Status</span>
                      <span class="info-value">
-                        <?php if ($laboratory['status'] == 1): ?>
+                        <?php if ($laboratory['estatus'] == 1): ?>
                            <span class="badge-status badge-active">Active</span>
                         <?php else: ?>
                            <span class="badge-status badge-inactive">Inactive</span>
@@ -397,7 +401,7 @@ $feedback_result = mysqli_query($con, $feedback_query);
                   <a href="<?php echo BASE_URL; ?>admin/laboratories/add?id=<?php echo $laboratory['lab_id']; ?>" class="btn-action btn-edit me-3">
                      <i class="fas fa-edit"></i> Edit Laboratory
                   </a>
-                  <a href="javascript:void(0)" onclick="deleteLaboratory(<?php echo $laboratory['lab_id']; ?>)" class="btn-action btn-delete me-3">
+                  <a href="javascript:void(0)" onclick="deleteLaboratory(<?php echo $laboratory['entity_id']; ?>)" class="btn-action btn-delete me-3">
                      <i class="fas fa-trash"></i> Delete Laboratory
                   </a>
                   <a href="<?php echo BASE_URL; ?>admin/laboratories/list" class="btn-action btn-back">
@@ -456,9 +460,9 @@ $feedback_result = mysqli_query($con, $feedback_query);
 </div>
 
 <script>
-function deleteLaboratory(labId) {
+function deleteLaboratory(entity_id) {
     if (confirm('Are you sure you want to delete this laboratory? This action cannot be undone.')) {
-        window.location.href = '?delete_id=' + labId;
+        window.location.href = '?delete_id=' + entity_id;
     }
 }
 </script>

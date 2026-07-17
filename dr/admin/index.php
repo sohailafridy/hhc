@@ -6,19 +6,19 @@ $cities_count_query = "SELECT COUNT(*) as total FROM cities WHERE status = 1";
 $cities_count_result = mysqli_query($con, $cities_count_query);
 $cities_count = mysqli_fetch_assoc($cities_count_result)['total'];
 
-$doctors_count_query = "SELECT COUNT(*) as total FROM doctors WHERE status = 1";
+$doctors_count_query = "SELECT COUNT(*) as total FROM doctors LEFT JOIN entities e ON e.entity_id = doctors.entity_id WHERE e.status = 1 AND doctors.approve =1";
 $doctors_count_result = mysqli_query($con, $doctors_count_query);
 $doctors_count = mysqli_fetch_assoc($doctors_count_result)['total'];
 
-$hospitals_count_query = "SELECT COUNT(*) as total FROM hospitals WHERE status = 1";
+$hospitals_count_query = "SELECT COUNT(*) as total FROM hospitals LEFT JOIN entities e ON e.entity_id = hospitals.entity_id WHERE e.status = 1 AND hospitals.approve =1";
 $hospitals_count_result = mysqli_query($con, $hospitals_count_query);
 $hospitals_count = mysqli_fetch_assoc($hospitals_count_result)['total'];
 
-$labs_count_query = "SELECT COUNT(*) as total FROM laboratories WHERE status = 1";
+$labs_count_query = "SELECT COUNT(*) as total FROM laboratories LEFT JOIN entities e ON e.entity_id = laboratories.entity_id WHERE e.status = 1 AND laboratories.approve =1";
 $labs_count_result = mysqli_query($con, $labs_count_query);
 $labs_count = mysqli_fetch_assoc($labs_count_result)['total'];
 
-$blood_banks_count_query = "SELECT COUNT(*) as total FROM blood_bank WHERE status = 1";
+$blood_banks_count_query = "SELECT COUNT(*) as total FROM blood_bank LEFT JOIN entities e ON e.entity_id = blood_bank.entity_id WHERE e.status = 1 AND blood_bank.approve =1";
 $blood_banks_count_result = mysqli_query($con, $blood_banks_count_query);
 $blood_banks_count = mysqli_fetch_assoc($blood_banks_count_result)['total'];
 
@@ -27,7 +27,8 @@ $recent_doctors_query = "SELECT d.*, c.city_name, h.hospital_name
                          FROM doctors d 
                          LEFT JOIN cities c ON d.city_id = c.city_id 
                          LEFT JOIN hospitals h ON d.hospital_id = h.hospital_id 
-                         WHERE d.status = 1 
+                         LEFT JOIN entities e ON e.entity_id = d.entity_id
+                         WHERE e.status = 1 AND d.approve=1
                          ORDER BY d.created_at DESC 
                          LIMIT 5";
 $recent_doctors_result = mysqli_query($con, $recent_doctors_query);

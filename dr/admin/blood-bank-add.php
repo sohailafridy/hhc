@@ -12,7 +12,10 @@ $blood_bank_data = null;
 
 if (isset($_GET['id']) && is_numeric($_GET['id'])) {
     $bb_id = $_GET['id'];
-    $edit_query = "SELECT * FROM blood_bank WHERE bb_id = $bb_id";
+    $edit_query = "SELECT blood_bank.*,e.status as estatus
+     FROM blood_bank 
+     LEFT JOIN entities e ON e.entity_id = blood_bank.entity_id
+     WHERE bb_id = $bb_id";
     $edit_result = mysqli_query($con, $edit_query);
     
     if (mysqli_num_rows($edit_result) > 0) {
@@ -28,6 +31,7 @@ $cities_result = mysqli_query($con, $cities_query);
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $city_id = mysqli_real_escape_string($con, $_POST['city_id']);
+    $entity_id     = mysqli_real_escape_string($con, $_POST['entity_id']);
     $bb_name = mysqli_real_escape_string($con, $_POST['bb_name']);
     $bb_address = mysqli_real_escape_string($con, $_POST['bb_address']);
     $bb_contact = mysqli_real_escape_string($con, $_POST['bb_contact']);
@@ -56,7 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     
     if ($edit_mode) {
         // Update existing blood bank
-        $update_query = "UPDATE blood_bank SET city_id = '$city_id', bb_name = '$bb_name', bb_address = '$bb_address', bb_contact = '$bb_contact', bb_comment = '$bb_comment', status = $status";
+        $update_query = "UPDATE blood_bank SET city_id = '$city_id', bb_name = '$bb_name', bb_address = '$bb_address', bb_contact = '$bb_contact', bb_comment = '$bb_comment'";
         
         // Update picture only if new one is uploaded
         if (!empty($bb_pic)) {
@@ -66,6 +70,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $update_query .= ", updated_at = NOW() WHERE bb_id = $bb_id";
         
         if (mysqli_query($con, $update_query)) {
+         mysqli_query($con, "UPDATE entities set status='". $status ."' WHERE entity_id='". $entity_id ."'");
             $success_msg = "Blood Bank updated successfully!";
         } else {
             $error_msg = "Error: " . mysqli_error($con);
@@ -76,9 +81,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         mysqli_query($con, $generate_ent_it);
         $entity_id = mysqli_insert_id($con);
 
+
         // Insert new blood bank
-        $insert_query = "INSERT INTO blood_bank (entity_id,city_id, bb_name, bb_address, bb_contact, bb_pic, bb_comment, status, approve, created_at) 
-                       VALUES ($entity_id,'$city_id', '$bb_name', '$bb_address', '$bb_contact', '$bb_pic', '$bb_comment', $status, 1, NOW())";
+        $insert_query = "INSERT INTO blood_bank (entity_id,city_id, bb_name, bb_address, bb_contact, bb_pic, bb_comment, approve, created_at) 
+                       VALUES ($entity_id,'$city_id', '$bb_name', '$bb_address', '$bb_contact', '$bb_pic', '$bb_comment', 1, NOW())";
         
         if (mysqli_query($con, $insert_query)) {
             $success_msg = "Blood Bank added successfully!";
@@ -114,6 +120,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                </div>
                <div class="card-block">
                   <form method="POST" action="" enctype="multipart/form-data">
+                     <input type="hidden" name="entity_id" value="<?php if(isset($blood_bank_data['entity_id'])){ echo $blood_bank_data['entity_id']; } ?>">
                      <div class="form-group">
                         <label for="cityId">City</label>
                         <select class="form-control" id="cityId" name="city_id" required>
@@ -162,8 +169,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                      <div class="form-group">
                         <div class="checkbox">
                            <label>
-                              <input type="checkbox" name="status" value="1" 
-                                     <?php echo ($edit_mode && $blood_bank_data['status'] == 1) ? 'checked' : ''; ?>>
+                              
+
+                                     <input type="checkbox" name="status" value="1"
+    <?php echo (!$edit_mode || (($blood_bank_data['status'] ?? 0) == 1)) ? 'checked' : ''; ?>>
+
+
                               Active Status
                            </label>
                         </div>

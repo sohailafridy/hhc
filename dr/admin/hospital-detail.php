@@ -13,7 +13,7 @@ if (isset($_GET['delete_id']) && is_numeric($_GET['delete_id'])) {
     $hospital_pic = $hospital_pic_data ? $hospital_pic_data['hospital_pic'] : '';
     
     // Delete hospital from database
-    $delete_query = "UPDATE hospitals SET status = 0 WHERE hospital_id = $delete_id";
+    $delete_query = "UPDATE entities set status=0 WHERE entity_id = $delete_id";
     
     if (mysqli_query($con, $delete_query)) {
         // Delete picture file if it exists
@@ -50,9 +50,10 @@ if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
 $hospital_id = $_GET['id'];
 
 // Fetch hospital details with related information
-$query = "SELECT h.*, c.city_name 
+$query = "SELECT h.*, c.city_name,e.status as estatus
           FROM hospitals h 
           LEFT JOIN cities c ON h.city_id = c.city_id
+          LEFT JOIN entities e ON e.entity_id = h.entity_id
           WHERE h.hospital_id = $hospital_id";
 $result = mysqli_query($con, $query);
 
@@ -429,7 +430,7 @@ $feedback_result = mysqli_query($con, $feedback_query);
                   <div class="info-item">
                      <span class="info-label">Status</span>
                      <span class="info-value">
-                        <?php if ($hospital['status'] == 1): ?>
+                        <?php if ($hospital['estatus'] == 1): ?>
                            <span class="badge-status badge-active">Active</span>
                         <?php else: ?>
                            <span class="badge-status badge-inactive">Inactive</span>
@@ -480,7 +481,7 @@ $feedback_result = mysqli_query($con, $feedback_query);
                   <a href="<?php echo BASE_URL; ?>admin/hospitals/add?id=<?php echo $hospital['hospital_id']; ?>" class="btn-action btn-edit me-3">
                      <i class="fas fa-edit"></i> Edit Hospital
                   </a>
-                  <a href="javascript:void(0)" onclick="deleteHospital(<?php echo $hospital['hospital_id']; ?>)" class="btn-action btn-delete me-3">
+                  <a href="javascript:void(0)" onclick="deleteHospital(<?php echo $hospital['entity_id']; ?>)" class="btn-action btn-delete me-3">
                      <i class="fas fa-trash"></i> Delete Hospital
                   </a>
                   <a href="<?php echo BASE_URL; ?>admin/hospitals/list" class="btn-action btn-back">
@@ -539,9 +540,9 @@ $feedback_result = mysqli_query($con, $feedback_query);
 </div>
 
 <script>
-function deleteHospital(hospitalId) {
+function deleteHospital(entity_id) {
     if (confirm('Are you sure you want to delete this hospital? This action cannot be undone.')) {
-        window.location.href = '?delete_id=' + hospitalId;
+        window.location.href = '?delete_id=' + entity_id;
     }
 }
 </script>

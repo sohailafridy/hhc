@@ -12,7 +12,10 @@ $hospital_data = null;
 
 if (isset($_GET['id']) && is_numeric($_GET['id'])) {
     $hospital_id = $_GET['id'];
-    $edit_query = "SELECT * FROM hospitals WHERE hospital_id = $hospital_id";
+    $edit_query = "SELECT hospitals.*,e.status as estatus
+     FROM hospitals 
+    LEFT JOIN entities e ON e.entity_id = hospitals.entity_id
+    WHERE hospital_id = $hospital_id";
     $edit_result = mysqli_query($con, $edit_query);
     
     if (mysqli_num_rows($edit_result) > 0) {
@@ -32,6 +35,7 @@ $cities_result = mysqli_query($con, $cities_query);
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $city_id = mysqli_real_escape_string($con, $_POST['city_id']);
+    $entity_id = mysqli_real_escape_string($con, $_POST['entity_id']);
     $hospital_name = mysqli_real_escape_string($con, $_POST['hospital_name']);
     $hospital_address = mysqli_real_escape_string($con, $_POST['hospital_address']);
     $hospital_phone = mysqli_real_escape_string($con, $_POST['hospital_phone']);
@@ -59,7 +63,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     
     if ($edit_mode) {
         // Update existing hospital
-        $update_query = "UPDATE hospitals SET city_id = '$city_id', hospital_name = '$hospital_name', hospital_address = '$hospital_address', hospital_phone = '$hospital_phone', status = $status";
+        $update_query = "UPDATE hospitals SET city_id = '$city_id', hospital_name = '$hospital_name', hospital_address = '$hospital_address', hospital_phone = '$hospital_phone'";
         
         // Update picture only if new one is uploaded
         if (!empty($hospital_pic)) {
@@ -69,6 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $update_query .= ", updated_at = NOW() WHERE hospital_id = $hospital_id";
         
         if (mysqli_query($con, $update_query)) {
+            mysqli_query($con, "UPDATE entities set status='". $status ."' WHERE entity_id='". $entity_id ."'");
             $success_msg = "Hospital updated successfully!";
         } else {
             $error_msg = "Error: " . mysqli_error($con);
@@ -80,8 +85,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $entity_id = mysqli_insert_id($con);
 
         // Insert new hospital
-        $insert_query = "INSERT INTO hospitals (entity_id,city_id, hospital_name, hospital_address, hospital_phone, hospital_pic, status, approve, created_at) 
-                       VALUES ($entity_id,'$city_id', '$hospital_name', '$hospital_address', '$hospital_phone', '$hospital_pic', $status, 1, NOW())";
+        $insert_query = "INSERT INTO hospitals (entity_id,city_id, hospital_name, hospital_address, hospital_phone, hospital_pic, approve, created_at) 
+                       VALUES ($entity_id,'$city_id', '$hospital_name', '$hospital_address', '$hospital_phone', '$hospital_pic', 1, NOW())";
         
         if (mysqli_query($con, $insert_query)) {
             $success_msg = "Hospital added successfully!";
@@ -117,6 +122,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                </div>
                <div class="card-block">
                   <form method="POST" action="" enctype="multipart/form-data">
+
+                   <input type="hidden" name="entity_id" value="<?php if(isset($hospital_data['entity_id'])){ echo $hospital_data['entity_id']; } ?>">
+
                      <div class="form-group">
                         <label for="cityId">City</label>
                         <select class="form-control" id="cityId" name="city_id" required>
@@ -161,7 +169,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         <div class="checkbox">
                            <label>
                               <input type="checkbox" name="status" value="1" 
-                                     <?php echo ($edit_mode && $hospital_data['status'] == 1) ? 'checked' : 'checked'; ?>>
+                                     <?php echo ($edit_mode && $hospital_data['estatus'] == 1) ? 'checked' : ''; ?>>
                               Active Status
                            </label>
                         </div>

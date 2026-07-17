@@ -12,7 +12,10 @@ $lab_data = null;
 
 if (isset($_GET['id']) && is_numeric($_GET['id'])) {
     $lab_id = $_GET['id'];
-    $edit_query = "SELECT * FROM laboratories WHERE lab_id = $lab_id";
+    $edit_query = "SELECT laboratories.*,e.status
+     FROM laboratories 
+     LEFT JOIN entities e ON e.entity_id = laboratories.entity_id
+     WHERE lab_id = $lab_id";
     $edit_result = mysqli_query($con, $edit_query);
     
     if (mysqli_num_rows($edit_result) > 0) {
@@ -26,12 +29,17 @@ $cities_query = "SELECT city_id, city_name FROM cities WHERE status = 1 ORDER BY
 $cities_result = mysqli_query($con, $cities_query);
 
 // Fetch hospitals for dropdown with city_id for filtering
-$hospitals_query = "SELECT hospital_id, hospital_name, city_id FROM hospitals WHERE status = 1 ORDER BY hospital_name ASC";
+$hospitals_query = "SELECT hospitals.entity_id,hospital_id, hospital_name, city_id 
+FROM hospitals 
+LEFT JOIN entities e ON e.entity_id = hospitals.entity_id
+WHERE e.status = 1 AND hospitals.approve=1 ORDER BY hospital_name ASC";
 $hospitals_result = mysqli_query($con, $hospitals_query);
 
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+
     $city_id     = mysqli_real_escape_string($con, $_POST['city_id']);
+    $entity_id     = mysqli_real_escape_string($con, $_POST['entity_id']);
     $lab_name    = mysqli_real_escape_string($con, $_POST['lab_name']);
     $lab_address = mysqli_real_escape_string($con, $_POST['lab_address']);
     $lab_phone   = mysqli_real_escape_string($con, $_POST['lab_phone']);
@@ -69,7 +77,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     
     if ($edit_mode) {
         // Update existing laboratory
-        $update_query = "UPDATE laboratories SET city_id = '$city_id', lab_name = '$lab_name', lab_address = '$lab_address', lab_phone = '$lab_phone', lab_email = '$lab_email', lab_type = '$lab_type', status = $status";
+        $update_query = "UPDATE laboratories SET city_id = '$city_id', lab_name = '$lab_name', lab_address = '$lab_address', lab_phone = '$lab_phone', lab_email = '$lab_email', lab_type = '$lab_type'";
         
         // Update type-specific fields
         if ($lab_type == 1) {
@@ -88,9 +96,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $update_query .= ", updated_at = NOW() WHERE lab_id = $lab_id";
         
         if (mysqli_query($con, $update_query)) {
+            mysqli_query($con, "UPDATE entities set status='". $status ."' WHERE entity_id='". $entity_id ."'");
             $success_msg = "Laboratory updated successfully!";
             // Refresh data
-            $edit_result = mysqli_query($con, "SELECT * FROM laboratories WHERE lab_id = $lab_id");
+            $edit_result = mysqli_query($con, "SELECT laboratories.*,e.status
+                FROM laboratories
+                LEFT JOIN entities e ON e.entity_id = laboratories.entity_id
+                 WHERE lab_id = $lab_id");
             $lab_data = mysqli_fetch_assoc($edit_result);
         } else {
             $error_msg = "Error: " . mysqli_error($con);
@@ -103,8 +115,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         mysqli_query($con, $generate_ent_it);
         $entity_id = mysqli_insert_id($con);
 
-        $insert_query = "INSERT INTO laboratories (entity_id,city_id, hospital_id, lab_name, lab_address, lab_phone, lab_email, lab_type, lab_pic, status, approve, created_at) 
-                       VALUES ($entity_id,'$city_id', $hospital_id_value, '$lab_name', '$lab_address', '$lab_phone', '$lab_email', '$lab_type', '$lab_pic', $status, 1, NOW())";
+        $insert_query = "INSERT INTO laboratories (entity_id,city_id, hospital_id, lab_name, lab_address, lab_phone, lab_email, lab_type, lab_pic, approve, created_at) 
+                       VALUES ($entity_id,'$city_id', $hospital_id_value, '$lab_name', '$lab_address', '$lab_phone', '$lab_email', '$lab_type', '$lab_pic', 1, NOW())";
         
         if (mysqli_query($con, $insert_query)) {
             $success_msg = "Laboratory added successfully!";
@@ -466,7 +478,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         <form method="POST" action="" enctype="multipart/form-data" class="animate-up delay-1">
             <input type="hidden" name="lab_type" id="lab_type" value="<?php echo $edit_mode ? $lab_data['lab_type'] : '1'; ?>">
-
+            <input type="hidden" name="entity_id" value="<?php if(isset($lab_data['entity_id'])){ echo $lab_data['entity_id']; } ?>">
             <!-- Mode Selection -->
             <div class="modern-card">
                 <div class="card-body-custom">
@@ -598,8 +610,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                             
                             <div class="form-group">
                                 <label class="custom-switch" style="vertical-align: middle;">
-                                    <input type="checkbox" name="status" value="1" 
-                                           <?php echo (!$edit_mode || $lab_data['status'] == 1) ? 'checked' : ''; ?>>
+                                    <input type="checkbox" name="status" value="1"
+    <?php echo (!$edit_mode || (($lab_data['status'] ?? 0) == 1)) ? 'checked' : ''; ?>>
                                     <span class="slider"></span>
                                 </label>
                                 <span class="ms-3 fw-bold">Active Status</span>

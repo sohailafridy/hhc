@@ -12,16 +12,16 @@ if (isset($_GET['delete_id']) && is_numeric($_GET['delete_id'])) {
     $lab_pic = $lab_pic_data ? $lab_pic_data['lab_pic'] : '';
     
     // Delete the laboratory from database
-    $delete_query = "DELETE FROM laboratories WHERE lab_id = $delete_id";
+    $delete_query = "UPDATE entities set status=0 WHERE entity_id = $delete_id";
     
     if (mysqli_query($con, $delete_query)) {
         // Delete the picture file if it exists
-        if (!empty($lab_pic)) {
-            $pic_path = BASE_PATH."/admin/inc/uploads/laboratories/".$lab_pic;
-            if (file_exists($pic_path)) {
-                unlink($pic_path);
-            }
-        }
+        // if (!empty($lab_pic)) {
+        //     $pic_path = BASE_PATH."/admin/inc/uploads/laboratories/".$lab_pic;
+        //     if (file_exists($pic_path)) {
+        //         unlink($pic_path);
+        //     }
+        // }
         $_SESSION['success_msg'] = "Laboratory deleted successfully!";
     } else {
         $_SESSION['error_msg'] = "Error: " . mysqli_error($con);
@@ -64,7 +64,9 @@ if (!empty($filter_city_id) && is_numeric($filter_city_id)) {
     $where_conditions[] = "l.city_id = $filter_city_id";
 }
 if ($filter_status !== '') {
-    $where_conditions[] = "l.status = $filter_status";
+    $where_conditions[] = "e.status = $filter_status";
+}else{
+   $where_conditions[] = "e.status = 1";
 }
 if ($filter_type !== '') {
     $where_conditions[] = "l.lab_type = $filter_type";
@@ -77,10 +79,13 @@ $cities_result = mysqli_query($con, $cities_query);
 $where_clause = !empty($where_conditions) ? 'WHERE ' . implode(' AND ', $where_conditions) : '';
 
 // Count total records
-$count_query = "SELECT COUNT(*) as total 
+ $count_query = "SELECT COUNT(*) as total 
                 FROM laboratories l
+                LEFT JOIN entities e ON e.entity_id = l.entity_id
                 LEFT JOIN cities c ON l.city_id = c.city_id
                 $where_clause";
+
+
 $count_result = mysqli_query($con, $count_query);
 $total_records = mysqli_fetch_assoc($count_result)['total'];
 $total_pages = ceil($total_records / $records_per_page);
@@ -89,12 +94,15 @@ $total_pages = ceil($total_records / $records_per_page);
 $query = "SELECT l.*, 
                 c.city_name,
                 h.hospital_name,
+                e.entity_id as e_id,
+                e.status as estatus,
                 COUNT(f.feedback_id) as total_feedbacks,
                 AVG(f.stars) as avg_rating
           FROM laboratories l
           LEFT JOIN cities c ON l.city_id = c.city_id
           LEFT JOIN hospitals h ON l.hospital_id = h.hospital_id
           LEFT JOIN feedback f ON l.entity_id = f.entity_id
+          LEFT JOIN entities e ON e.entity_id = l.entity_id
           $where_clause
           GROUP BY l.lab_id
           ORDER BY l.created_at DESC 
@@ -469,7 +477,7 @@ $result = mysqli_query($con, $query);
                                        <?php echo htmlspecialchars($lab['lab_email']); ?>
                                     </div>
                                     <div class="d-flex justify-content-center flex-wrap gap-1">
-                                       <?php if ($lab['status'] == 1): ?>
+                                       <?php if ($lab['estatus'] == 1): ?>
                                           <span class="badge-modern badge bg-success">Active</span>
                                        <?php else: ?>
                                           <span class="badge-modern badge bg-danger">Inactive</span>
@@ -532,7 +540,7 @@ $result = mysqli_query($con, $query);
                                              class="btn btn-xs btn-warning" title="Edit" style="font-size: 0.7rem; padding: 4px 8px;">
                                              <i class="icon-pencil"></i>
                                           </a>
-                                          <a href="javascript:void(0)" onclick="deleteLaboratory(<?php echo $lab['lab_id']; ?>)" 
+                                          <a href="javascript:void(0)" onclick="deleteLaboratory(<?php echo $lab['entity_id']; ?>)" 
                                              class="btn btn-xs btn-danger" title="Delete" style="font-size: 0.7rem; padding: 4px 8px;">
                                              <i class="icon-trash"></i>
                                           </a>
@@ -588,9 +596,9 @@ $result = mysqli_query($con, $query);
 </div>
 
 <script>
-function deleteLaboratory(labId) {
+function deleteLaboratory(entity_id) {
     if (confirm('Are you sure you want to delete this laboratory? This action cannot be undone.')) {
-        window.location.href = '?delete_id=' + labId;
+        window.location.href = '?delete_id=' + entity_id;
     }
 }
 </script>

@@ -13,7 +13,7 @@ if (isset($_GET['delete_id']) && is_numeric($_GET['delete_id'])) {
     $hospital_pic = $hospital_pic_data ? $hospital_pic_data['hospital_pic'] : '';
     
     // Delete the hospital from database
-    $delete_query = "UPDATE hospitals SET status = 0 WHERE hospital_id = $delete_id";
+    $delete_query = "UPDATE entities SET status = 0 WHERE entity_id = $delete_id";
     
     if (mysqli_query($con, $delete_query)) {
         // Delete the picture file if it exists
@@ -59,18 +59,21 @@ if (!empty($search_city)) {
     $where_conditions[] = "c.city_name LIKE '%$search_city%'";
 }
 if ($filter_status !== '') {
-    $where_conditions[] = "h.status = $filter_status";
+    $where_conditions[] = "e.status = $filter_status";
 }
 $where_conditions[] = "h.approve = 1";
 $where_clause = !empty($where_conditions) ? 'WHERE ' . implode(' AND ', $where_conditions) : '';
 // Count total records
-$count_query = "SELECT COUNT(*) as total FROM hospitals h LEFT JOIN cities c ON h.city_id = c.city_id $where_clause";
+$count_query = "SELECT COUNT(*) as total FROM hospitals h LEFT JOIN cities c ON h.city_id = c.city_id LEFT JOIN entities e ON e.entity_id = h.entity_id $where_clause";
 $count_result = mysqli_query($con, $count_query);
 $total_records = mysqli_fetch_assoc($count_result)['total'];
 $total_pages = ceil($total_records / $records_per_page);
 // Fetch hospitals data
- $query = "SELECT h.entity_id, h.hospital_id, h.hospital_name, h.hospital_address, h.hospital_phone, h.hospital_pic, h.status, h.created_at, c.city_name 
-          FROM hospitals h LEFT JOIN cities c ON h.city_id = c.city_id $where_clause 
+ $query = "SELECT h.entity_id, h.hospital_id, h.hospital_name, h.hospital_address, h.hospital_phone, h.hospital_pic, e.status, h.created_at, c.city_name 
+          FROM hospitals h 
+          LEFT JOIN cities c ON h.city_id = c.city_id 
+          LEFT JOIN entities e ON e.entity_id = h.entity_id
+          $where_clause
           ORDER BY h.created_at DESC 
           LIMIT $offset, $records_per_page";
          
@@ -208,7 +211,7 @@ $result = mysqli_query($con, $query);
                                           class="btn btn-sm btn-warning" title="Edit">
                                           <i class="icon-pencil"></i>
                                        </a>
-                                       <a href="javascript:void(0)" onclick="deleteHospital(<?php echo $row['hospital_id']; ?>)" 
+                                       <a href="javascript:void(0)" onclick="deleteHospital(<?php echo $row['entity_id']; ?>)" 
                                           class="btn btn-sm btn-danger" title="Delete">
                                           <i class="icon-trash"></i>
                                        </a>
@@ -263,9 +266,9 @@ $result = mysqli_query($con, $query);
 </div>
 
 <script>
-function deleteHospital(hospitalId) {
+function deleteHospital(entity_id) {
     if (confirm('Are you sure you want to delete this hospital?')) {
-        window.location.href = '?delete_id=' + hospitalId;
+        window.location.href = '?delete_id=' + entity_id;
     }
 }
 </script>

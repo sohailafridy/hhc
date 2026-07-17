@@ -12,16 +12,16 @@ if (isset($_GET['delete_id']) && is_numeric($_GET['delete_id'])) {
     $bb_pic = $bb_pic_data ? $bb_pic_data['bb_pic'] : '';
     
     // Delete blood bank from database
-    $delete_query = "DELETE FROM blood_bank WHERE bb_id = $delete_id";
+    $delete_query = "UPDATE entities set status=0 WHERE entity_id = $delete_id";
     
     if (mysqli_query($con, $delete_query)) {
         // Delete picture file if it exists
-        if (!empty($bb_pic)) {
-            $pic_path = BASE_PATH."/admin/inc/uploads/blood-banks/".$bb_pic;
-            if (file_exists($pic_path)) {
-                unlink($pic_path);
-            }
-        }
+        // if (!empty($bb_pic)) {
+        //     $pic_path = BASE_PATH."/admin/inc/uploads/blood-banks/".$bb_pic;
+        //     if (file_exists($pic_path)) {
+        //         unlink($pic_path);
+        //     }
+        // }
         $_SESSION['success_msg'] = "Blood Bank deleted successfully!";
     } else {
         $_SESSION['error_msg'] = "Error: " . mysqli_error($con);
@@ -66,9 +66,9 @@ if (mysqli_num_rows($result) == 0) {
 }
 
 $blood_bank = mysqli_fetch_assoc($result);
-
+$entity_id = $blood_bank['entity_id'];
 // Fetch feedbacks for this blood bank
-$feedback_query = "SELECT f.* FROM feedback f WHERE f.bloodb_id = $bb_id ORDER BY f.created_at DESC LIMIT 10";
+$feedback_query = "SELECT f.* FROM feedback f WHERE f.entity_id = $entity_id ORDER BY f.created_at DESC LIMIT 10";
 $feedback_result = mysqli_query($con, $feedback_query);
 
 // Fetch available blood types for this blood bank
@@ -545,7 +545,7 @@ $available_blood_bags = mysqli_query($con, "SELECT * FROM bb_available_blood WHE
                   <a href="<?php echo BASE_URL; ?>admin/blood-banks/add?id=<?php echo $blood_bank['bb_id']; ?>" class="btn-action btn-edit me-3">
                      <i class="fas fa-edit"></i> Edit Blood Bank
                   </a>
-                  <a href="javascript:void(0)" onclick="deleteBloodBank(<?php echo $blood_bank['bb_id']; ?>)" class="btn-action btn-delete me-3">
+                  <a href="javascript:void(0)" onclick="deleteBloodBank(<?php echo $blood_bank['entity_id']; ?>)" class="btn-action btn-delete me-3">
                      <i class="fas fa-trash"></i> Delete Blood Bank
                   </a>
                   <a href="<?php echo BASE_URL; ?>admin/blood-banks/list" class="btn-action btn-back">
@@ -642,9 +642,9 @@ $available_blood_bags = mysqli_query($con, "SELECT * FROM bb_available_blood WHE
 </div>
 
 <script>
-function deleteHospital(hospitalId) {
+function deleteBloodBank(entity_id) {
     if (confirm('Are you sure you want to delete this hospital? This action cannot be undone.')) {
-        window.location.href = '?delete_id=' + hospitalId;
+        window.location.href = '?delete_id=' + entity_id;
     }
 }
 </script>
