@@ -928,7 +928,7 @@
         }
         .mob-layout{
             margin-top: 10px !important;
-            margin-left: 30% !important;
+            margin-left: 32% !important;
         }
         .hero-city-wrap{
             width: 100% !important;
@@ -1121,7 +1121,7 @@
         .hospital-content-modern {
             padding: 15px;
         }
-        
+
     }
 
     @media (max-width: 768px) {
