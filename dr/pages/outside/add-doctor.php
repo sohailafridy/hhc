@@ -102,12 +102,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $specialization = (int) mysqli_insert_id($con);
             }
 
-            $generate_ent_it = "INSERT INTO entities (entity_type, created_at) VALUES ('doctor', CURDATE())";
+            $generate_ent_it = "INSERT INTO entities (entity_type,status, created_at) VALUES ('doctor',1, CURDATE())";
             if (!mysqli_query($con, $generate_ent_it)) {
                 throw new Exception(mysqli_error($con));
             }
 
             $entity_id = (int) mysqli_insert_id($con);
+
+
+//             $generate_user_id = "INSERT INTO users (username, email, password, user_type_id, created_at)
+// VALUES ('$user_name', '$doctor_email', '$password', 2, '$created_at')";
+//         mysqli_query($con, $generate_user_id);
+//         $userid = mysqli_insert_id($con);
+
+
+
+            
             $hospital_id_value = $doctor_type === 1 ? $hospital_id : "NULL";
 
             $insert_query = "INSERT INTO doctors (
@@ -125,7 +135,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 clinic_address,
                                 doctor_pic,
                                 static_clinical_info,
-                                status,
                                 approve,
                                 gender,
                                 other,
@@ -145,7 +154,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 '$clinic_address',
                                 '$doctor_pic',
                                 '$static_clinical_info',
-                                $status,
                                 $approve,
                                 '$gender',
                                 '$other',
