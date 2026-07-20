@@ -48,6 +48,13 @@
         return defined('BASE_URL') && BASE_URL ? BASE_URL . $path : $path;
     }
 ?>
+<style>
+    .nav-link.active{
+        padding-left: 10px;
+box-shadow: 0 10px 25px rgba(37, 99, 235, .35), 0 4px 10px rgba(0, 0, 0, .08);
+position: relative;
+    }
+</style>
 <nav class="navbar navbar-expand-lg fixed-top">
         <div class="container">
             <a class="navbar-brand fw-bold" href="<?php echo clean_url(''); ?>">
@@ -57,7 +64,7 @@
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto align-items-center">
+                <ul class="navbar-nav ms-auto">
                     <li class="nav-item"><a class="nav-link <?php echo is_active('home', $active_menu); ?>" href="<?php echo clean_url(''); ?>">Home</a></li>
                     <li class="nav-item"><a class="nav-link <?php echo is_active('doctors', $active_menu); ?>" href="<?php echo clean_url('doctors'); ?>">Doctors</a></li>
                     <li class="nav-item"><a class="nav-link <?php echo is_active('hospitals', $active_menu); ?>" href="<?php echo clean_url('hospitals'); ?>">Hospitals</a></li>
