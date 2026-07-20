@@ -12,7 +12,10 @@ $doctor_data = null;
 
 if (isset($_GET['id']) && is_numeric($_GET['id'])) {
     $doctor_id = $_GET['id'];
-    $edit_query = "SELECT * FROM doctors WHERE doctor_id = $doctor_id";
+    $edit_query = "SELECT doctors.*, e.entity_id as e_id
+    FROM doctors 
+    LEFT JOIN entities e ON e.entity_id = doctors.entity_id
+    WHERE doctor_id = $doctor_id";
     $edit_result = mysqli_query($con, $edit_query);
     
     if (mysqli_num_rows($edit_result) > 0) {
@@ -52,7 +55,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
   
     $city_id = mysqli_real_escape_string($con, $_POST['city_id']);
-    $user_name = mysqli_real_escape_string($con, $_POST['user_name']);
+    $entity_id = mysqli_real_escape_string($con, $_POST['entity_id']);
+    $user_name = mysqli_real_escape_string($con, $_POST['username']);
     $pass = mysqli_real_escape_string($con, $_POST['password']);
     $password = base64_encode($pass);
 
@@ -103,7 +107,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     
     if ($edit_mode) {
         // Update existing doctor
-        $update_query = "UPDATE doctors SET city_id = '$city_id', doctor_name = '$doctor_name', cat_type_id = '$specialization', experience_years = '$experience_years', doctor_phone = '$doctor_phone', doctor_email = '$doctor_email', doctor_type = '$doctor_type', gender = '$gender', other = '$other', static_clinical_info = '$static_clinical_info', status = $status";
+        $update_query = "UPDATE doctors SET city_id = '$city_id', doctor_name = '$doctor_name', cat_type_id = '$specialization', experience_years = '$experience_years', doctor_phone = '$doctor_phone', doctor_email = '$doctor_email', doctor_type = '$doctor_type', gender = '$gender', other = '$other', static_clinical_info = '$static_clinical_info'";
         
         // Update type-specific fields
         if ($doctor_type == 1) {
@@ -122,6 +126,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $update_query .= ", updated_at = NOW() WHERE doctor_id = $doctor_id";
         
         if (mysqli_query($con, $update_query)) {
+             mysqli_query($con, "UPDATE entities set status='". $status ."' WHERE entity_id='". $entity_id ."'");
             $success_msg = "Doctor updated successfully!";
             // Refresh data
             $edit_result = mysqli_query($con, "SELECT * FROM doctors WHERE doctor_id = $doctor_id");
@@ -150,14 +155,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
 
 
-        $generate_user_id = "INSERT INTO users (username,email, password,user_type_id, created_at) VALUES ($user_name,$doctor_email,$password,2,date('Y-m-d'))";
+       $created_at = date('Y-m-d');
+
+$generate_user_id = "INSERT INTO users (username, email, password, user_type_id, created_at)
+VALUES ('$user_name', '$doctor_email', '$password', 2, '$created_at')";
         mysqli_query($con, $generate_user_id);
         $userid = mysqli_insert_id($con);
 
 
 
-         $insert_query = "INSERT INTO doctors (entity_id, user_id, city_id, hospital_id, doctor_name, short_detail, cat_type_id, experience_years, doctor_phone, doctor_email, doctor_type, clinic_name, clinic_address, doctor_pic, static_clinical_info, status, approve, gender, other, created_at) 
-                       VALUES ($entity_id,$userid, '$city_id', $hospital_id_value, '$doctor_name', '$short_detail', '$specialization', '$experience_years', '$doctor_phone', '$doctor_email', '$doctor_type', '$clinic_name', '$clinic_address', '$doctor_pic', '$static_clinical_info', $status, 1, '$gender', '$other', NOW())";
+         $insert_query = "INSERT INTO doctors (entity_id, user_id, city_id, hospital_id, doctor_name, short_detail, cat_type_id, experience_years, doctor_phone, doctor_email, doctor_type, clinic_name, clinic_address, doctor_pic, static_clinical_info, approve, gender, other, created_at) 
+                       VALUES ($entity_id,$userid, '$city_id', $hospital_id_value, '$doctor_name', '$short_detail', '$specialization', '$experience_years', '$doctor_phone', '$doctor_email', '$doctor_type', '$clinic_name', '$clinic_address', '$doctor_pic', '$static_clinical_info', 1, '$gender', '$other', NOW())";
         
         if (mysqli_query($con, $insert_query)) {
             $last_insert_id = mysqli_insert_id($con);
@@ -557,7 +565,7 @@ if ($categories_result) {
 
         <form method="POST" action="" enctype="multipart/form-data" class="animate-up delay-1">
             <input type="hidden" name="doctor_type" id="doctor_type" value="<?php echo $edit_mode ? $doctor_data['doctor_type'] : '1'; ?>">
-
+             <input type="hidden" name="entity_id" value="<?php if(isset($doctor_data['entity_id'])){ echo $doctor_data['entity_id']; } ?>">
             <!-- Mode Selection -->
             <div class="modern-card">
                 <div class="card-body-custom">
@@ -645,6 +653,24 @@ if ($categories_result) {
                             <h5><i class="icofont icofont-user-alt-3"></i> Personal Details</h5>
                         </div>
                         <div class="card-body-custom">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label class="form-label">Username</label>
+                                        <input type="text" class="form-control-modern" name="username" min="0" 
+                                               placeholder="e.g. 5"
+                                               value="">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label class="form-label">Password</label>
+                                        <input type="password" class="form-control-modern" name="password" 
+                                               placeholder="Contact Number"
+                                               value="">
+                                    </div>
+                                </div>
+                            </div>
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="form-group">

@@ -86,6 +86,120 @@
         box-shadow: var(--hover-shadow);
     }
 
+    .hero-city-wrap {
+        position: relative;
+        display: inline-block;
+        vertical-align: middle;
+        min-width: 260px;
+    }
+
+    .hero-city-wrap .hero-city-icon {
+        position: absolute;
+        left: 18px;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 10;
+        color: var(--primary);
+        font-size: 1rem;
+        pointer-events: none;
+        transition: color 0.3s;
+    }
+
+    .hero-city-wrap .select2-container {
+        width: 100% !important;
+    }
+
+    .hero-city-wrap .select2-container--bootstrap-5 .select2-selection {
+        border-radius: 50px !important;
+        border: none !important;
+        background: var(--secondary) !important;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        padding: 12px 45px 12px 42px !important;
+        min-height: auto !important;
+        height: auto !important;
+        transition: all 0.3s;
+        box-shadow: none;
+    }
+
+    .hero-city-wrap .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
+        color: var(--primary) !important;
+        padding-left: 0;
+        line-height: 1.5;
+    }
+
+    .hero-city-wrap .select2-container--bootstrap-5 .select2-selection--single .select2-selection__placeholder {
+        color: var(--primary) !important;
+        opacity: 0.85;
+    }
+
+    .hero-city-wrap .select2-container--bootstrap-5 .select2-selection--single .select2-selection__arrow {
+        height: 100%;
+        right: 15px;
+    }
+
+    .hero-city-wrap .select2-container--bootstrap-5 .select2-selection--single .select2-selection__arrow b {
+        border-color: var(--primary) transparent transparent transparent;
+    }
+
+    .hero-city-wrap:hover .select2-container--bootstrap-5 .select2-selection,
+    .hero-city-wrap:has(.select2-container--open) .select2-container--bootstrap-5 .select2-selection,
+    .hero-city-wrap:has(.select2-container--focus) .select2-container--bootstrap-5 .select2-selection {
+        background: var(--primary) !important;
+        transform: translateY(-3px);
+        box-shadow: var(--hover-shadow);
+    }
+
+    .hero-city-wrap:hover .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered,
+    .hero-city-wrap:has(.select2-container--open) .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered,
+    .hero-city-wrap:has(.select2-container--focus) .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
+        color: var(--secondary) !important;
+    }
+
+    .hero-city-wrap:hover .select2-container--bootstrap-5 .select2-selection--single .select2-selection__placeholder,
+    .hero-city-wrap:has(.select2-container--open) .select2-container--bootstrap-5 .select2-selection--single .select2-selection__placeholder {
+        color: var(--secondary) !important;
+    }
+
+    .hero-city-wrap:hover .select2-container--bootstrap-5 .select2-selection--single .select2-selection__arrow b,
+    .hero-city-wrap:has(.select2-container--open) .select2-container--bootstrap-5 .select2-selection--single .select2-selection__arrow b {
+        border-color: var(--secondary) transparent transparent transparent;
+    }
+
+    .hero-city-wrap:hover .hero-city-icon,
+    .hero-city-wrap:has(.select2-container--open) .hero-city-icon,
+    .hero-city-wrap:has(.select2-container--focus) .hero-city-icon {
+        color: var(--secondary);
+    }
+
+    .select2-dropdown.hero-city-dropdown {
+        border-radius: 15px;
+        border: none;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        overflow: hidden;
+        margin-top: 8px;
+    }
+
+    .select2-dropdown.hero-city-dropdown .select2-search--dropdown {
+        padding: 10px;
+    }
+
+    .select2-dropdown.hero-city-dropdown .select2-search--dropdown .select2-search__field {
+        border-radius: 10px;
+        border: 1px solid #e0e0e0;
+        padding: 8px 12px;
+    }
+
+    .select2-dropdown.hero-city-dropdown .select2-search--dropdown .select2-search__field:focus {
+        border-color: var(--primary);
+        outline: none;
+    }
+
+    .select2-dropdown.hero-city-dropdown .select2-results__option--highlighted {
+        background: var(--primary) !important;
+    }
+
     /* Hero Form Styles */
     .hero-form {
         background: rgba(255, 255, 255, 0.95);
@@ -1575,7 +1689,22 @@
                         <h1 class="hero-title" data-aos="fade-up" data-aos-delay="200">We Care About <br>Your Health</h1>
                         <p class="hero-text" data-aos="fade-up" data-aos-delay="400">Experience world-class healthcare with our team of expert doctors and state-of-the-art facilities designed for your comfort and recovery.</p>
                         <div data-aos="fade-up" data-aos-delay="600">
-                            <a href="doctors" class="btn btn-hero me-3 d-inline-block">Find a Doctor</a>
+                            <div class="hero-city-wrap me-3">
+                                <i class="fas fa-map-marker-alt hero-city-icon"></i>
+                                <select class="hero-city-select" id="heroCitySelect">
+                                    <option value="">Select City</option>
+                                    <?php
+                                    $hero_cities_query = "SELECT city_id, city_name FROM cities ORDER BY city_name ASC";
+                                    $hero_cities_result = mysqli_query($con, $hero_cities_query);
+                                    if ($hero_cities_result && mysqli_num_rows($hero_cities_result) > 0) {
+                                        while ($hero_city = mysqli_fetch_assoc($hero_cities_result)) {
+                                            $hero_selected = ($hero_city['city_id'] == $city_id) ? 'selected' : '';
+                                            echo '<option value="' . $hero_city['city_id'] . '" ' . $hero_selected . '>' . htmlspecialchars($hero_city['city_name']) . '</option>';
+                                        }
+                                    }
+                                    ?>
+                                </select>
+                            </div>
                             <a href="about" class="btn btn-outline-light rounded-pill px-4 py-3 fw-bold d-inline-block">Learn More</a>
                         </div>
                     </div>
@@ -2239,6 +2368,30 @@ $(document).ready(function() {
         placeholder: 'Search city...',
         allowClear: true,
         width: '100%'
+    });
+
+    $('#heroCitySelect').select2({
+        theme: 'bootstrap-5',
+        placeholder: 'Select City',
+        allowClear: false,
+        width: '100%',
+        minimumResultsForSearch: 0,
+        dropdownCssClass: 'hero-city-dropdown'
+    }).on('change', function() {
+        var cityId = $(this).val();
+        if (!cityId) return;
+
+        fetch('<?php echo BASE_URL; ?>includes/set-city.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ city_id: parseInt(cityId) })
+        })
+        .then(function(response) { return response.json(); })
+        .then(function(data) {
+            if (data.success) {
+                location.reload();
+            }
+        });
     });
 });
 </script>

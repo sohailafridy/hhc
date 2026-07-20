@@ -30,6 +30,17 @@ $check = "SELECT id FROM history WHERE ip_address='$ip' LIMIT 1";
 $result = mysqli_query($con, $check);
 
 // 🔹 INSERT (first visit)
+    // $insert = "INSERT INTO history 
+    // (ip_address, country, city, region, visit, visit_date,referrer,page_url,browser)
+    // VALUES 
+    // ('$ip', '$country', '$city', '$region', 1, NOW(), '$referrer','$page','$user_agent')";
+
+    // mysqli_query($con, $insert);
+
+
+if (mysqli_num_rows($result) == 0) {
+
+    // 🔹 INSERT (first visit)
     $insert = "INSERT INTO history 
     (ip_address, country, city, region, visit, visit_date,referrer,page_url,browser)
     VALUES 
@@ -37,24 +48,13 @@ $result = mysqli_query($con, $check);
 
     mysqli_query($con, $insert);
 
+} else {
 
-// if (mysqli_num_rows($result) == 0) {
+    // 🔹 UPDATE (repeat visit)
+    $update = "UPDATE history 
+    SET visit = visit + 1, visit_date = NOW()
+    WHERE ip_address = '$ip'";
 
-//     // 🔹 INSERT (first visit)
-//     $insert = "INSERT INTO history 
-//     (ip_address, country, city, region, visit, visit_date,referrer,page_url,browser)
-//     VALUES 
-//     ('$ip', '$country', '$city', '$region', 1, NOW(), '$referrer','$page','$user_agent')";
-
-//     mysqli_query($con, $insert);
-
-// } else {
-
-//     // 🔹 UPDATE (repeat visit)
-//     $update = "UPDATE history 
-//     SET visit = visit + 1, visit_date = NOW()
-//     WHERE ip_address = '$ip'";
-
-//     mysqli_query($con, $update);
-// }
+    mysqli_query($con, $update);
+}
 ?>
