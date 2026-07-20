@@ -926,6 +926,13 @@
             flex-direction: column;
             align-items: flex-start;
         }
+        .mob-layout{
+            margin-top: 10px !important;
+            margin-left: 30% !important;
+        }
+        .hero-city-wrap{
+            width: 100% !important;
+        }
     }
     .heading-color{
         color: var(--dark-blue);
@@ -1098,6 +1105,9 @@
     .hospital-btn-modern:hover i {
         transform: translateX(3px);
     }
+    .mob-layout{
+            padding: 10px 20px !important;
+        }
 
     @media (max-width: 992px) {
         .hospital-image-modern {
@@ -1111,6 +1121,7 @@
         .hospital-content-modern {
             padding: 15px;
         }
+        
     }
 
     @media (max-width: 768px) {
@@ -1705,7 +1716,7 @@
                                     ?>
                                 </select>
                             </div>
-                            <a href="about" class="btn btn-outline-light rounded-pill px-4 py-3 fw-bold d-inline-block">Learn More</a>
+                            <a href="about" class="btn btn-outline-light rounded-pill px-4 fw-bold d-inline-block mob-layout">Learn More</a>
                         </div>
                     </div>
                     <div class="col-lg-5" data-aos="fade-left" data-aos-delay="400">
