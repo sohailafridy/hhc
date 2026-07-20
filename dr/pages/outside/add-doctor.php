@@ -201,7 +201,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $cities_query = "SELECT city_id, city_name FROM cities WHERE status = 1 ORDER BY city_name ASC";
 $cities_result = mysqli_query($con, $cities_query);
 
-$hospitals_query = "SELECT hospital_id, hospital_name, city_id FROM hospitals WHERE status = 1 ORDER BY hospital_name ASC";
+$hospitals_query = "SELECT hospital_id, hospital_name, city_id 
+FROM hospitals 
+LEFT JOIN entities e ON e.entity_id = hospitals.entity_id
+WHERE e.status = 1 ORDER BY hospital_name ASC";
 $hospitals_result = mysqli_query($con, $hospitals_query);
 
 $categories_query = "SELECT dc.dr_cat_id, dc.cat_name, dct.dr_cat_type_id, dct.type
