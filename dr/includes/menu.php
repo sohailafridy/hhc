@@ -14,10 +14,10 @@
     if (strpos($current_page, '.php') !== false) {
         $current_page = str_replace('.php', '', $current_page);
     }
-    
+   
     // Map paths to menu items
     $active_menu = '';
-    if ($current_page === '' || $current_page === 'index.php' || $current_page === 'home') {
+    if ( $current_page == 'dr' || $current_page == '' || $current_page === 'index.php' || $current_page === 'home') {
         $active_menu = 'home';
     } elseif ($current_page === 'doctors' || $current_page === 'doctors.php' || $current_page === 'doctor-detail') {
         $active_menu = 'doctors';
