@@ -526,6 +526,22 @@ if ($categories_result) {
     #specializationDropdown .dropdown-item:hover {
         background-color: #f1f5f9;
     }
+    .add-new-doctor{
+          display:inline-flex;
+    align-items:center;
+    gap:10px;
+    padding:14px 30px;
+    border-radius:50px;
+    background:rgba(255,255,255,0.12);
+    border:1.5px solid rgba(255,255,255,0.35);
+    backdrop-filter:blur(12px);
+    -webkit-backdrop-filter:blur(12px);
+    color:#fff;
+    text-decoration:none;
+    font-size:15px;
+    font-weight:600;
+    transition:.35s ease;
+    }
 </style>
 <body>
 
@@ -539,7 +555,7 @@ if ($categories_result) {
                 <div class="col-lg-12 text-center">
                     <h1 class="display-4 fw-bold mb-3" data-aos="fade-up">Our Expert Doctors</h1>
                     <p class="lead mb-0" data-aos="fade-up" data-aos-delay="200">Meet our team of qualified medical professionals</p>
-                    <a href="<?php echo BASE_URL; ?>/pages/outside/add-doctor.php" class="btn btn-primary btn-lg">Add New Doctor</a>
+                    <a href="<?php echo BASE_URL; ?>/pages/outside/add-doctor.php" class="btn btn-primary btn-lg add-new-doctor">Add New Doctor</a>
                 </div>
             </div>
         </div>
