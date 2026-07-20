@@ -191,11 +191,17 @@ $total_pages = ceil($total_doctors / $per_page);
 }
 
         
+        html {
+            overflow-x: hidden;
+        }
+
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); 
             min-height: 100vh;
             position: relative;
+            overflow-x: hidden;
+            width: 100%;
         }
         
         body::before {

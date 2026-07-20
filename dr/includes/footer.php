@@ -277,6 +277,13 @@
    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
    
 <script>
+        // Horizontal AOS animations cause mobile sideways scroll
+        if (window.matchMedia('(max-width: 991px)').matches) {
+            document.querySelectorAll('[data-aos="fade-left"], [data-aos="fade-right"]').forEach(function(el) {
+                el.setAttribute('data-aos', 'fade-up');
+            });
+        }
+
         // Initialize AOS
         AOS.init({
             duration: 1000,

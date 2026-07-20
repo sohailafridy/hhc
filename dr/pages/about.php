@@ -598,6 +598,7 @@ $average_rating = $review_count > 0 ? number_format($total_stars / $review_count
 <style>
 .about-hero-section,
 .about-story-section,
+.cofounder-section,
 .mission-section,
 .support-section,
 .reviews-section,
@@ -1757,6 +1758,8 @@ textarea.form-control {
     .floating-card-bottom {
         position: relative;
         inset: auto;
+        left: auto;
+        right: auto;
         width: 100%;
         margin-top: 16px;
     }
