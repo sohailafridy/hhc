@@ -36,7 +36,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $morning_closing_time = mysqli_real_escape_string($con, $data['morning_closing_time']);
             $evening_opening_time = mysqli_real_escape_string($con, $data['evening_opening_time']);
             $evening_closing_time = mysqli_real_escape_string($con, $data['evening_closing_time']);
-            
+            $shift = '';
+
+
+
             // Check if both shifts are empty
             if ((empty($morning_opening_time) || empty($morning_closing_time)) && 
                 (empty($evening_opening_time) || empty($evening_closing_time))) {
@@ -44,6 +47,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 continue; // Skip this iteration
             }
             
+            if (!empty($morning_opening_time) && !empty($morning_closing_time)) {
+                $shift = 'Morning';
+            }
+            if (!empty($evening_opening_time) && !empty($evening_closing_time)) {
+                $shift = 'Evening';
+            }
+
+
+
+
+
             // $shift = mysqli_real_escape_string($con, $data['shift']);
             $season = mysqli_real_escape_string($con, $data['season']);
             $contact = mysqli_real_escape_string($con, $data['contact']);
@@ -66,14 +80,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     contact = '$contact',
                     days = '$days',
                     off_days = '$off_days',
+                    shift = '$shift',
                     detail = '$detail'
                     WHERE doctor_in_hosp_id = $doctor_in_hosp_id";
                 mysqli_query($con, $update_query);
             } else {
                 // Insert new record
                 $insert_query = "INSERT INTO clinical_info 
-                    (doctor_in_hosp_id, morning_opening_time, morning_closing_time, evening_opening_time, evening_closing_time, season, contact, days, off_days, detail) 
-                    VALUES ('$doctor_in_hosp_id', '$morning_opening_time', '$morning_closing_time', '$evening_opening_time', '$evening_closing_time', '$season', '$contact', '$days', '$off_days', '$detail')";
+                    (doctor_in_hosp_id, morning_opening_time, morning_closing_time, evening_opening_time, evening_closing_time, season, contact, days, off_days, detail,shift) 
+                    VALUES ('$doctor_in_hosp_id', '$morning_opening_time', '$morning_closing_time', '$evening_opening_time', '$evening_closing_time', '$season', '$contact', '$days', '$off_days', '$detail', '$shift')";
                 mysqli_query($con, $insert_query);
                 header("Location: " . BASE_URL . "profile?id=" . $_GET['id']);
             }

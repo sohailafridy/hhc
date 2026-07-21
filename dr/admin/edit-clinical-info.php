@@ -33,7 +33,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['clinical_info_id'])) 
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>';
     } else {
-        $shift            = mysqli_real_escape_string($con, $_POST['shift']);
+
+        if ((!empty($morning_opening_time) || !empty($morning_closing_time)) && 
+        (!empty($evening_opening_time) || !empty($evening_closing_time))) {
+            $shift = 'both';
+        }else{
+           $shift            = mysqli_real_escape_string($con, $_POST['shift']); 
+        }
         $off_days         = mysqli_real_escape_string($con, $_POST['off_days']);
         $contact          = mysqli_real_escape_string($con, $_POST['contact']);
         $detail           = mysqli_real_escape_string($con, $_POST['detail'] ?? '');
@@ -430,6 +436,14 @@ if (!$clinical) {
                                     <div class="col-lg-6 mb-3">
                                         <div class="clinical-record-card">
                                             <div class="clinical-record-body">
+
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <small class="text-muted">Shift</small>
+                                                        <input class="form-control mb-2" type="text" name="shift" value="<?=$clinical['shift']?>">
+                                                    </div>
+                                                </div>
+
                                                 <div class="row">
                                                     <div class="col-md-6">
                                                         <div class="clinical-info-item">
