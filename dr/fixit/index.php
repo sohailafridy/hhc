@@ -21,6 +21,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['commenter_name'])) {
         $error_message = "Error submitting review. Please try again.";
     }
 }
+
+
+    $kohat_entity_id = $hangu_entity_id = $banu_entity_id = $peshawar_entity_id = $abbotabad_entity_id = $mardan_entity_id = $malakand_entity_id = $charsadda_entity_id = $isb_entity_id = $nowshehra_entity_id = $karachi_entity_id =  0;
+     $entity_id_q = mysqli_query($con, "SELECT entity_id,b_name from fixit_branches");
+     while($rs = mysqli_fetch_assoc($entity_id_q)){
+
+        if($rs['b_name']=='Kohat Team')    { $kohat_entity_id = $rs['entity_id']; }
+        if($rs['b_name']=='Hangu Team')    { $hangu_entity_id = $rs['entity_id']; }
+        if($rs['b_name']=='Banu Team')     { $banu_entity_id = $rs['entity_id']; }
+        if($rs['b_name']=='Peshawar Team') { $peshawar_entity_id = $rs['entity_id']; }
+        if($rs['b_name']=='Abbotabad Team'){ $abbotabad_entity_id = $rs['entity_id']; }
+        if($rs['b_name']=='Mardan Team')   { $mardan_entity_id = $rs['entity_id']; }
+        if($rs['b_name']=='Malakand Team') { $malakand_entity_id = $rs['entity_id']; }
+        if($rs['b_name']=='Charsadda Team'){ $charsadda_entity_id = $rs['entity_id']; }
+        if($rs['b_name']=='Islamabad Team'){ $isb_entity_id = $rs['entity_id']; }
+        if($rs['b_name']=='Karachi Team')  { $karachi_entity_id = $rs['entity_id']; }
+        if($rs['b_name']=='Nowshehra Team'){ $nowshehra_entity_id = $rs['entity_id']; }
+
+
+
+     }
+
 ?>
 
 <!-- Hero Section -->
@@ -321,7 +343,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['commenter_name'])) {
                             </div>
                         </div>
                         <div class="team-location-actions">
-                            <a href="<?=BASE_URL?>fixit/kohat" class="btn btn-primary">
+                            <a href="<?=BASE_URL?>fixit/kohat?entity_id=<?=$kohat_entity_id?>" class="btn btn-primary">
                                 <i class="fas fa-arrow-right me-2"></i>View Team
                             </a>
                         </div>
@@ -358,7 +380,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['commenter_name'])) {
                             </div>
                         </div>
                         <div class="team-location-actions">
-                            <a href="<?=BASE_URL?>fixit/fixit-hangu.php" class="btn btn-primary">
+                            <a href="<?=BASE_URL?>fixit/fixit-hangu.php?entity_id=<?=$hangu_entity_id?>" class="btn btn-primary">
                                 <i class="fas fa-arrow-right me-2"></i>View Team
                             </a>
                         </div>
@@ -395,7 +417,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['commenter_name'])) {
                             </div>
                         </div>
                         <div class="team-location-actions">
-                            <a href="<?=BASE_URL?>fixit/fixit-AbbotAbad.php" class="btn btn-primary">
+                            <a href="<?=BASE_URL?>fixit/fixit-AbbotAbad.php?entity_id=<?=$abbotabad_entity_id?>" class="btn btn-primary">
                                 <i class="fas fa-arrow-right me-2"></i>View Team
                             </a>
                         </div>
@@ -432,7 +454,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['commenter_name'])) {
                             </div>
                         </div>
                         <div class="team-location-actions">
-                            <a href="<?=BASE_URL?>fixit/fixit-bannu.php" class="btn btn-primary">
+                            <a href="<?=BASE_URL?>fixit/fixit-bannu.php?entity_id=<?=$banu_entity_id?>" class="btn btn-primary">
                                 <i class="fas fa-arrow-right me-2"></i>View Team
                             </a>
                         </div>
@@ -469,7 +491,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['commenter_name'])) {
                             </div>
                         </div>
                         <div class="team-location-actions">
-                            <a href="<?=BASE_URL?>fixit/fixit-lakki.php" class="btn btn-primary">
+                            <a href="<?=BASE_URL?>fixit/fixit-lakki.php?entity_id=<?=$charsadda_entity_id?>" class="btn btn-primary">
                                 <i class="fas fa-arrow-right me-2"></i>View Team
                             </a>
                         </div>
@@ -506,7 +528,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['commenter_name'])) {
                             </div>
                         </div>
                         <div class="team-location-actions">
-                            <a href="<?=BASE_URL?>fixit/fixit-Mardan.php" class="btn btn-primary">
+                            <a href="<?=BASE_URL?>fixit/fixit-Mardan.php?entity_id=<?=$mardan_entity_id?>" class="btn btn-primary">
                                 <i class="fas fa-arrow-right me-2"></i>View Team
                             </a>
                         </div>
@@ -543,7 +565,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['commenter_name'])) {
                             </div>
                         </div>
                         <div class="team-location-actions">
-                            <a href="<?=BASE_URL?>fixit/fixit-Nowshehra.php" class="btn btn-primary">
+                            <a href="<?=BASE_URL?>fixit/fixit-Nowshehra.php?entity_id=<?=$nowshehra_entity_id?>" class="btn btn-primary">
                                 <i class="fas fa-arrow-right me-2"></i>View Team
                             </a>
                         </div>
@@ -580,7 +602,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['commenter_name'])) {
                             </div>
                         </div>
                         <div class="team-location-actions">
-                            <a href="<?=BASE_URL?>fixit/fixit-Peshawar.php" class="btn btn-primary">
+                            <a href="<?=BASE_URL?>fixit/fixit-Peshawar.php?entity_id=<?=$peshawar_entity_id?>" class="btn btn-primary">
                                 <i class="fas fa-arrow-right me-2"></i>View Team
                             </a>
                         </div>
@@ -617,7 +639,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['commenter_name'])) {
                             </div>
                         </div>
                         <div class="team-location-actions">
-                            <a href="<?=BASE_URL?>fixit/fixit-Karachi.php" class="btn btn-primary">
+                            <a href="<?=BASE_URL?>fixit/fixit-Karachi.php?entity_id=<?=$karachi_entity_id?>" class="btn btn-primary">
                                 <i class="fas fa-arrow-right me-2"></i>View Team
                             </a>
                         </div>

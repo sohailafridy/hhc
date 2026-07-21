@@ -2,6 +2,11 @@
 include '../includes/header.php'; 
 include BASE_PATH.'/includes/menu.php';
 
+$entity_id=0;
+if (isset($_GET['entity_id'])) {
+    $entity_id = $_GET['entity_id'];
+}
+
 // Handle review form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['commenter_name'])) {
     $commenter_name = mysqli_real_escape_string($con, $_POST['commenter_name']);
@@ -11,8 +16,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['commenter_name'])) {
     $fixit_id = 1; // Set fixit_id to 1 as requested
     
     // Insert into feedback table
-    $insert_query = "INSERT INTO feedback (fixit_id, commenter_name, commenter_gmail, comment, stars, status, created_at, updated_at) 
-                     VALUES ('$fixit_id', '$commenter_name', '$commenter_gmail', '$comment', '$stars', 'approved', NOW(), NOW())";
+    $insert_query = "INSERT INTO feedback (entity_id, commenter_name, commenter_gmail, comment, stars, status, created_at, updated_at) 
+                     VALUES ('$entity_id', '$commenter_name', '$commenter_gmail', '$comment', '$stars', 1, NOW(), NOW())";
     
     if (mysqli_query($con, $insert_query)) {
         $success_message = "Review submitted successfully!";
@@ -810,13 +815,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['commenter_name'])) {
             <div class="row" id="reviewsContainer">
                 <?php
                 // Get total reviews count
-                $total_query = "SELECT COUNT(*) as total FROM feedback WHERE fixit_id = 1 AND status = 0";
+                $total_query = "SELECT COUNT(*) as total FROM feedback WHERE entity_id = $entity_id AND status = 1";
                 $total_result = mysqli_query($con, $total_query);
                 $total_reviews = mysqli_fetch_assoc($total_result)['total'];
                 
-                // Fetch reviews from feedback table where fixit_id = 1
+                // Fetch reviews from feedback table where entity_id = $entity_id
                 $limit = isset($_GET['load_more']) ? (int)$_GET['load_more'] : 4;
-                $reviews_query = "SELECT * FROM feedback WHERE fixit_id = 1 AND status = 0 ORDER BY created_at DESC LIMIT $limit";
+                $reviews_query = "SELECT * FROM feedback WHERE entity_id = $entity_id AND status = 1 ORDER BY created_at DESC LIMIT $limit";
                 $reviews_result = mysqli_query($con, $reviews_query);
                 
                 if (mysqli_num_rows($reviews_result) > 0) {
