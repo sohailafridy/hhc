@@ -108,7 +108,9 @@ $query = "SELECT d.*,
                 dc.cat_name,
                 dct.type as cat_type,
                 e.status as estatus,
-                e.reference as ref
+                e.reference as ref,
+                u.username,
+                u.password
           FROM doctors d 
           LEFT JOIN cities c ON d.city_id = c.city_id
           LEFT JOIN hospitals h ON d.hospital_id = h.hospital_id
@@ -117,6 +119,7 @@ $query = "SELECT d.*,
           LEFT JOIN dr_cat_types dct ON dct.dr_cat_type_id = d.cat_type_id
           LEFT JOIN dr_categories dc ON dc.dr_cat_id = dct.dr_cat_id
           LEFT JOIN entities e ON e.entity_id = d.entity_id
+          LEFT JOIN users u ON u.user_id = d.user_id
           WHERE d.doctor_id = $doctor_id";
 $result = mysqli_query($con, $query);
 
@@ -546,6 +549,17 @@ $clinical_result = mysqli_query($con, $clinical_query);
                   <h5><i class="fas fa-user-md me-2"></i>Personal Information</h5>
                </div>
                <div class="info-card-body">
+
+                <div class="info-item">
+                     <span class="info-label">Username</span>
+                     <span class="info-value"><?php echo $doctor['username']; ?></span>
+                  </div>
+                  <div class="info-item">
+                     <span class="info-label">Password</span>
+                     <span class="info-value"><?php echo base64_decode($doctor['password']); ?></span>
+                  </div>
+
+
                   <div class="info-item">
                      <span class="info-label">Doctor ID</span>
                      <span class="info-value"><?php echo $doctor['doctor_id']; ?></span>
