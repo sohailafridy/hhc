@@ -6,13 +6,19 @@
  <?php include BASE_PATH.'/admin/inc/nav.php';?> 
 
 <?php
+
+$entity_id =0;
+if (isset($_GET['entity_id'])) {
+    $entity_id =$_GET['entity_id'];
+}
+
 // Check if it's edit mode
 $edit_mode = false;
 $doctor_data = null;
 
 if (isset($_GET['id']) && is_numeric($_GET['id'])) {
     $doctor_id = $_GET['id'];
-    $edit_query = "SELECT doctors.*, e.entity_id as e_id
+    $edit_query = "SELECT doctors.*, e.entity_id as e_id,e.status as estatus,e.reference as ref
     FROM doctors 
     LEFT JOIN entities e ON e.entity_id = doctors.entity_id
     WHERE doctor_id = $doctor_id";
@@ -126,7 +132,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $update_query .= ", updated_at = NOW() WHERE doctor_id = $doctor_id";
         
         if (mysqli_query($con, $update_query)) {
-             mysqli_query($con, "UPDATE entities set status='". $status ."' WHERE entity_id='". $entity_id ."'");
+            $ref='';
+            if($status==0){
+                $ref = mysqli_real_escape_string($con, $_POST['ref']);
+            }
+
+
+             mysqli_query($con, "UPDATE entities set status='". $status ."', reference ='". $ref ."' WHERE entity_id='". $entity_id ."'");
             $success_msg = "Doctor updated successfully!";
             // Refresh data
             $edit_result = mysqli_query($con, "SELECT * FROM doctors WHERE doctor_id = $doctor_id");
@@ -145,6 +157,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         } else {
             $error_msg = "Error: " . mysqli_error($con);
         }
+
     } else {
         // Insert new doctor
         $hospital_id_value = ($doctor_type == 1 && !empty($hospital_id)) ? "'" . $hospital_id . "'" : "NULL";
@@ -808,17 +821,54 @@ if ($categories_result) {
                             
                             <div class="form-group">
                                 <label class="custom-switch" style="vertical-align: middle;">
-                                    <input type="checkbox" name="status" value="1" 
-                                           <?php echo (!$edit_mode || $doctor_data['status'] == 1) ? 'checked' : ''; ?>>
+                                    <input type="checkbox" id="estatus" name="status" value="1"
+                                        <?php echo (!$edit_mode || (isset($doctor_data['estatus']) && $doctor_data['estatus'] == 1)) ? 'checked' : ''; ?>>
                                     <span class="slider"></span>
                                 </label>
+
                                 <span class="ms-3 fw-bold">Active Status</span>
-                                <small class="text-muted d-block mt-1">Enable to make this doctor visible in the public directory.</small>
+                                <small class="text-muted d-block mt-1">
+                                    Enable to make this doctor visible in the public directory.
+                                </small>
+
+                                <div class="mb-3" id="refDiv">
+                                    <label for="ref" class="form-label">Inactive Status Detail</label>
+                                    <textarea class="form-control" id="ref" name="ref" rows="5"><?php if(isset($doctor_data['ref'])){ echo $doctor_data['ref']; } ?></textarea>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+
+
+            <script>
+document.addEventListener('DOMContentLoaded', function () {
+    const estatus = document.getElementById('estatus');
+    const refDiv = document.getElementById('refDiv');
+    const ref = document.getElementById('ref');
+
+    function toggleRef() {
+        if (estatus.checked) {
+            // Active => Hide textarea
+            refDiv.style.display = 'none';
+            ref.required = false;
+        } else {
+            // Inactive => Show textarea
+            refDiv.style.display = 'block';
+            ref.required = true;
+        }
+    }
+
+    // Initial state
+    toggleRef();
+
+    // On checkbox change
+    estatus.addEventListener('change', toggleRef);
+});
+</script>
+
+
 
             <div class="text-center mt-4 mb-5 animate-up delay-2">
                 <button type="submit" class="btn-action btn-save">

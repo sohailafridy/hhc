@@ -2,7 +2,10 @@
 
 <?php
 
-
+$entity_id =0;
+if (isset($_GET['entity_id'])) {
+    $entity_id =$_GET['entity_id'];
+}
 
 // delete clinical_info and doctor_in_hospital 
 if(isset($_REQUEST['del_clinic_id']) && $_REQUEST['del_clinic_id'] !=0){
@@ -103,7 +106,9 @@ $query = "SELECT d.*,
                 ci.days,
                 ci.off_days,
                 dc.cat_name,
-                dct.type as cat_type
+                dct.type as cat_type,
+                e.status as estatus,
+                e.reference as ref
           FROM doctors d 
           LEFT JOIN cities c ON d.city_id = c.city_id
           LEFT JOIN hospitals h ON d.hospital_id = h.hospital_id
@@ -111,6 +116,7 @@ $query = "SELECT d.*,
           LEFT JOIN clinical_info ci ON dih.doctor_in_hosp_id = ci.doctor_in_hosp_id
           LEFT JOIN dr_cat_types dct ON dct.dr_cat_type_id = d.cat_type_id
           LEFT JOIN dr_categories dc ON dc.dr_cat_id = dct.dr_cat_id
+          LEFT JOIN entities e ON e.entity_id = d.entity_id
           WHERE d.doctor_id = $doctor_id";
 $result = mysqli_query($con, $query);
 
@@ -122,7 +128,7 @@ if (mysqli_num_rows($result) == 0) {
 $doctor = mysqli_fetch_assoc($result);
 
 // Fetch feedbacks for this doctor
-$feedback_query = "SELECT f.* FROM feedback f WHERE f.doctor_id = $doctor_id ORDER BY f.created_at DESC LIMIT 10";
+$feedback_query = "SELECT f.* FROM feedback f WHERE f.entity_id = $entity_id ORDER BY f.created_at DESC LIMIT 10";
 $feedback_result = mysqli_query($con, $feedback_query);
 
 
@@ -507,7 +513,7 @@ $clinical_result = mysqli_query($con, $clinical_query);
                         </div>
                      </div>
                      <div class="col-md-4 text-end">
-                        <?php if ($doctor['status'] == 1): ?>
+                        <?php if ($doctor['estatus'] == 1): ?>
                            <?php if ($doctor['emergency_status'] == 1): ?>
                               <button onclick="toggleEmergencyStatus(<?php echo $doctor['doctor_id']; ?>, 0)" class="btn-action btn-success">
                                  <i class="fas fa-check me-2"></i>
@@ -565,13 +571,26 @@ $clinical_result = mysqli_query($con, $clinical_query);
                   <div class="info-item">
                      <span class="info-label">Status</span>
                      <span class="info-value">
-                        <?php if ($doctor['status'] == 1): ?>
+                        <?php if ($doctor['estatus'] == 1): ?>
                            <span class="badge-status badge-active">Active</span>
                         <?php else: ?>
                            <span class="badge-status badge-inactive">Inactive</span>
                         <?php endif; ?>
                      </span>
                   </div>
+
+                  <div class="info-item">
+                     <?php
+                        if ($doctor['estatus'] == 0){ ?>
+                            <span class="info-label">Inactive Status Detail</span>
+                            <p class="text-danger"> <?=$doctor['ref']?> </p>
+                            <?php
+                        }
+                     ?>
+                  </div>
+
+
+
                   <?php if (!empty($doctor['static_clinical_info'])): ?>
                   <div class="info-item" style="display: block; border-top: 1px solid #f1f3f4; padding-top: 15px;">
                      <span class="info-label" style="display: block; margin-bottom: 10px;">Clinical Info Summary</span>

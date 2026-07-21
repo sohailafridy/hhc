@@ -121,12 +121,15 @@ $total_pages = ceil($total_records / $records_per_page);
                 h.hospital_name,
                 COUNT(f.feedback_id) as total_feedbacks,
                 AVG(f.stars) as avg_rating,
-                dct.type as speciality
+                dct.type as speciality,
+                e.entity_id as e_id,
+                e.status as estatus
           FROM doctors d
           LEFT JOIN cities c ON d.city_id = c.city_id
           LEFT JOIN hospitals h ON d.hospital_id = h.hospital_id
           LEFT JOIN feedback f ON d.entity_id = f.entity_id
           LEFT JOIN dr_cat_types dct ON d.cat_type_id = dct.dr_cat_type_id
+          LEFT JOIN entities e ON e.entity_id = d.entity_id
           $where_clause
           GROUP BY d.doctor_id
           ORDER BY d.created_at DESC 
@@ -615,7 +618,7 @@ $result = mysqli_query($con, $query);
                                        <?php echo htmlspecialchars($doctor['speciality']); ?>
                                     </div>
                                     <div class="d-flex justify-content-center flex-wrap gap-1">
-                                       <?php if ($doctor['status'] == 1): ?>
+                                       <?php if ($doctor['estatus'] == 1): ?>
                                           <?php if ($doctor['emergency_status'] == 1): ?>
                                              <span class="badge-modern badge bg-warning" onclick="toggleEmergencyStatus(<?php echo $doctor['doctor_id']; ?>, 0)" style="cursor: pointer;" title="Click to enable emergency">Active</span>
                                           <?php else: ?>
@@ -673,7 +676,7 @@ $result = mysqli_query($con, $query);
                                     <?php endif; ?>
                                     
                                     <div class="mt-2 d-flex justify-content-between align-items-center">
-                                       <a href="<?php echo BASE_URL; ?>admin/doctors/profile?id=<?php echo $doctor['doctor_id']; ?>" 
+                                       <a href="<?php echo BASE_URL; ?>admin/doctors/profile?id=<?php echo $doctor['doctor_id']; ?>&entity_id=<?=$doctor['entity_id']?>" 
                                           class="btn btn-primary btn-xs" style="font-size: 0.7rem; padding: 4px 8px;">
                                           <i class="fas fa-user me-1"></i> View
                                        </a>
@@ -682,7 +685,7 @@ $result = mysqli_query($con, $query);
                                           <i class="fas fa-user me-1"></i> Assign
                                        </a>
                                        <div>
-                                          <a href="<?php echo BASE_URL; ?>admin/doctors/add?id=<?php echo $doctor['doctor_id']; ?>" 
+                                          <a href="<?php echo BASE_URL; ?>admin/doctors/add?id=<?php echo $doctor['doctor_id']; ?>&entity_id=<?=$doctor['entity_id']?>" 
                                              class="btn btn-xs btn-warning" title="Edit" style="font-size: 0.7rem; padding: 4px 8px;">
                                              <i class="icon-pencil"></i>
                                           </a>
