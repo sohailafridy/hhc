@@ -398,22 +398,22 @@ if (!$get_doc_in_hosp) {
                            <label class="form-label">
                               <i class="fas fa-clock me-2"></i>Opening Time
                            </label>
-                           <input type="text" 
-                                  class="form-input" 
-                                  name="clinical_data[<?php echo $rs['doctor_in_hosp_id']; ?>][morning_opening_time]" 
-                                  value="<?php echo isset($clinical_info[$rs['doctor_in_hosp_id']]) ? htmlspecialchars($clinical_info[$rs['doctor_in_hosp_id']]['opening_time']) : ''; ?>"
-                                  placeholder="e.g., 9:00 AM">
+                           <input type="text"
+                               class="form-input timepicker"
+                               name="clinical_data[<?php echo $rs['doctor_in_hosp_id']; ?>][morning_opening_time]"
+                               value="<?php echo isset($clinical_info[$rs['doctor_in_hosp_id']]) ? htmlspecialchars($clinical_info[$rs['doctor_in_hosp_id']]['opening_time']) : ''; ?>"
+                               placeholder="Select Opening Time">
                         </div>
 
                         <div class="form-group">
                            <label class="form-label">
                               <i class="fas fa-clock me-2"></i>Closing Time
                            </label>
-                           <input type="text" 
-                                  class="form-input" 
-                                  name="clinical_data[<?php echo $rs['doctor_in_hosp_id']; ?>][morning_closing_time]" 
-                                  value="<?php echo isset($clinical_info[$rs['doctor_in_hosp_id']]) ? htmlspecialchars($clinical_info[$rs['doctor_in_hosp_id']]['closing_time']) : ''; ?>"
-                                  placeholder="e.g., 5:00 PM">
+                           <input type="text"
+                           class="form-input timepicker"
+                           name="clinical_data[<?php echo $rs['doctor_in_hosp_id']; ?>][morning_closing_time]"
+                           value="<?php echo isset($clinical_info[$rs['doctor_in_hosp_id']]) ? htmlspecialchars($clinical_info[$rs['doctor_in_hosp_id']]['closing_time']) : ''; ?>"
+                           placeholder="Select Closing Time">
                         </div>
                         <!-- first shift end -->
 
@@ -428,22 +428,22 @@ if (!$get_doc_in_hosp) {
                             <label class="form-label">
                                 <i class="fas fa-clock me-2"></i>Opening Time
                             </label>
-                            <input type="text" 
-                                    class="form-input" 
-                                    name="clinical_data[<?php echo $rs['doctor_in_hosp_id']; ?>][evening_opening_time]" 
-                                    value="<?php echo isset($clinical_info[$rs['doctor_in_hosp_id']]) ? htmlspecialchars($clinical_info[$rs['doctor_in_hosp_id']]['second_opening_time']) : ''; ?>"
-                                    placeholder="e.g., 9:00 AM">
+                            <input type="text"
+                               class="form-input timepicker"
+                               name="clinical_data[<?php echo $rs['doctor_in_hosp_id']; ?>][evening_opening_time]"
+                               value="<?php echo isset($clinical_info[$rs['doctor_in_hosp_id']]) ? htmlspecialchars($clinical_info[$rs['doctor_in_hosp_id']]['second_opening_time']) : ''; ?>"
+                               placeholder="Select Opening Time">
                             </div>
 
                             <div class="form-group">
                             <label class="form-label">
                                 <i class="fas fa-clock me-2"></i>Closing Time
                             </label>
-                            <input type="text" 
-                                    class="form-input" 
-                                    name="clinical_data[<?php echo $rs['doctor_in_hosp_id']; ?>][evening_closing_time]" 
-                                    value="<?php echo isset($clinical_info[$rs['doctor_in_hosp_id']]) ? htmlspecialchars($clinical_info[$rs['doctor_in_hosp_id']]['second_closing_time']) : ''; ?>"
-                                    placeholder="e.g., 5:00 PM">
+                            <input type="text"
+                               class="form-input timepicker"
+                               name="clinical_data[<?php echo $rs['doctor_in_hosp_id']; ?>][evening_closing_time]"
+                               value="<?php echo isset($clinical_info[$rs['doctor_in_hosp_id']]) ? htmlspecialchars($clinical_info[$rs['doctor_in_hosp_id']]['second_closing_time']) : ''; ?>"
+                               placeholder="Select Closing Time">
                             </div>
 
                             
@@ -453,14 +453,32 @@ if (!$get_doc_in_hosp) {
 
 
                         <div class="form-group">
-                           <label class="form-label">
-                              <i class="fas fa-calendar-alt me-2"></i>Season
-                           </label>
-                           <input type="text" 
+                          <!--  <input type="text" 
                                   class="form-input" 
                                   name="clinical_data[<?php echo $rs['doctor_in_hosp_id']; ?>][season]" 
                                   value="<?php echo isset($clinical_info[$rs['doctor_in_hosp_id']]) ? htmlspecialchars($clinical_info[$rs['doctor_in_hosp_id']]['season']) : ''; ?>"
-                                  placeholder="e.g., Summer, Winter">
+                                  placeholder="e.g., Summer, Winter"> -->
+
+
+                                  <div class="form-group">
+                                    <label class="form-label">
+                                        <i class="fas fa-calendar-alt me-2"></i>Season
+                                    </label>
+
+                                    <select class="form-input" name="clinical_data[<?php echo $rs['doctor_in_hosp_id']; ?>][season]">
+                                        <option value="">-- Select Season --</option>
+                                        <option value="Summer" <?php echo (isset($clinical_info[$rs['doctor_in_hosp_id']]) && $clinical_info[$rs['doctor_in_hosp_id']]['season'] == 'Summer') ? 'selected' : ''; ?>>
+                                            Summer
+                                        </option>
+                                        <option value="Winter" <?php echo (isset($clinical_info[$rs['doctor_in_hosp_id']]) && $clinical_info[$rs['doctor_in_hosp_id']]['season'] == 'Winter') ? 'selected' : ''; ?>>
+                                            Winter
+                                        </option>
+                                    </select>
+                                </div>
+
+
+
+
                         </div>
 
                         <div class="form-group">
@@ -475,25 +493,67 @@ if (!$get_doc_in_hosp) {
                         </div>
 
                         <div class="form-group">
-                           <label class="form-label">
-                              <i class="fas fa-calendar-week me-2"></i>Working Days
-                           </label>
-                           <input type="text" 
-                                  class="form-input" 
-                                  name="clinical_data[<?php echo $rs['doctor_in_hosp_id']; ?>][days]" 
-                                  value="<?php echo isset($clinical_info[$rs['doctor_in_hosp_id']]) ? htmlspecialchars($clinical_info[$rs['doctor_in_hosp_id']]['days']) : ''; ?>"
-                                  placeholder="e.g., Monday to Friday">
+                            <label class="form-label">
+                                <i class="fas fa-calendar-week me-2"></i>Working Days
+                            </label>
+
+                            <select class="form-input" name="clinical_data[<?php echo $rs['doctor_in_hosp_id']; ?>][days]">
+                                <option value="">-- Select Working Days --</option>
+
+                                <?php
+                                $working_days = [
+                                    "Monday to Friday",
+                                    "Monday to Saturday",
+                                    "Monday to Sunday",
+                                    "Tuesday to Sunday",
+                                    "Friday to Sunday",
+                                    "Saturday & Sunday",
+                                    "Sunday Only",
+                                    "24/7"
+                                ];
+
+                                $selected = isset($clinical_info[$rs['doctor_in_hosp_id']])
+                                    ? $clinical_info[$rs['doctor_in_hosp_id']]['days']
+                                    : '';
+
+                                foreach ($working_days as $day) {
+                                    echo '<option value="'.$day.'" '.($selected == $day ? 'selected' : '').'>'.$day.'</option>';
+                                }
+                                ?>
+                            </select>
                         </div>
 
                         <div class="form-group">
-                           <label class="form-label">
-                              <i class="fas fa-calendar-times me-2"></i>Off Days
-                           </label>
-                           <input type="text" 
-                                  class="form-input" 
-                                  name="clinical_data[<?php echo $rs['doctor_in_hosp_id']; ?>][off_days]" 
-                                  value="<?php echo isset($clinical_info[$rs['doctor_in_hosp_id']]) ? htmlspecialchars($clinical_info[$rs['doctor_in_hosp_id']]['off_days']) : ''; ?>"
-                                  placeholder="e.g., Saturday, Sunday">
+                            <label class="form-label">
+                                <i class="fas fa-calendar-times me-2"></i>Off Days
+                            </label>
+
+                            <select class="form-input" name="clinical_data[<?php echo $rs['doctor_in_hosp_id']; ?>][off_days]">
+                                <option value="">-- Select Off Days --</option>
+
+                                <?php
+                                $off_days = [
+                                    "None",
+                                    "Monday",
+                                    "Tuesday",
+                                    "Wednesday",
+                                    "Thursday",
+                                    "Friday",
+                                    "Saturday",
+                                    "Sunday",
+                                    "Saturday & Sunday",
+                                    "Friday & Saturday"
+                                ];
+
+                                $selected = isset($clinical_info[$rs['doctor_in_hosp_id']])
+                                    ? $clinical_info[$rs['doctor_in_hosp_id']]['off_days']
+                                    : '';
+
+                                foreach ($off_days as $day) {
+                                    echo '<option value="'.$day.'" '.($selected == $day ? 'selected' : '').'>'.$day.'</option>';
+                                }
+                                ?>
+                            </select>
                         </div>
 
                         <div class="form-group" style="grid-column: 1 / -1;">
@@ -530,6 +590,8 @@ if (!$get_doc_in_hosp) {
       </div>
    </div>
 </div>
+
+
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -572,3 +634,16 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <?php include BASE_PATH.'/admin/inc/footer.php';?>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    flatpickr(".timepicker", {
+        enableTime: true,
+        noCalendar: true,
+        dateFormat: "h:i K", // 09:30 AM
+        time_24hr: false,
+        minuteIncrement: 5
+    });
+
+});
+</script>

@@ -1184,21 +1184,11 @@
                                                 <span><?php echo htmlspecialchars($doctor['city_name']); ?></span>
                                             </div>
                                         </div>
-                                        
-                                        <?php if(!empty($doctor['hospital_name'])): ?>
-                                        <div class="contact-item">
-                                            <i class="fas fa-hospital"></i>
-                                            <div>
-                                                <label>Hospital</label>
-                                                <span><?php echo htmlspecialchars($doctor['hospital_name']); ?></span>
-                                            </div>
-                                        </div>
-                                        <?php endif; ?>
                                     </div>
                                 </div>
                                 
                                 <!-- Professional Information -->
-                                <div class="detail-section">
+                              <!--   <div class="detail-section">
                                     <h3 class="section-title">
                                         <i class="fas fa-user-md me-2"></i>Professional Information
                                     </h3>
@@ -1222,7 +1212,7 @@
                                         </div>
                                         <?php endif; ?>
                                     </div>
-                                </div>
+                                </div> -->
                                 
                                 <!-- About Section -->
                                 <?php if(!empty($doctor['short_detail'])): ?>
@@ -1274,98 +1264,108 @@
                                 <?php while($clinical = mysqli_fetch_assoc($clinical_result)){ ?>
 
                                     <div class="col-lg-6 col-md-6 mb-4">
-                                        <div class="clinical-record-card h-100">
+    <div class="clinical-record-card h-100">
 
-                                            <div class="clinical-record-header">
-                                                <i class="fas fa-hospital me-2"></i>
-                                                <h6>
-                                                    <?php
-                                                    if ($clinical['hospital_name'] != '') {
-                                                        echo '<a href="' . BASE_URL . 'admin/hospitals/detail?id=' . $clinical['hospital_id'] . '" target="_blank">' . htmlspecialchars($clinical['hospital_name']) . '</a>';
-                                                    } else {
-                                                        echo 'Personal Clinic';
-                                                    }
-                                                    ?>
-                                                </h6>
-                                            </div>
+        <div class="clinical-record-header">
+            <i class="fas fa-hospital me-2"></i>
+            <h6>
+                <?php
+                if ($clinical['hospital_name'] != '') {
+                    echo '<a href="' . BASE_URL . 'admin/hospitals/detail?id=' . $clinical['hospital_id'] . '" target="_blank">Hospital ' . htmlspecialchars($clinical['hospital_name']) . '</a>';
+                } else {
+                    echo 'Personal Clinic';
+                }
+                ?>
+            </h6>
+        </div>
 
-                                            <div class="clinical-record-body">
+        <div class="clinical-record-body">
 
-                                                <div class="row">
+            <div class="row">
 
-                                                    <!-- Left Column -->
-                                                    <div class="col-md-6">
+                <!-- Left Column -->
+                <div class="col-md-6">
 
-                                                        <div class="clinical-info-item">
-                                                            <i class="fas fa-clock text-primary"></i>
-                                                            <div>
-                                                                <small class="text-muted">Timing</small><br>
-                                                                <strong>
-                                                                    <?php
-                                                                    if (!empty($clinical['morning_opening_time'])) {
-                                                                        echo date('h:i A', strtotime($clinical['morning_opening_time']));
-                                                                        echo " - ";
-                                                                        echo date('h:i A', strtotime($clinical['morning_closing_time']));
-                                                                    }
+                    <div class="clinical-info-item">
+                        <i class="fas fa-clock text-primary"></i>
+                        <div>
+                            <small class="text-muted">Timing</small><br>
+                            <strong>
+                                <?php
+                                if (!empty($clinical['morning_opening_time'])) {
+                                    echo date('h:i A', strtotime($clinical['morning_opening_time']));
+                                    echo " - ";
+                                    echo date('h:i A', strtotime($clinical['morning_closing_time']));
+                                }
 
-                                                                    if (!empty($clinical['evening_opening_time'])) {
-                                                                        echo "<br>";
-                                                                        echo date('h:i A', strtotime($clinical['evening_opening_time']));
-                                                                        echo " - ";
-                                                                        echo date('h:i A', strtotime($clinical['evening_closing_time']));
-                                                                    }
-                                                                    ?>
-                                                                </strong>
-                                                            </div>
-                                                        </div>
+                                if (!empty($clinical['evening_opening_time'])) {
+                                    echo "<br>";
+                                    echo date('h:i A', strtotime($clinical['evening_opening_time']));
+                                    echo " - ";
+                                    echo date('h:i A', strtotime($clinical['evening_closing_time']));
+                                }
+                                ?>
+                            </strong>
+                        </div>
+                    </div>
 
-                                                        <div class="clinical-info-item">
-                                                            <i class="fas fa-calendar-day text-success"></i>
-                                                            <div>
-                                                                <small class="text-muted">Working Days</small><br>
-                                                                <strong><?php echo htmlspecialchars($clinical['days']); ?></strong>
-                                                            </div>
-                                                        </div>
+                    <div class="clinical-info-item">
+                        <i class="fas fa-calendar-day text-success"></i>
+                        <div>
+                            <small class="text-muted">Working Days</small><br>
+                            <strong><?php echo htmlspecialchars($clinical['days']); ?></strong>
+                        </div>
+                    </div>
 
-                                                    </div>
+                </div>
 
-                                                    <!-- Right Column -->
-                                                    <div class="col-md-6">
+                <!-- Right Column -->
+                <div class="col-md-6">
 
-                                                        <div class="clinical-info-item">
-                                                            <i class="fas fa-user-md text-info"></i>
-                                                            <div>
-                                                                <small class="text-muted">Doctor</small><br>
-                                                                <strong><?php echo htmlspecialchars($doctor_data['name'] ?? ''); ?></strong>
-                                                            </div>
-                                                        </div>
+                    <div class="clinical-info-item">
+                        <i class="fas fa-user-md text-info"></i>
+                        <div>
+                            <small class="text-muted">Shift</small><br>
+                            <strong>
+                                <?php
+                                if (!empty($clinical['morning_opening_time'])) {
+                                    echo 'Morning';
+                                }
 
-                                                    </div>
+                                if (!empty($clinical['evening_opening_time'])) {
+                                    echo '<br>Evening';
+                                }
+                                ?>
+                            </strong>
+                        </div>
+                    </div>
 
-                                                </div>
+                    <div class="clinical-info-item">
+                        <i class="fas fa-phone text-warning"></i>
+                        <div>
+                            <small class="text-muted">Contact</small><br>
+                            <strong><?php echo htmlspecialchars($clinical['contact']); ?></strong>
+                        </div>
+                    </div>
 
-                                                <div class="clinical-contact">
-                                                    <i class="fas fa-phone text-warning"></i>
-                                                    <div>
-                                                        <small class="text-muted">Contact</small><br>
-                                                        <strong><?php echo htmlspecialchars($clinical['contact']); ?></strong>
-                                                    </div>
-                                                </div>
+                </div>
 
-                                                <?php if (!empty($clinical['detail'])) { ?>
-                                                    <div class="clinical-detail">
-                                                        <i class="fas fa-info-circle text-primary"></i>
-                                                        <div>
-                                                            <small class="text-muted">Detail</small><br>
-                                                            <strong><?php echo htmlspecialchars($clinical['detail']); ?></strong>
-                                                        </div>
-                                                    </div>
-                                                <?php } ?>
+            </div>
 
-                                            </div>
+            <?php if (!empty($clinical['detail'])) { ?>
+                <div class="clinical-detail mt-3">
+                    <i class="fas fa-info-circle text-primary"></i>
+                    <div>
+                        <small class="text-muted">Detail</small><br>
+                        <strong><?php echo htmlspecialchars($clinical['detail']); ?></strong>
+                    </div>
+                </div>
+            <?php } ?>
 
-                                        </div>
-                                    </div>
+        </div>
+
+    </div>
+</div>
 
                                 <?php } ?>
                             </div>

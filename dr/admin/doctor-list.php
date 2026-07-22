@@ -28,16 +28,16 @@ if (isset($_GET['delete_id']) && is_numeric($_GET['delete_id'])) {
     $doctor_pic = $doctor_pic_data ? $doctor_pic_data['doctor_pic'] : '';
     
     // Delete the doctor from database
-    $delete_query = "DELETE FROM doctors WHERE doctor_id = $delete_id";
+    $delete_query = "UPDATE entities set status = 0 WHERE entity_id = $delete_id";
     
     if (mysqli_query($con, $delete_query)) {
         // Delete the picture file if it exists
-        if (!empty($doctor_pic)) {
-            $pic_path = BASE_PATH."/admin/inc/uploads/doctors/".$doctor_pic;
-            if (file_exists($pic_path)) {
-                unlink($pic_path);
-            }
-        }
+        // if (!empty($doctor_pic)) {
+        //     $pic_path = BASE_PATH."/admin/inc/uploads/doctors/".$doctor_pic;
+        //     if (file_exists($pic_path)) {
+        //         unlink($pic_path);
+        //     }
+        // }
         $_SESSION['success_msg'] = "Doctor deleted successfully!";
     } else {
         $_SESSION['error_msg'] = "Error: " . mysqli_error($con);
@@ -689,7 +689,7 @@ $result = mysqli_query($con, $query);
                                              class="btn btn-xs btn-warning" title="Edit" style="font-size: 0.7rem; padding: 4px 8px;">
                                              <i class="icon-pencil"></i>
                                           </a>
-                                          <a href="javascript:void(0)" onclick="deleteDoctor(<?php echo $doctor['doctor_id']; ?>)" 
+                                          <a href="javascript:void(0)" onclick="deleteDoctor(<?php echo $doctor['entity_id']; ?>)" 
                                              class="btn btn-xs btn-danger" title="Delete" style="font-size: 0.7rem; padding: 4px 8px;">
                                              <i class="icon-trash"></i>
                                           </a>
@@ -748,9 +748,9 @@ $result = mysqli_query($con, $query);
 <script>
 
 
-function deleteDoctor(doctorId) {
+function deleteDoctor(entity_id) {
     if (confirm('Are you sure you want to delete this doctor? This action cannot be undone.')) {
-        window.location.href = '?delete_id=' + doctorId;
+        window.location.href = '?delete_id=' + entity_id;
     }
 }
 

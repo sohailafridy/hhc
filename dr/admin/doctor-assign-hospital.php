@@ -10,12 +10,17 @@
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $doctor_id = mysqli_real_escape_string($con, $_POST['doctor_id']);
     $hospitals = isset($_POST['hospitals']) ? $_POST['hospitals'] : [];
-    
+    $clinic=0;
     if (!empty($hospitals)) {
         foreach ($hospitals as $hospital_id) {
             $hospital_id = mysqli_real_escape_string($con, $hospital_id);
+
+            if($hospital_id==0){$clinic=1;}
+
+
+
             $insert_query = "INSERT INTO doctor_in_hospital (doctor_id, hospital_id, if_clinic) 
-                           VALUES ('$doctor_id', '$hospital_id', 0)";
+                           VALUES ('$doctor_id', '$hospital_id', '$clinic')";
             mysqli_query($con, $insert_query);
         }
         $success_msg = "Hospitals assigned to doctor successfully!";
@@ -44,12 +49,18 @@ if (mysqli_num_rows($get_city_id) == 0) {
 }
 
 $city_id = mysqli_fetch_assoc($get_city_id)['city_id'];
-$get_already_assign_hosp = mysqli_query($con,"SELECT hospital_id FROM doctor_in_hospital where doctor_id = $doctor_id");
+$get_already_assign_hosp = mysqli_query($con,"SELECT if_clinic,hospital_id FROM doctor_in_hospital where doctor_id = $doctor_id");
 $already_assign_hosp = [];
+
+$clinic_check =0;
+
+
 while($row = mysqli_fetch_assoc($get_already_assign_hosp)) {
     $already_assign_hosp[] = $row['hospital_id'];
+    if ($row['if_clinic'] == 1) {
+        $clinic_check =1;
+    }
 }
-
 // Get available hospitals (not already assigned)
 if (!empty($already_assign_hosp)) {
     $hosp_ids = implode(',', $already_assign_hosp);
@@ -275,6 +286,29 @@ if (!empty($already_assign_hosp)) {
                      </div>
                   </div>
 
+                  <?php
+                    if ($clinic_check==0) { ?>
+                        <div class="hospital-item">
+                            <div class="custom-checkbox">
+                               <input class="form-check-input hospital-checkbox" name="hospitals[]" type="checkbox" value="0" id="personal_clinic">
+                               <label class="form-check-label" for="personal_clinic">
+                                  <div class="hospital-icon">
+                                     <i class="fas fa-hospital"></i>
+                                  </div>
+                                  <div>
+                                     <div class="hospital-name">Personal Clinic</div>
+                                     <small class="text-muted">
+                                         -
+                                     </small>
+                                  </div>
+                               </label>
+                            </div>
+                        </div>
+                    <?php }
+                  ?>
+                  
+
+
                   <?php while($rs = mysqli_fetch_assoc($get_hosp)) { ?>
                      <div class="hospital-item">
                         <div class="custom-checkbox">
@@ -379,5 +413,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
+
+
 
 <?php include BASE_PATH.'/admin/inc/footer.php';?>

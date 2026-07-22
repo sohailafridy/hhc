@@ -145,11 +145,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $doctor_data = mysqli_fetch_assoc($edit_result);
 
             if($hospital_id !== null && $hospital_id !== '' && $hospital_id !== 0){
-                mysqli_query($con, "DELETE FROM doctor_in_hospital WHERE doctor_id = $doctor_id");
                 $insert_hospital_query = "INSERT INTO doctor_in_hospital (doctor_id, hospital_id) VALUES ($doctor_id, $hospital_id)";
                 mysqli_query($con, $insert_hospital_query);
             }else{
-                mysqli_query($con, "DELETE FROM doctor_in_hospital WHERE doctor_id = $doctor_id");
                 $insert_hospital_query = "INSERT INTO doctor_in_hospital (doctor_id, if_clinic,hospital_id) VALUES ($doctor_id, 1,0)";
                 mysqli_query($con, $insert_hospital_query);
             }
