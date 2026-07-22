@@ -316,6 +316,7 @@
     }
     
     .doctor-name {
+        color: #E0E7FF !important;
         font-size: 2rem;
         font-weight: 800;
         margin-bottom: 15px;
@@ -1070,6 +1071,55 @@
             width: 100%;
         }
     }
+    .doctor-basic-info{
+    text-align:center;
+}
+
+.doctor-name{
+    color:#fff;
+    font-size:34px;
+    font-weight:700;
+    margin-bottom:10px;
+}
+
+.specialization-badge{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    background:rgba(255,255,255,.18);
+    color:#fff;
+    padding:8px 18px;
+    border-radius:30px;
+    font-size:17px;
+    font-weight:600;
+    border:1px solid rgba(255,255,255,.35);
+    margin-bottom:15px;
+}
+
+.doctor-degree{
+    color:#F8FAFC;
+    font-size:20px;
+    font-weight:600;
+    margin-bottom:12px;
+}
+
+.static-clinical-info{
+    color:#E2E8F0;
+    font-size:16px;
+    margin-bottom:15px;
+}
+
+.doctor-experience{
+    color:#fff;
+    font-size:17px;
+    font-weight:500;
+}
+
+.doctor-rating{
+    margin-top:15px;
+    color:#FFD700;
+    font-weight:600;
+}
 </style>
 <body>
 
@@ -1108,30 +1158,38 @@
                                 </div>
                                 
                                 <div class="doctor-basic-info">
-                                    <h2 class="doctor-name"><?php echo htmlspecialchars($doctor['doctor_name']); ?></h2>
-                                    <p class="doctor-specialization">
-                                        <?php 
-                                        // Get specialization name
+
+                                    <h2 class="doctor-name">
+                                        Dr. <?php echo htmlspecialchars($doctor['doctor_name']); ?>
+                                    </h2>
+
+                                    <div class="specialization-badge">
+                                        <i class="fas fa-user-md"></i>
+                                        <?php
                                         $spec_query = "SELECT `type` FROM dr_cat_types WHERE dr_cat_type_id = " . $doctor['cat_type_id'];
                                         $spec_result = mysqli_query($con, $spec_query);
                                         $spec = mysqli_fetch_assoc($spec_result);
                                         echo $spec ? htmlspecialchars($spec['type']) : 'General Practitioner';
                                         ?>
-                                    </p>
-                                    <p class="doctor-specialization">
+                                    </div>
+
+                                    <p class="doctor-degree">
                                         <?php echo htmlspecialchars($doctor['short_detail']); ?>
-                                        
                                     </p>
+
                                     <p class="static-clinical-info">
                                         <?php echo htmlspecialchars($doctor['static_clinical_info']); ?>
                                     </p>
-                                    <p class="doctor-experience">
-                                        <i class="fas fa-briefcase me-2"></i>
-                                        <?php echo $doctor['experience_years']; ?> years experience
-                                    </p>
-                                    <p class="doctor-rating">
-                                        <i class="fas fa-star me-2"></i>
-                                        <?php 
+                                    <?php
+                                        if ($doctor['experience_years'] !='' && $doctor['experience_years'] !=0) { ?>
+                                            <p class="doctor-experience">
+                                            <i class="fas fa-briefcase me-2"></i>
+                                            <?php echo $doctor['experience_years']; ?> Years Experience
+                                        </p>
+                                       <?php }
+                                    ?>
+
+                                     <?php 
                                         // Calculate average rating
                                         $rating_query = "SELECT AVG(stars) as avg_rating, COUNT(*) as total_reviews 
                                                       FROM feedback WHERE entity_id = " . $doctor['entity_id'];
@@ -1140,11 +1198,17 @@
                                         $avg_rating = $rating_data['avg_rating'] ? round($rating_data['avg_rating'], 1) : 0;
                                         $total_reviews = $rating_data['total_reviews'] ? $rating_data['total_reviews'] : 0;
                                         $rating_percentage = ($avg_rating / 5) * 100;
+                                        if($avg_rating !=0){
                                         ?>
-                                        <span class="rating-score"><?php echo $avg_rating; ?></span>/5.0 
-                                        <span class="rating-percentage">(<?php echo $rating_percentage; ?>%)</span>
-                                        <span class="total-reviews">based on <?php echo $total_reviews; ?> reviews</span>
-                                    </p>
+                                            <p class="doctor-rating">
+                                                <i class="fas fa-star me-2"></i>
+                                                <span class="rating-score"><?php echo $avg_rating; ?></span>/5.0 
+                                                <span class="rating-percentage">(<?php echo $rating_percentage; ?>%)</span>
+                                                <span class="total-reviews">based on <?php echo $total_reviews; ?> reviews</span>
+                                            </p>
+                                        <?php } ?>
+
+
                                 </div>
                             </div>
                         </div>
