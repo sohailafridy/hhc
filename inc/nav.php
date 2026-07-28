@@ -69,7 +69,7 @@
                 <a href="#patientsSubmenu"
                    data-bs-toggle="collapse"
                    aria-expanded="<?php echo $is_clients_active ? 'true' : 'false'; ?>"
-                   class="dropdown-toggle <?php echo $is_clients_active ? 'active' : ''; ?>">
+                   class="dropdown-toggle <?php echo $is_clients_active ? 'active' : ''; ?>" style="display: none;" >
                     <i class="fas fa-users"></i> Patients
                 </a>
 
