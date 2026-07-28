@@ -57,6 +57,46 @@
                 </ul>
             </li>
 
+            <li class="<?php 
+                    $active_pages = ['patient-add.php', 'patient-list.php', 'patient-edit.php','patient-visit-add.php'];
+                    $is_clients_active = in_array(basename($_SERVER['PHP_SELF']), $active_pages);
+                    echo $is_clients_active ? 'active' : ''; 
+                ?>">
+                <?php
+                      $current_page = basename($_SERVER['PHP_SELF']);
+                ?>
+
+                <a href="#patientsSubmenu"
+                   data-bs-toggle="collapse"
+                   aria-expanded="<?php echo $is_clients_active ? 'true' : 'false'; ?>"
+                   class="dropdown-toggle <?php echo $is_clients_active ? 'active' : ''; ?>">
+                    <i class="fas fa-users"></i> Patients
+                </a>
+
+                <ul class="collapse list-unstyled ps-3 <?php echo $is_clients_active ? 'show' : ''; ?>"
+                    id="patientsSubmenu">
+
+                    <li class="<?php echo $current_page == 'patient-add.php' ? 'active' : ''; ?>">
+                        <a href="<?php echo BASE_URL; ?>/admin/patient/add"
+                           class="small py-2 <?php echo $current_page == 'patient-add.php' ? 'active' : ''; ?>">
+                            <i class="fas fa-user-tag me-2"></i> Add/Register
+                        </a>
+                    </li>
+
+                    <li class="<?php echo $current_page == 'patient-list.php' || $current_page == 'patient-edit.php' ? 'active' : ''; ?>">
+                        <a href="<?php echo BASE_URL; ?>/admin/patient/list"
+                           class="small py-2 <?php echo $current_page == 'admin/patient/list' || $current_page == 'admin/patient/edit' ? 'active' : ''; ?>">
+                            <i class="fas fa-list-ul me-2"></i> List
+                        </a>
+                    </li>
+                </ul>
+            </li>
+
+
+
+
+
+
             <!-- <li class="<?php echo basename($_SERVER['PHP_SELF']) == 'products.php' ? 'active' : ''; ?>">
                 <a href="<?php echo BASE_URL; ?>/admin/products.php"
                    class="<?php echo basename($_SERVER['PHP_SELF']) == 'products.php' ? 'active' : ''; ?>">

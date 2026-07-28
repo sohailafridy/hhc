@@ -86,7 +86,7 @@ $total_reviews = $rating_data['total_reviews'] ? $rating_data['total_reviews'] :
                                 <i class="fas fa-map-marker-alt"></i>
                                 <div class="detail-content">
                                     <span class="detail-label">Address</span>
-                                    <span class="detail-value"><?php echo $lab['lab_address']; ?>, <?php echo $lab['city_name']; ?></span>
+                                    <span class="detail-value "><?php echo $lab['lab_address']; ?>, <?php echo $lab['city_name']; ?></span>
                                 </div>
                             </div>
                             
@@ -367,7 +367,7 @@ $total_reviews = $rating_data['total_reviews'] ? $rating_data['total_reviews'] :
 }
 
 .detail-value {
-    color: var(--secondary);
+    color: #6b6b6b ;
     font-weight: 500;
     line-height: 1.5;
 }

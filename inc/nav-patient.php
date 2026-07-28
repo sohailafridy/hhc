@@ -11,9 +11,9 @@
 
 
             <li class="<?php echo basename($_SERVER['PHP_SELF']) == 'index.php' ? 'active' : ''; ?>">
-                <a href="<?php echo BASE_URL; ?>/admin/index.php"
+                <a href="<?php echo BASE_URL; ?>/patient/dashboard"
                    class="<?php echo basename($_SERVER['PHP_SELF']) == 'index.php' ? 'active' : ''; ?>">
-                    <i class="fas fa-tachometer-alt"></i> Nurse Dashboard
+                    <i class="fas fa-tachometer-alt"></i> Patient Dashboard
                 </a>
             </li>
 
@@ -57,12 +57,12 @@
                 </ul>
             </li> -->
 
-             <li class="<?php echo basename($_SERVER['PHP_SELF']) == 'products.php' ? 'active' : ''; ?>">
+           <!--   <li class="<?php echo basename($_SERVER['PHP_SELF']) == 'products.php' ? 'active' : ''; ?>">
                 <a href="<?php echo BASE_URL; ?>/admin/products.php"
                    class="<?php echo basename($_SERVER['PHP_SELF']) == 'products.php' ? 'active' : ''; ?>">
                     <i class="fas fa-cog me-2"></i> Test Patient Menu
                 </a>
-            </li> 
+            </li>  -->
 
 
     </ul>

@@ -561,14 +561,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
                             <div class="form-group">
                                 <label class="form-label">Phone Number</label>
-                                <input type="tel" class="form-control-modern" name="lab_phone" required
+                                <input type="tel" class="form-control-modern" name="lab_phone"
                                        placeholder="Contact Number"
                                        value="<?php echo $edit_mode ? htmlspecialchars($lab_data['lab_phone']) : ''; ?>">
                             </div>
 
                             <div class="form-group">
                                 <label class="form-label">Email Address</label>
-                                <input type="email" class="form-control-modern" name="lab_email" required
+                                <input type="email" class="form-control-modern" name="lab_email"
                                        placeholder="lab@example.com"
                                        value="<?php echo $edit_mode ? htmlspecialchars($lab_data['lab_email']) : ''; ?>">
                             </div>

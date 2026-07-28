@@ -23,5 +23,122 @@ RewriteRule ^admin/doctor/list$ admin/doctor-list.php [L]
 RewriteRule ^admin/doctor/edit$ admin/doctor-edit.php [L]
 
 
-#admin patient url
+#admin dashboard patient url
 RewriteRule ^patient/dashboard$ patient/index.php [L]
+RewriteRule ^admin/patient/add$ admin/patient-add.php [L]
+RewriteRule ^admin/patient/detail$ admin/patient-detail.php [L]
+RewriteRule ^admin/patient/list$ admin/patient-list.php [L]
+RewriteRule ^admin/patient/edit$ admin/patient-edit.php [L]
+RewriteRule ^admin/patient/visit/add$ admin/patient-visit-add.php [L]
+RewriteRule ^admin/patient/visit/detail$ admin/patient-visit-detail.php [L]
+RewriteRule ^admin/patient/test/add$ admin/patient-test-add.php [L]
+RewriteRule ^admin/patient/prescription/add$ admin/patient-prescription-add.php [L]
+RewriteRule ^admin/patient/disease/add$ admin/patient-disease-add.php [L]
+
+
+#patient dashboard url
+RewriteRule ^patient/visits$ patient/visits.php [L]
+RewriteRule ^patient/visit/detail$ patient/patient-visit-detail.php [L]
+RewriteRule ^patient/lab/tests$ patient/lab-tests.php [L]
+RewriteRule ^patient/medicine/detail$ patient/medicine-detail.php [L]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
