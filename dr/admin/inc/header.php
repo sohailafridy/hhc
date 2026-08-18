@@ -1,4 +1,9 @@
-<?php include('check_auth.php'); ?>
+<?php 
+
+  if($_SESSION['type']=='admin'){
+    include('check_auth.php');
+  }
+ ?>
 <!DOCTYPE html>
 <html lang="en">
 

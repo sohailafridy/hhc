@@ -5,7 +5,7 @@
 <div class="wrapper">
 
 <header class="main-header-top hidden-print">
-         <a href="index.html" class="logo"><img class="img-fluid able-logo" src="<?php echo BASE_URL; ?>admin/inc/assets/images/logo.png" alt="Theme-logo"></a>
+         <a href="<?php echo BASE_URL; ?>admin" class="logo"><img class="img-fluid able-logo" src="<?php echo BASE_URL; ?>admin/inc/assets/images/logo.png" alt="Theme-logo"></a>
          <nav class="navbar navbar-static-top">
             <!-- Sidebar toggle button-->
             <a href="#!" data-toggle="offcanvas" class="sidebar-toggle"></a>
@@ -35,7 +35,6 @@
             </ul>
             <!-- Navbar Right Menu-->
            
-
                <ul class="top-nav">
                   <!--Notification Menu-->
                     
@@ -88,23 +87,46 @@
                      </a>
 
                   </li>
-                  <!-- User Menu-->
+                  <!-- User Menu - DYNAMIC -->
                   <li class="dropdown">
                      <a href="#!" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false" class="dropdown-toggle drop icon-circle drop-image">
-                        <span><img class="img-circle " src="<?php echo BASE_URL; ?>admin/inc/assets/images/avatar-1.png" style="width:40px;" alt="User Image"></span>
-                        <span>John <b>Doe</b> <i class=" icofont icofont-simple-down"></i></span>
-
+                        <span><img class="img-circle" src="<?php echo BASE_URL; ?>admin/inc/assets/images/avatar-1.png" style="width:40px;" alt="User Image"></span>
+                        <span>
+                            <?php 
+                            // Get username from session
+                            $display_name = isset($_SESSION['username']) ? $_SESSION['username'] : 'Guest';
+                            $display_type = isset($_SESSION['type']) ? ucfirst($_SESSION['type']) : '';
+                            
+                            // If hospital, get hospital name
+                            if (isset($_SESSION['type']) && $_SESSION['type'] == 'hospital' && isset($_SESSION['user_id'])) {
+                                $user_id = $_SESSION['user_id'];
+                                $hosp_query = "SELECT hospital_name FROM hospitals WHERE user_id = $user_id AND approve = 1";
+                                $hosp_result = mysqli_query($con, $hosp_query);
+                                if ($hosp_result && mysqli_num_rows($hosp_result) > 0) {
+                                    $hosp_data = mysqli_fetch_assoc($hosp_result);
+                                    $display_name = $hosp_data['hospital_name'];
+                                }
+                            }
+                            ?>
+                            <strong><?php echo htmlspecialchars($display_name); ?></strong>
+                            <span class="text-muted small">(<?php echo htmlspecialchars($display_type); ?>)</span>
+                            <i class="icofont icofont-simple-down"></i>
+                        </span>
                      </a>
                      <ul class="dropdown-menu settings-menu">
-                        <li><a href="#!"><i class="icon-settings"></i> Settings</a></li>
-                        <li><a href="#"><i class="icon-user"></i> Profile</a></li>
-                        <li><a href="#"><i class="icon-envelope-open"></i> My Messages</a></li>
+                        <?php if (isset($_SESSION['type']) && $_SESSION['type'] == 'hospital'): ?>
+                            <li><a href="<?php echo BASE_URL; ?>hospital/profile"><i class="icon-user"></i> My Profile</a></li>
+                            <li><a href="<?php echo BASE_URL; ?>hospital/"><i class="icon-speedometer"></i> Dashboard</a></li>
+                        <?php else: ?>
+                            <li><a href="#!"><i class="icon-settings"></i> Settings</a></li>
+                            <li><a href="#"><i class="icon-user"></i> Profile</a></li>
+                            <li><a href="#"><i class="icon-envelope-open"></i> My Messages</a></li>
+                        <?php endif; ?>
                         <li class="p-0">
                            <div class="dropdown-divider m-0"></div>
                         </li>
                         <li><a href="#"><i class="icon-lock"></i> Lock Screen</a></li>
                         <li><a href="<?php echo BASE_URL; ?>logout"><i class="icon-logout"></i> Logout</a></li>
-
                      </ul>
                   </li>
                </ul>
@@ -134,23 +156,23 @@
                      <div class="dummy-column">
                         <h2>Popular</h2>
                         <a class="dummy-media-object" href="#!">
-                           <img src="assets/images/avatar-1.png" alt="PagePreloadingEffect" />
+                           <img src="<?php echo BASE_URL; ?>admin/inc/assets/images/avatar-1.png" alt="PagePreloadingEffect" />
                            <h3>Page Preloading Effect</h3>
                         </a>
 
                         <a class="dummy-media-object" href="#!">
-                           <img src="assets/images/avatar-1.png" alt="DraggableDualViewSlideshow" />
+                           <img src="<?php echo BASE_URL; ?>admin/inc/assets/images/avatar-1.png" alt="DraggableDualViewSlideshow" />
                            <h3>Draggable Dual-View Slideshow</h3>
                         </a>
                      </div>
                      <div class="dummy-column">
                         <h2>Recent</h2>
                         <a class="dummy-media-object" href="#!">
-                           <img src="assets/images/avatar-1.png" alt="TooltipStylesInspiration" />
+                           <img src="<?php echo BASE_URL; ?>admin/inc/assets/images/avatar-1.png" alt="TooltipStylesInspiration" />
                            <h3>Tooltip Styles Inspiration</h3>
                         </a>
                         <a class="dummy-media-object" href="#!">
-                           <img src="assets/images/avatar-1.png" alt="NotificationStyles" />
+                           <img src="<?php echo BASE_URL; ?>admin/inc/assets/images/avatar-1.png" alt="NotificationStyles" />
                            <h3>Notification Styles Inspiration</h3>
                         </a>
                      </div>

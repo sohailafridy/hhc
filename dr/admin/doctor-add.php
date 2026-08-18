@@ -168,8 +168,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
        $created_at = date('Y-m-d');
 
-$generate_user_id = "INSERT INTO users (username, email, password, user_type_id, created_at)
-VALUES ('$user_name', '$doctor_email', '$password', 2, '$created_at')";
+$generate_user_id = "INSERT INTO users (username, email, password, user_type_id, status, created_at)
+VALUES ('$user_name', '$doctor_email', '$password', 2, 1, '$created_at')";
         mysqli_query($con, $generate_user_id);
         $userid = mysqli_insert_id($con);
 

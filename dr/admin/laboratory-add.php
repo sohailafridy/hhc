@@ -9,7 +9,7 @@
 // Check if it's edit mode
 $edit_mode = false;
 $lab_data = null;
-
+$created_at = date('Y-m-d');
 if (isset($_GET['id']) && is_numeric($_GET['id'])) {
     $lab_id = $_GET['id'];
     $edit_query = "SELECT laboratories.*,e.status
@@ -46,6 +46,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $lab_email   = mysqli_real_escape_string($con, $_POST['lab_email']);
     $lab_type    = mysqli_real_escape_string($con, $_POST['lab_type']);
     $status      = isset($_POST['status']) ? 1 : 0;
+    $username = mysqli_real_escape_string($con, $_POST['username']);
+    $pass = mysqli_real_escape_string($con, $_POST['password']);
+    $password = base64_encode($pass);
     
     // Handle lab type specific fields
     $hospital_id = null;
@@ -115,8 +118,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         mysqli_query($con, $generate_ent_it);
         $entity_id = mysqli_insert_id($con);
 
-        $insert_query = "INSERT INTO laboratories (entity_id,city_id, hospital_id, lab_name, lab_address, lab_phone, lab_email, lab_type, lab_pic, approve, created_at) 
-                       VALUES ($entity_id,'$city_id', $hospital_id_value, '$lab_name', '$lab_address', '$lab_phone', '$lab_email', '$lab_type', '$lab_pic', 1, NOW())";
+        $generate_user_id = "INSERT INTO users (username, email, password, user_type_id, status, created_at)
+VALUES ('$user_name', '$lab_email', '$password', 3, 1, '$created_at')";
+        mysqli_query($con, $generate_user_id);
+        $userid = mysqli_insert_id($con);
+
+        $insert_query = "INSERT INTO laboratories (entity_id,city_id,user_id, hospital_id, lab_name, lab_address, lab_phone, lab_email, lab_type, lab_pic, approve, created_at) 
+                       VALUES ($entity_id,'$city_id', '$userid', $hospital_id_value, '$lab_name', '$lab_address', '$lab_phone', '$lab_email', '$lab_type', '$lab_pic', 1, NOW())";
         
         if (mysqli_query($con, $insert_query)) {
             $success_msg = "Laboratory added successfully!";
@@ -552,6 +560,24 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                             <h5><i class="icofont icofont-laboratory"></i> Laboratory Details</h5>
                         </div>
                         <div class="card-body-custom">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label class="form-label">Username</label>
+                                        <input type="text" class="form-control-modern" name="username" min="0" 
+                                               placeholder="e.g. 5"
+                                               value="<?php echo $edit_mode ? htmlspecialchars($hospital_data['username']) : ''; ?>" <?php echo $edit_mode ? 'readonly' : ''; ?>>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label class="form-label">Password</label>
+                                        <input type="password" class="form-control-modern" name="password" 
+                                               placeholder="Contact Number"
+                                               value="<?php echo $edit_mode ? htmlspecialchars($hospital_data['password']) : ''; ?>" <?php echo $edit_mode ? 'readonly' : ''; ?>>
+                                    </div>
+                                </div>
+                            </div>
                             <div class="form-group">
                                 <label class="form-label">Laboratory Name</label>
                                 <input type="text" class="form-control-modern" name="lab_name" required

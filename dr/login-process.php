@@ -1,6 +1,11 @@
 <?php
 include('config.php');
 
+// ============================================
+// START SESSION FIRST
+// ============================================
+session_start();
+
 // Check if form is submitted
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     
@@ -10,7 +15,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     
     // Validate inputs
     if (empty($email) || empty($password)) {
-        header("Location: login?error=empty");
+        header("Location: login.php?error=empty");
         exit();
     }
     
@@ -19,7 +24,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
               FROM users u 
               LEFT JOIN usertypes ut ON u.user_type_id = ut.usertypes_id  
               WHERE u.email = '$email' AND u.status = 1";
-   
+    
     $result = mysqli_query($con, $query);
     
     if (mysqli_num_rows($result) > 0) {
@@ -29,30 +34,44 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $stored_password = base64_decode($user['password']);
         
         if ($password === $stored_password) {
-            // Check if user type is admin
+            
+            // ============================================
+            // SET SESSION VARIABLES
+            // ============================================
+            $_SESSION['loggedin'] = true;
+            $_SESSION['user_id'] = $user['user_id'];
+            $_SESSION['username'] = $user['username'];
+            $_SESSION['type'] = $user['user_type_name'];  // ✅ Only one type
+            
+            // ============================================
+            // REDIRECT BASED ON USER TYPE
+            // ============================================
             if ($user['user_type_name'] == 'admin') {
-                // Set session variables
-                session_start();
-                $_SESSION['loggedin'] = true;
-                $_SESSION['type'] = 'admin';
-                $_SESSION['user_id'] = $user['user_id'];
-                $_SESSION['username'] = $user['username'];
-                
-                // Redirect to admin panel
                 header("Location: admin/");
                 exit();
-            } else {
-                // For other user types (you can extend this)
-                session_start();
-                $_SESSION['loggedin'] = true;
-                $_SESSION['type'] = $user['user_type_name'];
-                $_SESSION['user_id'] = $user['user_id'];
-                $_SESSION['username'] = $user['username'];
-                
-                // Redirect based on user type or to dashboard
+            } 
+            elseif ($user['user_type_name'] == 'hospital') {
+                header("Location: hospital/");
+                exit();
+            } 
+            elseif ($user['user_type_name'] == 'doctor') {
+                header("Location: doctor/");
+                exit();
+            } 
+            elseif ($user['user_type_name'] == 'lab') {
+                header("Location: lab/");
+                exit();
+            } 
+            elseif ($user['user_type_name'] == 'blood_bank') {
+                header("Location: blood-bank/");
+                exit();
+            } 
+            else {
+                // Default redirect for other user types
                 header("Location: dashboard.php");
                 exit();
             }
+            
         } else {
             // Invalid password
             header("Location: login.php?error=invalid");
