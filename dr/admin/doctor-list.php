@@ -1,6 +1,7 @@
 <?php include '../config.php'; ?>
 
 <?php
+$user_id = $_SESSION['user_id'];
 // Handle emergency status toggle - MUST be before any HTML output
 if (isset($_POST['toggle_emergency']) && is_numeric($_POST['toggle_emergency']) && isset($_POST['status'])) {
     $doctor_id = $_POST['toggle_emergency'];
@@ -20,24 +21,17 @@ if (isset($_POST['toggle_emergency']) && is_numeric($_POST['toggle_emergency']) 
 // Handle delete operation - MUST be before any HTML output
 if (isset($_GET['delete_id']) && is_numeric($_GET['delete_id'])) {
     $delete_id = $_GET['delete_id'];
-    
-    // First, get the doctor picture to delete the file
-    $pic_query = "SELECT doctor_pic FROM doctors WHERE doctor_id = $delete_id";
-    $pic_result = mysqli_query($con, $pic_query);
-    $doctor_pic_data = mysqli_fetch_assoc($pic_result);
-    $doctor_pic = $doctor_pic_data ? $doctor_pic_data['doctor_pic'] : '';
-    
-    // Delete the doctor from database
-    $delete_query = "UPDATE entities set status = 0 WHERE entity_id = $delete_id";
-    
+    $delete_query = "UPDATE users set status = 0 WHERE user_id = $delete_id";
     if (mysqli_query($con, $delete_query)) {
-        // Delete the picture file if it exists
-        // if (!empty($doctor_pic)) {
-        //     $pic_path = BASE_PATH."/admin/inc/uploads/doctors/".$doctor_pic;
-        //     if (file_exists($pic_path)) {
-        //         unlink($pic_path);
-        //     }
-        // }
+      $status_change_history = "INSERT INTO user_status_change_by
+            SET 
+            user_id = '". $delete_id ."',
+            change_by = '". $user_id ."',
+            status_to = 0
+        ";
+        mysqli_query($con, $status_change_history);
+
+
         $_SESSION['success_msg'] = "Doctor deleted successfully!";
     } else {
         $_SESSION['error_msg'] = "Error: " . mysqli_error($con);
@@ -104,11 +98,12 @@ $specializations_query = "SELECT dr_cat_type_id, type FROM dr_cat_types ORDER BY
 $specializations_result = mysqli_query($con, $specializations_query);
 
 $where_clause = !empty($where_conditions) ? 'WHERE ' . implode(' AND ', $where_conditions) : '';
-
+$where_clause .=" AND u.status=1";
 // Count total records
  $count_query = "SELECT COUNT(*) as total 
                 FROM doctors d
                 LEFT JOIN cities c ON d.city_id = c.city_id
+                LEFT JOIN users u ON u.user_id = d.user_id
                 LEFT JOIN dr_cat_types on dr_cat_types.dr_cat_type_id  = d.cat_type_id
                 $where_clause"; 
 $count_result = mysqli_query($con, $count_query);
@@ -116,7 +111,7 @@ $total_records = mysqli_fetch_assoc($count_result)['total'];
 $total_pages = ceil($total_records / $records_per_page);
 
 // Fetch doctors data with related information
- $query = "SELECT d.*, 
+  $query = "SELECT d.*, 
                 c.city_name,
                 h.hospital_name,
                 COUNT(f.feedback_id) as total_feedbacks,
@@ -126,6 +121,7 @@ $total_pages = ceil($total_records / $records_per_page);
                 e.status as estatus
           FROM doctors d
           LEFT JOIN cities c ON d.city_id = c.city_id
+          LEFT JOIN users u ON u.user_id = d.user_id
           LEFT JOIN hospitals h ON d.hospital_id = h.hospital_id
           LEFT JOIN feedback f ON d.entity_id = f.entity_id
           LEFT JOIN dr_cat_types dct ON d.cat_type_id = dct.dr_cat_type_id
@@ -689,7 +685,7 @@ $result = mysqli_query($con, $query);
                                              class="btn btn-xs btn-warning" title="Edit" style="font-size: 0.7rem; padding: 4px 8px;">
                                              <i class="icon-pencil"></i>
                                           </a>
-                                          <a href="javascript:void(0)" onclick="deleteDoctor(<?php echo $doctor['entity_id']; ?>)" 
+                                          <a href="javascript:void(0)" onclick="deleteDoctor(<?php echo $doctor['user_id']; ?>)" 
                                              class="btn btn-xs btn-danger" title="Delete" style="font-size: 0.7rem; padding: 4px 8px;">
                                              <i class="icon-trash"></i>
                                           </a>

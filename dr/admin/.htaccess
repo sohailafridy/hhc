@@ -30,5 +30,8 @@ RewriteRule ^blood-banks/list$ blood-bank-list.php [L]
 RewriteRule ^blood-banks/detail$ blood-bank-detail.php [L]
 
 
+RewriteRule ^recycle$ recycle.php [L]
+
+
 
 

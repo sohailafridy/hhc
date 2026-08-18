@@ -287,12 +287,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                                 entity_id, user_id, city_id, hospital_id, doctor_name, 
                                 cat_type_id, experience_years, doctor_phone, doctor_email, 
                                 doctor_type, gender, short_detail, other, static_clinical_info,
-                                doctor_pic, approve, status, created_at
+                                doctor_pic, approve, created_at
                             ) VALUES (
                                 '$entity_id_new', '$user_id_new', '$city_id', '$hospital_id', '$doctor_name',
                                 '$cat_type_id', '$experience_years', '$doctor_phone', '$doctor_email',
                                 '1', '$gender', '$short_detail', '$other', '$static_clinical_info',
-                                '$doctor_pic', 1, 1, NOW()
+                                '$doctor_pic', 1, NOW()
                             )";
             
             if (mysqli_query($con, $insert_query)) {

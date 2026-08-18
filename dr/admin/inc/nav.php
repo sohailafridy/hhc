@@ -109,7 +109,24 @@ if ($in_users_section) {
     }
 }
 
+// ============================================
+// RECYCLE BIN
+// ============================================
+if (in_array('recycle', $url_parts)) {
+    $open = 'recycle';
+    $active = 'list';
+}
+
+// ============================================
+// DIRECT URL MATCHING FOR RECYCLE BIN
+// ============================================
+if ($current_url == BASE_URL . 'admin/recycle' || strpos($current_url, 'admin/recycle') !== false) {
+    $open = 'recycle';
+    $active = 'list';
+}
+
 ?>
+
 <aside class="main-sidebar hidden-print ">
     <section class="sidebar" id="sidebar-scroll">
         <!-- Sidebar Menu-->
@@ -229,7 +246,7 @@ if ($in_users_section) {
             </li>
            
             <!-- ========================================== -->
-            <!-- ===== USERS MENU (NEW) ===== -->
+            <!-- ===== USERS MENU ===== -->
             <!-- ========================================== -->
             <li class="treeview <?php echo ($open == 'users') ? 'active' : ''; ?>">
                 <a class="waves-effect waves-dark" href="#!">
@@ -281,6 +298,28 @@ if ($in_users_section) {
                         </a>
                     </li>
                 </ul>
+            </li>
+
+            <!-- ========================================== -->
+            <!-- ===== RECYCLE BIN ===== -->
+            <!-- ========================================== -->
+            <li class="treeview <?php echo ($open == 'recycle') ? 'active' : ''; ?>">
+                <a class="waves-effect waves-dark" href="<?php echo BASE_URL; ?>admin/recycle">
+                    <i class="icon-trash"></i>
+                    <span style="color: #ef4444;"> Recycle Bin</span>
+                    <?php if ($open == 'recycle'): ?>
+                        <i class="icon-arrow-down"></i>
+                    <?php endif; ?>
+                </a>
+                <?php if ($open == 'recycle'): ?>
+                <ul class="treeview-menu" style="display:block;">
+                    <li class="<?php echo ($active == 'list') ? 'active' : ''; ?>">
+                        <a class="waves-effect waves-dark" href="<?php echo BASE_URL; ?>admin/recycle">
+                            <i class="icon-arrow-right"></i> All Deleted
+                        </a>
+                    </li>
+                </ul>
+                <?php endif; ?>
             </li>
 
             <!-- ========================================== -->

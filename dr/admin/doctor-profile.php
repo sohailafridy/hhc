@@ -5,7 +5,7 @@ $entity_id = 0;
 if (isset($_GET['entity_id'])) {
     $entity_id = $_GET['entity_id'];
 }
-
+$user_id = $_SESSION['user_id'];
 // ============================================
 // DELETE CLINICAL INFO
 // ============================================
@@ -54,19 +54,17 @@ if (isset($_POST['toggle_emergency']) && is_numeric($_POST['toggle_emergency']) 
 // ============================================
 if (isset($_GET['delete_id']) && is_numeric($_GET['delete_id'])) {
     $delete_id = $_GET['delete_id'];
-    $pic_query = "SELECT doctor_pic FROM doctors WHERE doctor_id = $delete_id";
-    $pic_result = mysqli_query($con, $pic_query);
-    $doctor_pic_data = mysqli_fetch_assoc($pic_result);
-    $doctor_pic = $doctor_pic_data ? $doctor_pic_data['doctor_pic'] : '';
+    // 
     
-    $delete_query = "DELETE FROM doctors WHERE doctor_id = $delete_id";
+    $delete_query = "UPDATE users set status = 0 WHERE user_id = $delete_id";    
     if (mysqli_query($con, $delete_query)) {
-        if (!empty($doctor_pic)) {
-            $pic_path = BASE_PATH . "/admin/inc/uploads/doctors/" . $doctor_pic;
-            if (file_exists($pic_path)) {
-                unlink($pic_path);
-            }
-        }
+       $status_change_history = "INSERT INTO user_status_change_by
+            SET 
+            user_id = '". $delete_id ."',
+            change_by = '". $user_id ."',
+            status_to = 0
+        ";
+        mysqli_query($con, $status_change_history);
         $_SESSION['success_msg'] = "Doctor deleted successfully!";
     } else {
         $_SESSION['error_msg'] = "Error: " . mysqli_error($con);
@@ -615,7 +613,7 @@ $dih_count = mysqli_fetch_assoc($dih_result)['total'];
                 <a href="<?php echo BASE_URL; ?>admin/doctors/add?id=<?php echo $doctor['doctor_id']; ?>" class="btn-action-header">
                     <i class="fas fa-edit"></i> Edit
                 </a>
-                <a href="javascript:void(0)" onclick="deleteDoctor(<?php echo $doctor['doctor_id']; ?>)" class="btn-action-header danger">
+                <a href="javascript:void(0)" onclick="deleteDoctor(<?php echo $doctor['user_id']; ?>)" class="btn-action-header danger">
                     <i class="fas fa-trash"></i> Delete
                 </a>
                 <a href="<?php echo BASE_URL; ?>admin/doctors/list" class="btn-action-header">
