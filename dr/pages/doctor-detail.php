@@ -1,2177 +1,1265 @@
 <?php include '../includes/header.php'; ?>
 
 <?php
-    // Get doctor ID from URL
-    $doctor_id = isset($_GET['doctor_id']) ? (int)$_GET['doctor_id'] : 0;
-    
-    if ($doctor_id > 0) {
-        // Fetch doctor details
-        $query = "SELECT d.*, c.city_name, h.hospital_name 
-                 FROM doctors d 
-                 LEFT JOIN cities c ON d.city_id = c.city_id 
-                 LEFT JOIN hospitals h ON d.hospital_id = h.hospital_id 
-                 LEFT JOIN entities e ON e.entity_id = d.entity_id
-                 WHERE d.doctor_id = $doctor_id AND e.status = 1 AND d.approve=1";
-        $result = mysqli_query($con, $query);
-        $doctor = mysqli_fetch_assoc($result);
-    }
+// Get doctor ID from URL
+$doctor_id = isset($_GET['doctor_id']) ? (int)$_GET['doctor_id'] : 0;
 
+if ($doctor_id > 0) {
+    $query = "SELECT d.*, c.city_name, h.hospital_name 
+             FROM doctors d 
+             LEFT JOIN cities c ON d.city_id = c.city_id 
+             LEFT JOIN hospitals h ON d.hospital_id = h.hospital_id 
+             LEFT JOIN entities e ON e.entity_id = d.entity_id
+             WHERE d.doctor_id = $doctor_id AND e.status = 1 AND d.approve=1";
+    $result = mysqli_query($con, $query);
+    $doctor = mysqli_fetch_assoc($result);
+}
 
-    if (isset($_REQUEST['entity_id']) AND $_REQUEST['entity_id'] !=0) {
-        $entity_id = $_REQUEST['entity_id'];
-        $commenter_name = isset($_POST['commenter_name']) ? trim($_POST['commenter_name']) : '';
-        $commenter_gmail = isset($_POST['commenter_gmail']) ? trim($_POST['commenter_gmail']) : '';
-        $comment = isset($_POST['comment']) ? trim($_POST['comment']) : '';
-        $stars = isset($_POST['stars']) ? (int)$_POST['stars'] : 5;
+if (isset($_REQUEST['entity_id']) && $_REQUEST['entity_id'] != 0) {
+    $entity_id = $_REQUEST['entity_id'];
+    $commenter_name = isset($_POST['commenter_name']) ? trim($_POST['commenter_name']) : '';
+    $commenter_gmail = isset($_POST['commenter_gmail']) ? trim($_POST['commenter_gmail']) : '';
+    $comment = isset($_POST['comment']) ? trim($_POST['comment']) : '';
+    $stars = isset($_POST['stars']) ? (int)$_POST['stars'] : 5;
 
-        $insert_query = "INSERT INTO feedback (entity_id, commenter_name, commenter_gmail, comment, stars, status, created_at, updated_at) 
-                        VALUES ($entity_id,
-                        '" . mysqli_real_escape_string($con, $commenter_name) . "', 
-                        '" . mysqli_real_escape_string($con, $commenter_gmail) . "', 
-                        '" . mysqli_real_escape_string($con, $comment) . "', 
-                        $stars,1, NOW(), NOW())";
-
-        $feedback_run = mysqli_query($con, $insert_query);
-    }
-
-
+    $insert_query = "INSERT INTO feedback (entity_id, commenter_name, commenter_gmail, comment, stars, status, created_at, updated_at) 
+                    VALUES ($entity_id,
+                    '" . mysqli_real_escape_string($con, $commenter_name) . "', 
+                    '" . mysqli_real_escape_string($con, $commenter_gmail) . "', 
+                    '" . mysqli_real_escape_string($con, $comment) . "', 
+                    $stars, 1, NOW(), NOW())";
+    $feedback_run = mysqli_query($con, $insert_query);
+}
 ?>
+
 <style>
-     /* Clinical Record Cards */
-    .clinical-record-card {
-        background: white;
-        border: 1px solid #e9ecef;
-        border-radius: 12px;
-        margin-bottom: 20px;
-        overflow: hidden;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        transition: all 0.3s ease;
-    }
-    
-    .clinical-record-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 15px rgba(0,0,0,0.12);
-    }
-    
-    .clinical-record-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 15px 20px;
-        font-weight: 600;
-        display: flex;
+/* ========================================
+   ROOT VARIABLES
+   ======================================== */
+:root {
+    --primary: #6366f1;
+    --primary-light: #818cf8;
+    --primary-dark: #4f46e5;
+    --secondary: #8b5cf6;
+    --accent: #f59e0b;
+    --success: #22c55e;
+    --danger: #ef4444;
+    --text: #0f172a;
+    --text-light: #64748b;
+    --bg: #f1f5f9;
+    --card: rgba(255,255,255,0.85);
+    --glass: rgba(255,255,255,0.6);
+    --border: rgba(255,255,255,0.2);
+    --shadow: 0 25px 50px -12px rgba(0,0,0,0.15);
+    --shadow-glow: 0 0 40px rgba(99,102,241,0.15);
+}
+
+/* ========================================
+   GLOBAL
+   ======================================== */
+.section-padding {
+    padding: 60px 0;
+}
+
+/* ========================================
+   HERO SECTION - ANIMATED
+   ======================================== */
+.doctor-hero {
+    position: relative;
+    min-height: 90vh;
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+    background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 40%, #4f46e5 100%);
+}
+
+.doctor-hero .hero-bg-particles {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+}
+
+.doctor-hero .hero-bg-particles .particle {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 50%;
+    animation: floatParticle 20s infinite linear;
+}
+
+.doctor-hero .hero-bg-particles .particle:nth-child(1) { top: 10%; left: 5%; animation-duration: 18s; }
+.doctor-hero .hero-bg-particles .particle:nth-child(2) { top: 20%; left: 85%; animation-duration: 22s; }
+.doctor-hero .hero-bg-particles .particle:nth-child(3) { top: 60%; left: 10%; animation-duration: 16s; }
+.doctor-hero .hero-bg-particles .particle:nth-child(4) { top: 70%; left: 75%; animation-duration: 24s; }
+.doctor-hero .hero-bg-particles .particle:nth-child(5) { top: 40%; left: 45%; animation-duration: 20s; }
+.doctor-hero .hero-bg-particles .particle:nth-child(6) { top: 85%; left: 30%; animation-duration: 19s; }
+
+@keyframes floatParticle {
+    0% { transform: translateY(0) rotate(0deg) scale(1); opacity: 0.3; }
+    25% { opacity: 0.8; }
+    50% { transform: translateY(-100px) rotate(180deg) scale(1.5); opacity: 0.5; }
+    75% { opacity: 0.8; }
+    100% { transform: translateY(0) rotate(360deg) scale(1); opacity: 0.3; }
+}
+
+.doctor-hero .hero-glow {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.4;
+    animation: pulseGlow 6s ease-in-out infinite;
+}
+
+.doctor-hero .hero-glow.glow-1 {
+    width: 400px;
+    height: 400px;
+    top: -100px;
+    right: -100px;
+    background: var(--primary);
+    animation-delay: 0s;
+}
+
+.doctor-hero .hero-glow.glow-2 {
+    width: 300px;
+    height: 300px;
+    bottom: -50px;
+    left: -50px;
+    background: var(--secondary);
+    animation-delay: -3s;
+}
+
+@keyframes pulseGlow {
+    0%, 100% { transform: scale(1); opacity: 0.3; }
+    50% { transform: scale(1.2); opacity: 0.5; }
+}
+
+/* Hero Container */
+.doctor-hero .hero-container {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    padding: 40px 0;
+}
+
+.doctor-hero .hero-card {
+    background: var(--glass);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border-radius: 32px;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow), var(--shadow-glow);
+    padding: 40px;
+    animation: fadeInUp 0.8s ease-out;
+}
+
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(40px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Hero Profile */
+.hero-profile {
+    display: flex;
+    gap: 40px;
+    align-items: flex-start;
+}
+
+.hero-avatar-wrapper {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.hero-avatar-wrapper .avatar-ring {
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
+    background: conic-gradient(from 0deg, var(--primary), var(--secondary), var(--accent), var(--primary));
+    animation: spinRing 6s linear infinite;
+    z-index: 0;
+}
+
+@keyframes spinRing {
+    to { transform: rotate(360deg); }
+}
+
+.hero-avatar-wrapper .avatar-ring-inner {
+    position: relative;
+    z-index: 1;
+    padding: 4px;
+    border-radius: 50%;
+    background: #0f172a;
+}
+
+.hero-avatar {
+    width: 160px;
+    height: 160px;
+    border-radius: 50%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.hero-avatar:hover {
+    transform: scale(1.05) rotate(-4deg);
+}
+
+.hero-avatar-placeholder {
+    width: 160px;
+    height: 160px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 4rem;
+    color: white;
+}
+
+.hero-avatar-wrapper .online-badge {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    z-index: 2;
+    width: 24px;
+    height: 24px;
+    background: var(--success);
+    border-radius: 50%;
+    border: 3px solid #0f172a;
+    animation: pulseDot 2s ease-in-out infinite;
+}
+
+@keyframes pulseDot {
+    0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(34,197,94,0.4); }
+    50% { transform: scale(1.1); box-shadow: 0 0 0 8px rgba(34,197,94,0); }
+}
+
+/* Hero Info */
+.hero-info {
+    flex: 1;
+}
+
+.hero-info .name-badge {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+}
+
+.hero-info h1 {
+    font-size: 2.8rem;
+    font-weight: 800;
+    color: #fff;
+    margin: 0;
+    text-shadow: 0 2px 20px rgba(0,0,0,0.2);
+}
+
+.hero-info .badge-status {
+    padding: 4px 16px;
+    border-radius: 50px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background: rgba(34,197,94,0.2);
+    color: #4ade80;
+    border: 1px solid rgba(34,197,94,0.3);
+}
+
+.hero-info .badge-status.emergency {
+    background: rgba(239,68,68,0.2);
+    color: #f87171;
+    border-color: rgba(239,68,68,0.3);
+    animation: pulseEmergency 1.5s ease-in-out infinite;
+}
+
+@keyframes pulseEmergency {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+}
+
+.hero-info .specialty-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 18px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 50px;
+    font-size: 0.95rem;
+    color: rgba(255,255,255,0.85);
+    margin: 6px 0 12px;
+    border: 1px solid rgba(255,255,255,0.06);
+}
+
+.hero-info .specialty-tag i {
+    color: var(--accent);
+}
+
+.hero-info .hero-meta {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    margin: 16px 0 20px;
+}
+
+.hero-info .hero-meta .meta-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: rgba(255,255,255,0.75);
+    font-size: 0.9rem;
+}
+
+.hero-info .hero-meta .meta-item i {
+    color: var(--accent);
+    font-size: 0.9rem;
+}
+
+.hero-info .hero-rating {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 20px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 50px;
+    border: 1px solid rgba(255,255,255,0.06);
+    margin-top: 8px;
+}
+
+.hero-info .hero-rating .stars {
+    color: #fbbf24;
+    font-size: 0.9rem;
+}
+
+.hero-info .hero-rating .score {
+    font-weight: 700;
+    color: #fff;
+    font-size: 1.1rem;
+}
+
+.hero-info .hero-rating .count {
+    color: rgba(255,255,255,0.5);
+    font-size: 0.85rem;
+}
+
+.hero-info .hero-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 24px;
+    flex-wrap: wrap;
+}
+
+.btn-hero {
+    padding: 12px 28px;
+    border-radius: 50px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    font-size: 0.95rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+}
+
+.btn-hero-primary {
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    color: white;
+    box-shadow: 0 8px 30px rgba(99,102,241,0.35);
+}
+
+.btn-hero-primary:hover {
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 12px 40px rgba(99,102,241,0.5);
+    color: white;
+}
+
+.btn-hero-secondary {
+    background: rgba(255,255,255,0.08);
+    color: white;
+    border: 1px solid rgba(255,255,255,0.12);
+}
+
+.btn-hero-secondary:hover {
+    background: rgba(255,255,255,0.15);
+    transform: translateY(-3px);
+    color: white;
+}
+
+.btn-hero-outline {
+    background: transparent;
+    color: white;
+    border: 2px solid rgba(255,255,255,0.2);
+}
+
+.btn-hero-outline:hover {
+    background: rgba(255,255,255,0.08);
+    border-color: rgba(255,255,255,0.4);
+    transform: translateY(-3px);
+    color: white;
+}
+
+/* ========================================
+   GLASS CARD SECTION
+   ======================================== */
+.glass-section {
+    background: var(--bg);
+    padding: 60px 0;
+}
+
+.glass-card {
+    background: var(--card);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 24px;
+    border: 1px solid rgba(255,255,255,0.5);
+    box-shadow: var(--shadow);
+    padding: 32px;
+    margin-bottom: 30px;
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.glass-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow), var(--shadow-glow);
+}
+
+.glass-card .card-header-custom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid rgba(0,0,0,0.04);
+}
+
+.glass-card .card-header-custom h3 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.glass-card .card-header-custom h3 i {
+    color: var(--primary);
+}
+
+/* Contact Grid */
+.contact-grid-modern {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+}
+
+.contact-item-modern {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 18px;
+    background: rgba(0,0,0,0.02);
+    border-radius: 14px;
+    border: 1px solid rgba(0,0,0,0.04);
+    transition: all 0.3s ease;
+}
+
+.contact-item-modern:hover {
+    background: rgba(99,102,241,0.04);
+    border-color: var(--primary-light);
+    transform: translateX(6px);
+}
+
+.contact-item-modern .icon-box {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+.contact-item-modern .label {
+    font-size: 0.7rem;
+    color: var(--text-light);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.contact-item-modern .value {
+    font-weight: 600;
+    color: var(--text);
+    font-size: 0.95rem;
+}
+
+/* About Text */
+.about-text-modern {
+    color: var(--text-light);
+    line-height: 1.9;
+    font-size: 1rem;
+}
+
+/* ========================================
+   CLINICAL CARDS - ANIMATED
+   ======================================== */
+.clinical-grid-modern {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 20px;
+}
+
+.clinical-card-modern {
+    background: rgba(255,255,255,0.6);
+    backdrop-filter: blur(12px);
+    border-radius: 18px;
+    padding: 22px;
+    border: 1px solid rgba(255,255,255,0.3);
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.clinical-card-modern::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--primary), var(--secondary), var(--accent));
+    opacity: 0;
+    transition: opacity 0.4s;
+}
+
+.clinical-card-modern:hover::before {
+    opacity: 1;
+}
+
+.clinical-card-modern:hover {
+    transform: translateY(-6px) scale(1.01);
+    box-shadow: var(--shadow), var(--shadow-glow);
+}
+
+.clinical-card-modern .hospital-name {
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: var(--primary-dark);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.clinical-card-modern .hospital-name i {
+    font-size: 0.9rem;
+}
+
+.clinical-item-modern {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 4px 0;
+    font-size: 0.9rem;
+    color: var(--text);
+}
+
+.clinical-item-modern i {
+    width: 18px;
+    color: var(--primary);
+    font-size: 0.8rem;
+}
+
+.clinical-item-modern .clabel {
+    color: var(--text-light);
+    font-weight: 500;
+    min-width: 85px;
+    font-size: 0.8rem;
+}
+
+.clinical-item-modern .cvalue {
+    font-weight: 500;
+}
+
+/* ========================================
+   REVIEWS
+   ======================================== */
+.reviews-grid-modern {
+    display: grid;
+    gap: 16px;
+}
+
+.review-item-modern {
+    padding: 16px 0;
+    border-bottom: 1px solid rgba(0,0,0,0.04);
+    transition: all 0.3s ease;
+}
+
+.review-item-modern:last-child {
+    border-bottom: none;
+}
+
+.review-item-modern:hover {
+    padding-left: 12px;
+}
+
+.review-item-modern .review-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.review-item-modern .reviewer-name {
+    font-weight: 700;
+    color: var(--text);
+}
+
+.review-item-modern .reviewer-email {
+    font-size: 0.8rem;
+    color: var(--text-light);
+}
+
+.review-item-modern .review-stars {
+    color: #fbbf24;
+    font-size: 0.85rem;
+}
+
+.review-item-modern .review-comment {
+    color: var(--text-light);
+    font-size: 0.95rem;
+    line-height: 1.7;
+    margin: 4px 0 0;
+}
+
+.review-item-modern .review-date {
+    font-size: 0.75rem;
+    color: var(--text-light);
+    margin-top: 4px;
+}
+
+/* Review Form */
+.review-form-modern {
+    background: rgba(255,255,255,0.5);
+    backdrop-filter: blur(12px);
+    border-radius: 18px;
+    padding: 28px;
+    border: 1px solid rgba(255,255,255,0.3);
+    margin-bottom: 30px;
+}
+
+.review-form-modern .form-control {
+    border-radius: 12px;
+    border: 2px solid rgba(0,0,0,0.06);
+    padding: 10px 16px;
+    transition: all 0.3s ease;
+    background: rgba(255,255,255,0.8);
+}
+
+.review-form-modern .form-control:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 4px rgba(99,102,241,0.08);
+}
+
+.rating-select-modern {
+    display: flex;
+    gap: 6px;
+    margin: 8px 0 12px;
+}
+
+.rating-select-modern .star {
+    font-size: 2rem;
+    color: #d1d5db;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.rating-select-modern .star:hover,
+.rating-select-modern .star.active {
+    color: #f59e0b;
+    transform: scale(1.15);
+}
+
+.btn-submit-glass {
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    color: white;
+    border: none;
+    padding: 12px 32px;
+    border-radius: 50px;
+    font-weight: 600;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow: 0 8px 30px rgba(99,102,241,0.3);
+}
+
+.btn-submit-glass:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 40px rgba(99,102,241,0.5);
+    color: white;
+}
+
+/* ========================================
+   ANIMATIONS
+   ======================================== */
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in-up {
+    animation: fadeInUp 0.7s ease-out forwards;
+}
+
+.fade-in-up-delay-1 { animation-delay: 0.1s; opacity: 0; }
+.fade-in-up-delay-2 { animation-delay: 0.2s; opacity: 0; }
+.fade-in-up-delay-3 { animation-delay: 0.3s; opacity: 0; }
+.fade-in-up-delay-4 { animation-delay: 0.4s; opacity: 0; }
+
+/* ========================================
+   RESPONSIVE
+   ======================================== */
+@media (max-width: 992px) {
+    .hero-profile {
+        flex-direction: column;
         align-items: center;
+        text-align: center;
     }
-    
-    .clinical-record-header h6 {
-        font-size: 16px;
-        margin: 0;
+    .hero-info .name-badge {
+        justify-content: center;
     }
-    
-    .clinical-record-body {
+    .hero-info .hero-meta {
+        justify-content: center;
+    }
+    .hero-info .hero-actions {
+        justify-content: center;
+    }
+    .clinical-grid-modern {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .doctor-hero .hero-card {
+        padding: 24px;
+    }
+    .hero-info h1 {
+        font-size: 2rem;
+    }
+    .hero-avatar {
+        width: 120px;
+        height: 120px;
+    }
+    .hero-avatar-placeholder {
+        width: 120px;
+        height: 120px;
+        font-size: 3rem;
+    }
+    .contact-grid-modern {
+        grid-template-columns: 1fr;
+    }
+    .glass-card {
         padding: 20px;
     }
-    
-    .clinical-info-item {
-        display: flex;
+    .hero-info .hero-meta {
+        flex-direction: column;
         align-items: center;
-        margin-bottom: 15px;
-        padding: 10px;
-        background: #f8f9fa;
-        border-radius: 8px;
-        transition: all 0.3s ease;
-    }
-    
-    .clinical-info-item:hover {
-        background: #e9ecef;
-    }
-    
-    .clinical-info-item i {
-        font-size: 18px;
-        margin-right: 12px;
-        width: 24px;
-        text-align: center;
-    }
-    
-    .clinical-info-item div {
-        flex: 1;
-    }
-    
-    .clinical-info-item small {
-        display: block;
-        font-size: 12px;
-        margin-bottom: 2px;
-    }
-    
-    .clinical-info-item strong {
-        font-size: 14px;
-        color: #495057;
-    }
-    
-    .clinical-contact {
-        display: flex;
-        align-items: center;
-        padding: 15px;
-        background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
-        border-radius: 8px;
-        border-left: 4px solid #ffc107;
-        margin-top: 10px;
-    }
-    
-    .clinical-contact i {
-        font-size: 20px;
-        margin-right: 15px;
-        color: #f39c12;
-    }
-    
-    .clinical-contact div {
-        flex: 1;
-    }
-    
-    .clinical-contact small {
-        display: block;
-        font-size: 12px;
-        color: #856404;
-        margin-bottom: 2px;
-    }
-    
-    /* Clinical Information Section */
-    .clinical-info-section {
-        margin-top: 40px;
-    }
-    
-    .section-header {
-        margin-bottom: 40px;
-    }
-    
-    .section-title-main {
-        font-size: 2.2rem;
-        font-weight: 700;
-        color: var(--primary);
-        margin-bottom: 15px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-    
-    .section-title-main i {
-        color: var(--primary);
-    }
-    
-    .section-subtitle {
-        font-size: 1.1rem;
-        color: #6c757d;
-        margin-bottom: 0;
-    }
-    
-    .clinical-record-header h6 a {
-        color: white;
-        text-decoration: none;
-        transition: opacity 0.3s ease;
-    }
-    
-    .clinical-record-header h6 a:hover {
-        opacity: 0.8;
-    }
-    
-    .clinical-detail {
-        display: flex;
-        align-items: center;
-        padding: 15px;
-        background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
-        border-radius: 8px;
-        border-left: 4px solid #2196f3;
-        margin-top: 10px;
-    }
-    
-    .clinical-detail i {
-        font-size: 20px;
-        margin-right: 15px;
-        color: #2196f3;
-    }
-    
-    .clinical-detail div {
-        flex: 1;
-    }
-    
-    .clinical-detail small {
-        display: block;
-        font-size: 12px;
-        color: #1565c0;
-        margin-bottom: 2px;
-    }
-    
-    /* Modern Doctor Detail Section */
-    #doctor-detail {
-        background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(248,249,250,0.95) 100%);
-        border-radius: 25px;
-        overflow: hidden;
-        box-shadow: 
-            0 20px 60px rgba(0,0,0,0.1),
-            0 0 0 1px rgba(255,255,255,0.1) inset;
-        backdrop-filter: blur(20px);
-        position: relative;
-        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    
-    #doctor-detail::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 4px;
-        background: linear-gradient(90deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
-        border-radius: 25px 25px 0 0;
-    }
-    
-    #doctor-detail:hover {
-        transform: translateY(-5px);
-        box-shadow: 
-            0 30px 80px rgba(0,0,0,0.15),
-            0 0 0 1px rgba(255,255,255,0.2) inset;
-    }
-    
-    #doctor-detail .col-lg-4 {
-        position: relative;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border-radius: 25px 0 0 25px;
-        overflow: hidden;
-    }
-    
-    #doctor-detail .col-lg-4::after {
-        content: '';
-        position: absolute;
-        top: -50%;
-        right: -20px;
-        width: 200px;
-        height: 200px;
-        background: rgba(255,255,255,0.1);
-        border-radius: 50%;
-        animation: float 6s ease-in-out infinite;
-    }
-    
-    #doctor-detail .col-lg-8 {
-        padding: 0;
-        background: rgba(255,255,255,0.8);
-        border-radius: 0 25px 25px 0;
-    }
-    
-    @keyframes float {
-        0%, 100% { transform: translateY(0px) rotate(0deg); }
-        50% { transform: translateY(-20px) rotate(180deg); }
-    }
-    
-    /* Enhanced Profile Section */
-    .doctor-profile-section {
-        padding: 50px 40px;
-        text-align: center;
-        background: transparent;
-        position: relative;
-        z-index: 2;
-    }
-    
-    .doctor-image-wrapper {
-        margin-bottom: 35px;
-        position: relative;
-    }
-    
-    .doctor-profile-img {
-        width: 160px;
-        height: 160px;
-        border-radius: 50%;
-        border: 5px solid rgba(255,255,255,0.3);
-        object-fit: cover;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-        transition: all 0.3s ease;
-    }
-    
-    .doctor-profile-img:hover {
-        transform: scale(1.05);
-        border-color: rgba(255,255,255,0.5);
-    }
-    
-    .doctor-avatar-placeholder {
-        width: 160px;
-        height: 160px;
-        border-radius: 50%;
-        background: rgba(255,255,255,0.15);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin: 0 auto;
-        border: 5px solid rgba(255,255,255,0.3);
-        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-        transition: all 0.3s ease;
-    }
-    
-    .doctor-avatar-placeholder:hover {
-        background: rgba(255,255,255,0.25);
-        transform: scale(1.05);
-    }
-    
-    .doctor-basic-info {
-        color: white;
-        position: relative;
-        z-index: 2;
-    }
-    
-    .doctor-name {
-        color: #E0E7FF !important;
-        font-size: 2rem;
-        font-weight: 800;
-        margin-bottom: 15px;
-        text-shadow: 0 2px 10px rgba(0,0,0,0.2);
-        letter-spacing: -0.5px;
-    }
-    
-    .doctor-specialization {
-        font-size: 1.2rem;
-        margin-bottom: 20px;
-        opacity: 0.95;
-        font-weight: 500;
-    }
-    
-    .doctor-experience {
-        font-size: 1rem;
-        margin: 0;
-        opacity: 0.9;
-        font-weight: 400;
-    }
-    
-    /* Enhanced Details Section */
-    .doctor-details-section {
-        padding: 50px 40px;
-        background: transparent;
-        position: relative;
-    }
-    
-    .doctor-details-section::before {
-        content: '';
-        position: absolute;
-        top: 20px;
-        left: -20px;
-        width: 4px;
-        height: calc(100% - 40px);
-        background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
-        border-radius: 2px;
-    }
-    
-    /* Enhanced Section Titles */
-    .section-title {
-        font-size: 1.4rem;
-        font-weight: 700;
-        color: var(--primary);
-        margin-bottom: 30px;
-        display: flex;
-        align-items: center;
-        position: relative;
-        padding-left: 20px;
-    }
-    
-    .section-title::before {
-        content: '';
-        position: absolute;
-        left: 0;
-        top: 50%;
-        transform: translateY(-50%);
-        width: 4px;
-        height: 24px;
-        background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
-        border-radius: 2px;
-    }
-    
-    /* Enhanced Contact Grid */
-    .contact-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        gap: 25px;
-    }
-    
-    .contact-item {
-        justify-content: left !important;
-        display: flex;
-        align-items: center;
-        padding: 25px;
-        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
-        border-radius: 15px;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        border: 1px solid rgba(102, 126, 234, 0.1);
-        position: relative;
-        overflow: hidden;
-    }
-    
-    .contact-item::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-        transition: left 0.5s ease;
-    }
-    
-    .contact-item:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 15px 40px rgba(0,0,0,0.1);
-        border-color: rgba(102, 126, 234, 0.2);
-    }
-    
-    .contact-item:hover::before {
-        left: 100%;
-    }
-    
-    .contact-item i {
-        font-size: 1.8rem;
-        color: var(--primary);
-        margin-right: 20px;
-        width: 35px;
-        text-align: center;
-        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
-        padding: 15px;
-        border-radius: 12px;
-    }
-    
-    /* Enhanced Professional Info */
-    .professional-info {
-        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
-        border-radius: 15px;
-        padding: 30px;
-        border: 1px solid rgba(102, 126, 234, 0.1);
-    }
-    
-    .info-row {
-        display: flex;
-        justify-content: space-between;
-        padding: 20px 0;
-        border-bottom: 1px solid rgba(0,0,0,0.05);
-        transition: all 0.3s ease;
-    }
-    
-    .info-row:last-child {
-        border-bottom: none;
-    }
-    
-    .info-row:hover {
-        padding-left: 10px;
-        background: linear-gradient(90deg, rgba(102, 126, 234, 0.05) 0%, transparent 100%);
-        margin: 0 -10px;
-        padding-right: 10px;
-    }
-    
-    .info-row label {
-        font-weight: 600;
-        color: #6c757d;
-        font-size: 0.95rem;
-    }
-    
-    .info-row span {
-        color: #212529;
-        font-weight: 500;
-        font-size: 0.95rem;
-    }
-    
-    /* Enhanced About Section */
-    .about-content {
-        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
-        border-radius: 15px;
-        padding: 30px;
-        line-height: 1.7;
-        border: 1px solid rgba(102, 126, 234, 0.1);
-        position: relative;
-    }
-    
-    .about-content p {
-        margin: 0;
-        color: #495057;
-        font-size: 1rem;
-    }
-    
-    /* Enhanced Action Buttons */
-    .action-buttons {
-        display: flex;
-        gap: 20px;
-        flex-wrap: wrap;
-        margin-top: 40px;
-    }
-    
-    .action-buttons .btn {
-        padding: 15px 30px;
-        border-radius: 12px;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        position: relative;
-        overflow: hidden;
-    }
-    
-    .action-buttons .btn::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-        transition: left 0.5s ease;
-    }
-    
-    .action-buttons .btn:hover::before {
-        left: 100%;
-    }
-    
-    .action-buttons .btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-    }
-    
-    /* Responsive Design */
-    @media (max-width: 991px) {
-        #doctor-detail .col-lg-4 {
-            border-radius: 25px 25px 0 0;
-        }
-        
-        #doctor-detail .col-lg-8 {
-            border-radius: 0 0 25px 25px;
-        }
-        
-        .doctor-details-section::before {
-            display: none;
-        }
-    }
-    
-    @media (max-width: 768px) {
-        .doctor-profile-section {
-            padding: 40px 30px;
-        }
-        
-        .doctor-details-section {
-            padding: 40px 30px;
-        }
-        
-        .contact-grid {
-            grid-template-columns: 1fr;
-        }
-        
-        .action-buttons {
-            flex-direction: column;
-        }
-        
-        .action-buttons .btn {
-            width: 100%;
-        }
-        
-        .doctor-name {
-            font-size: 1.8rem;
-        }
-        
-        .section-title-main {
-            font-size: 1.8rem;
-        }
-    }
-    
-    /* Modern Patient Feedback Section */
-    .patient-feedback-section {
-        background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(248,249,250,0.95) 100%);
-        border-radius: 25px;
-        padding: 50px 40px;
-        margin-top: 60px;
-        border: 1px solid rgba(102, 126, 234, 0.1);
-        position: relative;
-        overflow: hidden;
-    }
-    
-    .patient-feedback-section::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 4px;
-        background: linear-gradient(90deg, #667eea 0%, #764ba2 50%, #667eea 100%);
-        animation: shimmer 3s ease-in-out infinite;
-    }
-    
-    @keyframes shimmer {
-        0%, 100% { transform: translateX(-100%); }
-        50% { transform: translateX(100%); }
-    }
-    
-    /* Feedback Form Container */
-    .feedback-form-container {
-        margin-bottom: 50px;
-    }
-    
-    .feedback-form-card {
-        background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-        border-radius: 20px;
-        padding: 40px;
-        box-shadow: 
-            0 20px 40px rgba(0,0,0,0.1),
-            0 0 0 1px rgba(102, 126, 234, 0.1) inset;
-        border: 1px solid rgba(102, 126, 234, 0.05);
-        position: relative;
-        overflow: hidden;
-    }
-    
-    .feedback-form-card::before {
-        content: '';
-        position: absolute;
-        top: -50%;
-        left: -50%;
-        width: 200%;
-        height: 200%;
-        background: radial-gradient(circle, rgba(102, 126, 234, 0.05) 0%, transparent 70%);
-        animation: float 6s ease-in-out infinite;
-    }
-    
-    .form-title {
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: var(--primary);
-        margin-bottom: 30px;
-        text-align: center;
-        position: relative;
-        padding-bottom: 15px;
-    }
-    
-    .form-title::after {
-        content: '';
-        position: absolute;
-        bottom: 0;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 60px;
-        height: 3px;
-        background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-        border-radius: 2px;
-    }
-    
-    .feedback-form .form-group {
-        margin-bottom: 25px;
-    }
-    
-    .feedback-form .form-label {
-        font-weight: 600;
-        color: #495057;
-        margin-bottom: 8px;
-        font-size: 0.95rem;
-        display: flex;
-        align-items: center;
-    }
-    
-    .feedback-form .form-control {
-        border: 2px solid #e9ecef;
-        border-radius: 12px;
-        padding: 15px;
-        font-size: 0.95rem;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        background: rgba(255,255,255,0.8);
-        backdrop-filter: blur(10px);
-    }
-    
-    .feedback-form .form-control:focus {
-        border-color: var(--primary);
-        box-shadow: 
-            0 0 0 4px rgba(102, 126, 234, 0.1),
-            0 10px 25px rgba(102, 126, 234, 0.15);
-        outline: none;
-        transform: translateY(-2px);
-        background: rgba(255,255,255,0.95);
-    }
-    
-    /* Star Rating */
-    .rating-container {
-        display: flex;
-        align-items: center;
-        gap: 15px;
-    }
-    
-    .star-rating {
-        display: flex;
         gap: 8px;
-        position: relative;
-        z-index: 10;
     }
-    
-    .star-rating .star {
-        font-size: 1.5rem;
-        color: #dee2e6;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        transform-origin: center;
-        pointer-events: auto;
-        position: relative;
-        z-index: 15;
-        user-select: none;
-        -webkit-user-select: none;
-        -moz-user-select: none;
-        -ms-user-select: none;
-    }
-    
-    .star-rating .star:hover {
-        color: #ffc107;
-        transform: scale(1.2);
-    }
-    
-    .star-rating .star.active {
-        color: #ffc107;
-        animation: starPulse 0.3s ease;
-    }
-    
-    @keyframes starPulse {
-        0% { transform: scale(1); }
-        50% { transform: scale(1.3); }
-        100% { transform: scale(1); }
-    }
-    
-    .rating-text {
-        font-weight: 600;
-        color: var(--primary);
-        font-size: 0.95rem;
-        padding: 8px 16px;
-        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+}
+
+@media (max-width: 480px) {
+    .doctor-hero .hero-card {
+        padding: 16px;
         border-radius: 20px;
-        border: 1px solid rgba(102, 126, 234, 0.2);
     }
-    
-    /* Form Actions */
-    .form-actions {
-        display: flex;
-        gap: 15px;
-        margin-top: 30px;
+    .hero-info h1 {
+        font-size: 1.6rem;
     }
-    
-    .btn-submit {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        border: none;
-        border-radius: 12px;
-        padding: 15px 30px;
-        font-weight: 600;
-        font-size: 0.95rem;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        position: relative;
-        overflow: hidden;
+    .hero-avatar {
+        width: 100px;
+        height: 100px;
     }
-    
-    .btn-submit::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: -100%;
+    .hero-avatar-placeholder {
+        width: 100px;
+        height: 100px;
+        font-size: 2.5rem;
+    }
+    .btn-hero {
+        padding: 10px 20px;
+        font-size: 0.85rem;
         width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-        transition: left 0.5s ease;
-    }
-    
-    .btn-submit:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 15px 30px rgba(102, 126, 234, 0.3);
-    }
-    
-    .btn-submit:hover::before {
-        left: 100%;
-    }
-    
-    .btn-reset {
-        background: transparent;
-        color: #6c757d;
-        border: 2px solid #e9ecef;
-        border-radius: 12px;
-        padding: 15px 30px;
-        font-weight: 600;
-        font-size: 0.95rem;
-        transition: all 0.3s ease;
-    }
-    
-    .btn-reset:hover {
-        border-color: #adb5bd;
-        background: rgba(108, 117, 125, 0.1);
-        transform: translateY(-2px);
-    }
-    
-    /* Feedback Display */
-    .feedbacks-display {
-        margin-top: 50px;
-    }
-    
-    .feedbacks-title {
-        font-size: 1.4rem;
-        font-weight: 700;
-        color: var(--primary);
-        margin-bottom: 30px;
-        text-align: center;
-        position: relative;
-        padding-bottom: 15px;
-    }
-    
-    .feedbacks-title::after {
-        content: '';
-        position: absolute;
-        bottom: 0;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 50px;
-        height: 3px;
-        background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-        border-radius: 2px;
-    }
-    
-    .feedbacks-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-        gap: 25px;
-    }
-    
-    .feedback-card {
-        background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-        border-radius: 20px;
-        padding: 25px;
-        box-shadow: 
-            0 10px 30px rgba(0,0,0,0.08),
-            0 0 0 1px rgba(102, 126, 234, 0.05) inset;
-        border: 1px solid rgba(102, 126, 234, 0.08);
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        position: relative;
-        overflow: hidden;
-    }
-    
-    .feedback-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 3px;
-        background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-        opacity: 0;
-        transition: opacity 0.3s ease;
-    }
-    
-    .feedback-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 
-            0 20px 40px rgba(0,0,0,0.12),
-            0 0 0 1px rgba(102, 126, 234, 0.15) inset;
-    }
-    
-    .feedback-card:hover::before {
-        opacity: 1;
-    }
-    
-    .feedback-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        margin-bottom: 20px;
-    }
-    
-    .patient-info {
-        display: flex;
-        align-items: center;
-        gap: 15px;
-    }
-    
-    .patient-avatar {
-        width: 50px;
-        height: 50px;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
         justify-content: center;
-        color: white;
-        font-size: 1.2rem;
-        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
     }
-    
-    .patient-details {
-        flex: 1;
+    .hero-info .hero-actions {
+        flex-direction: column;
+        width: 100%;
     }
-    
-    .patient-name {
-        font-size: 1.1rem;
-        font-weight: 700;
-        color: #212529;
-        margin-bottom: 5px;
+    .glass-card {
+        padding: 16px;
+        border-radius: 16px;
     }
-    
-    .patient-email {
-        font-size: 0.85rem;
-        color: #6c757d;
-        margin: 0;
-    }
-    
-    .feedback-rating {
-        text-align: right;
-    }
-    
-    .feedback-rating .stars {
-        display: flex;
-        gap: 3px;
-        margin-bottom: 5px;
-    }
-    
-    .feedback-rating .stars .fa-star {
-        font-size: 0.9rem;
-        color: #dee2e6;
-    }
-    
-    .feedback-rating .stars .fa-star.active {
-        color: #ffc107;
-    }
-    
-    .rating-number {
-        font-size: 0.85rem;
-        font-weight: 600;
-        color: #495057;
-        background: rgba(255, 193, 7, 0.1);
-        padding: 4px 8px;
-        border-radius: 10px;
-    }
-    
-    .feedback-content {
-        margin-bottom: 20px;
-    }
-    
-    .feedback-comment {
-        font-size: 0.95rem;
-        line-height: 1.6;
-        color: #495057;
-        background: rgba(248, 249, 250, 0.5);
-        padding: 15px;
-        border-radius: 12px;
-        border-left: 3px solid var(--primary);
-    }
-    
-    .feedback-footer {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding-top: 15px;
-        border-top: 1px solid rgba(0,0,0,0.05);
-    }
-    
-    .feedback-date {
-        font-size: 0.8rem;
-        color: #6c757d;
-        display: flex;
-        align-items: center;
-        gap: 5px;
-    }
-    
-    .feedback-actions {
-        display: flex;
-        gap: 10px;
-    }
-    
-    .like-btn {
-        background: transparent;
-        color: #6c757d;
-        border: 1px solid #e9ecef;
-        border-radius: 8px;
-        padding: 8px 15px;
-        font-size: 0.8rem;
-        font-weight: 600;
-        transition: all 0.3s ease;
-        cursor: pointer;
-    }
-    
-    .like-btn:hover {
-        border-color: var(--primary);
-        color: var(--primary);
-        background: rgba(102, 126, 234, 0.1);
-        transform: translateY(-1px);
-    }
-    
-    .like-btn.liked {
-        background: var(--primary);
-        color: white;
-        border-color: var(--primary);
-    }
-    
-    /* No Feedback Message */
-    .no-feedbacks {
-        text-align: center;
-        padding: 60px 40px;
-        background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(248,249,250,0.95) 100%);
-        border-radius: 20px;
-        border: 2px dashed rgba(102, 126, 234, 0.2);
-    }
-    
-    .no-feedbacks i {
-        font-size: 3rem;
-        color: var(--primary);
-        margin-bottom: 20px;
-        opacity: 0.6;
-    }
-    
-    .no-feedbacks h5 {
-        font-size: 1.3rem;
-        font-weight: 700;
-        color: #495057;
-        margin-bottom: 10px;
-    }
-    
-    .no-feedbacks p {
-        color: #6c757d;
-        font-size: 0.95rem;
-        margin: 0;
-    }
-    
-    /* Mobile Responsive for Feedback Section */
-    @media (max-width: 768px) {
-        .patient-feedback-section {
-            padding: 30px 20px;
-            margin-top: 40px;
-        }
-        
-        .feedback-form-card {
-            padding: 25px;
-        }
-        
-        .form-title {
-            font-size: 1.3rem;
-        }
-        
-        .feedbacks-grid {
-            grid-template-columns: 1fr;
-            gap: 20px;
-        }
-        
-        .feedback-card {
-            padding: 20px;
-        }
-        
-        .feedback-header {
-            flex-direction: column;
-            gap: 15px;
-            align-items: flex-start;
-        }
-        
-        .feedback-rating {
-            text-align: left;
-        }
-        
-        .feedback-footer {
-            flex-direction: column;
-            gap: 15px;
-            align-items: flex-start;
-        }
-        
-        .form-actions {
-            flex-direction: column;
-        }
-        
-        .btn-submit,
-        .btn-reset {
-            width: 100%;
-        }
-    }
-    .doctor-basic-info{
-    text-align:center;
-}
-
-.doctor-name{
-    color:#fff;
-    font-size:34px;
-    font-weight:700;
-    margin-bottom:10px;
-}
-
-.specialization-badge{
-    display:inline-flex;
-    align-items:center;
-    gap:8px;
-    background:rgba(255,255,255,.18);
-    color:#fff;
-    padding:8px 18px;
-    border-radius:30px;
-    font-size:17px;
-    font-weight:600;
-    border:1px solid rgba(255,255,255,.35);
-    margin-bottom:15px;
-}
-
-.doctor-degree{
-    color:#F8FAFC;
-    font-size:20px;
-    font-weight:600;
-    margin-bottom:12px;
-}
-
-.static-clinical-info{
-    color:#E2E8F0;
-    font-size:16px;
-    margin-bottom:15px;
-}
-
-.doctor-experience{
-    color:#fff;
-    font-size:17px;
-    font-weight:500;
-}
-
-.doctor-rating{
-    margin-top:15px;
-    color:#FFD700;
-    font-weight:600;
 }
 </style>
-<body>
 
-    <!-- Navbar -->
-    <?php include BASE_PATH.'/includes/menu.php'; ?>
+<!-- ======================================== -->
+<!-- NAVBAR -->
+<!-- ======================================== -->
+<?php include BASE_PATH . '/includes/menu.php'; ?>
 
-    <!-- Page Header -->
-    <section class="page-header">
-        <div class="container position-relative">
-            <div class="row">
-                <div class="col-lg-12 text-center">
-                    <h1 class="display-4 fw-bold mb-3" data-aos="fade-up">Doctor Profile</h1>
-                    <p class="lead mb-0" data-aos="fade-up" data-aos-delay="200">Complete doctor information and details</p>
-                </div>
-            </div>
-        </div>
-    </section>
+<!-- ======================================== -->
+<!-- HERO SECTION - ANIMATED -->
+<!-- ======================================== -->
+<?php if ($doctor && !empty($doctor)): 
 
-    <!-- Doctor Detail Section -->
-    <section class="section-padding">
-        <div class="container">
-            <?php if ($doctor && !empty($doctor)): ?>
-                <div class="doctor-detail-card" data-aos="fade-up">
-                    <div class="row" id="doctor-detail">
-                        <div class="col-lg-4">
-                            <div class="doctor-profile-section">
-                                <div class="doctor-image-wrapper">
-                                    <?php if(!empty($doctor['doctor_pic'])): ?>
-                                        <img src="<?php echo BASE_URL; ?>admin/inc/uploads/doctors/<?php echo $doctor['doctor_pic']; ?>" 
-                                             alt="<?php echo htmlspecialchars($doctor['doctor_name']); ?>" class="doctor-profile-img">
-                                    <?php else: ?>
-                                        <div class="doctor-avatar-placeholder">
-                                            <i class="fas fa-user-md fa-4x"></i>
-                                        </div>
-                                    <?php endif; ?>
-                                </div>
-                                
-                                <div class="doctor-basic-info">
+    // Get specialization
+    $spec_query = "SELECT `type` FROM dr_cat_types WHERE dr_cat_type_id = " . $doctor['cat_type_id'];
+    $spec_result = mysqli_query($con, $spec_query);
+    $spec = mysqli_fetch_assoc($spec_result);
+    $specialization = $spec ? $spec['type'] : 'General Practitioner';
 
-                                    <h2 class="doctor-name">
-                                        Dr. <?php echo htmlspecialchars($doctor['doctor_name']); ?>
-                                    </h2>
+    // Get rating
+    $rating_query = "SELECT AVG(stars) as avg_rating, COUNT(*) as total_reviews 
+                  FROM feedback WHERE entity_id = " . $doctor['entity_id'] . " AND status = 1";
+    $rating_result = mysqli_query($con, $rating_query);
+    $rating_data = mysqli_fetch_assoc($rating_result);
+    $avg_rating = $rating_data['avg_rating'] ? round($rating_data['avg_rating'], 1) : 0;
+    $total_reviews = $rating_data['total_reviews'] ? $rating_data['total_reviews'] : 0;
+?>
 
-                                    <div class="specialization-badge">
-                                        <i class="fas fa-user-md"></i>
-                                        <?php
-                                        $spec_query = "SELECT `type` FROM dr_cat_types WHERE dr_cat_type_id = " . $doctor['cat_type_id'];
-                                        $spec_result = mysqli_query($con, $spec_query);
-                                        $spec = mysqli_fetch_assoc($spec_result);
-                                        echo $spec ? htmlspecialchars($spec['type']) : 'General Practitioner';
-                                        ?>
-                                    </div>
-
-                                    <p class="doctor-degree">
-                                        <?php echo htmlspecialchars($doctor['short_detail']); ?>
-                                    </p>
-
-                                    <p class="static-clinical-info">
-                                        <?php echo htmlspecialchars($doctor['static_clinical_info']); ?>
-                                    </p>
-                                    <?php
-                                        if ($doctor['experience_years'] !='' && $doctor['experience_years'] !=0) { ?>
-                                            <p class="doctor-experience">
-                                            <i class="fas fa-briefcase me-2"></i>
-                                            <?php echo $doctor['experience_years']; ?> Years Experience
-                                        </p>
-                                       <?php }
-                                    ?>
-
-                                     <?php 
-                                        // Calculate average rating
-                                        $rating_query = "SELECT AVG(stars) as avg_rating, COUNT(*) as total_reviews 
-                                                      FROM feedback WHERE entity_id = " . $doctor['entity_id'];
-                                        $rating_result = mysqli_query($con, $rating_query);
-                                        $rating_data = mysqli_fetch_assoc($rating_result);
-                                        $avg_rating = $rating_data['avg_rating'] ? round($rating_data['avg_rating'], 1) : 0;
-                                        $total_reviews = $rating_data['total_reviews'] ? $rating_data['total_reviews'] : 0;
-                                        $rating_percentage = ($avg_rating / 5) * 100;
-                                        if($avg_rating !=0){
-                                        ?>
-                                            <p class="doctor-rating">
-                                                <i class="fas fa-star me-2"></i>
-                                                <span class="rating-score"><?php echo $avg_rating; ?></span>/5.0 
-                                                <span class="rating-percentage">(<?php echo $rating_percentage; ?>%)</span>
-                                                <span class="total-reviews">based on <?php echo $total_reviews; ?> reviews</span>
-                                            </p>
-                                        <?php } ?>
-
-
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="col-lg-8">
-                            <div class="doctor-details-section">
-                                <!-- Contact Information -->
-                                <div class="detail-section">
-                                    <h3 class="section-title">
-                                        <i class="fas fa-contact-card me-2"></i>Contact Information
-                                    </h3>
-                                    <div class="contact-grid">
-                                        <?php if(!empty($doctor['doctor_phone'])): ?>
-                                        <div class="contact-item">
-                                            <i class="fas fa-phone"></i>
-                                            <div>
-                                                <label>Phone</label>
-                                                <span><?php echo htmlspecialchars($doctor['doctor_phone']); ?></span>
-                                            </div>
-                                        </div>
-                                        <?php endif; ?>
-                                        
-                                        <?php if(!empty($doctor['doctor_email'])): ?>
-                                        <div class="contact-item">
-                                            <i class="fas fa-envelope"></i>
-                                            <div>
-                                                <label>Email</label>
-                                                <span><?php echo htmlspecialchars($doctor['doctor_email']); ?></span>
-                                            </div>
-                                        </div>
-                                        <?php endif; ?>
-                                        
-                                        <div class="contact-item">
-                                            <i class="fas fa-map-marker-alt"></i>
-                                            <div>
-                                                <label>City</label>
-                                                <span><?php echo htmlspecialchars($doctor['city_name']); ?></span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <!-- Professional Information -->
-                              <!--   <div class="detail-section">
-                                    <h3 class="section-title">
-                                        <i class="fas fa-user-md me-2"></i>Professional Information
-                                    </h3>
-                                    <div class="professional-info">
-                                        <div class="info-row">
-                                            <label>Doctor Type</label>
-                                            <span><?php echo htmlspecialchars($spec['type']); ?></span>
-                                        </div>
-                                        
-                                        <?php if(!empty($doctor['clinic_name'])): ?>
-                                        <div class="info-row">
-                                            <label>Clinic Name</label>
-                                            <span><?php echo htmlspecialchars($doctor['clinic_name']); ?></span>
-                                        </div>
-                                        <?php endif; ?>
-                                        
-                                        <?php if(!empty($doctor['clinic_address'])): ?>
-                                        <div class="info-row">
-                                            <label>Clinic Address</label>
-                                            <span><?php echo htmlspecialchars($doctor['clinic_address']); ?></span>
-                                        </div>
-                                        <?php endif; ?>
-                                    </div>
-                                </div> -->
-                                
-                                <!-- About Section -->
-                                <?php if(!empty($doctor['short_detail'])): ?>
-                                <div class="detail-section">
-                                    <h3 class="section-title">
-                                        <i class="fas fa-info-circle me-2"></i>About Doctor
-                                    </h3>
-                                    <div class="about-content">
-                                        <p>
-                                            <?php echo nl2br(htmlspecialchars($doctor['short_detail'])); ?> <br>
-                                            <?php echo nl2br(htmlspecialchars($doctor['other'])); ?>
-                                        </p>
-                                    </div>
-                                </div>
-                                <?php endif; ?>
-                                
-                                <!-- Action Buttons -->
-                                <div class="action-buttons">
-                                    <a href="javascript:history.back()" class="btn btn-outline-secondary">
-                                        <i class="fas fa-arrow-left me-2"></i>Back to Doctors
-                                    </a>
-                                    <!-- <button class="btn btn-primary" onclick="bookAppointment(<?php echo $doctor['doctor_id']; ?>)">
-                                        <i class="fas fa-calendar-check me-2"></i>Book Appointment
-                                    </button> -->
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Clinical Information Section -->
-                    <div class="clinical-info-section mt-5" data-aos="fade-up">
-                        <div class="section-header text-center mb-4">
-                            <h2 class="section-title-main">
-                                <i class="fas fa-hospital-alt me-3"></i>Clinical Information
-                            </h2>
-                            <p class="section-subtitle">Doctor's clinical schedule and availability at different hospitals</p>
-                        </div>
-                        
-                        <div class="row g-4">
-                            <?php 
-                            // Get clinical information for this doctor
-                            $clinical_query = "SELECT ci.* ,hospitals.hospital_name,hospitals.hospital_id
-                                            FROM clinical_info ci 
-                                            INNER JOIN doctor_in_hospital dih ON ci.doctor_in_hosp_id = dih.doctor_in_hosp_id 
-                                            left join hospitals on dih.hospital_id = hospitals.hospital_id
-                                            WHERE dih.doctor_id = " . $doctor['doctor_id'] . " ";
-                            $clinical_result = mysqli_query($con, $clinical_query); ?>
-                            <div class="row m-2">
-                                <?php while($clinical = mysqli_fetch_assoc($clinical_result)){ ?>
-
-                                    <div class="col-lg-6 col-md-6 mb-4">
-    <div class="clinical-record-card h-100">
-
-        <div class="clinical-record-header">
-            <i class="fas fa-hospital me-2"></i>
-            <h6>
-                <?php
-                if ($clinical['hospital_name'] != '') {
-                    echo '<a href="' . BASE_URL . 'admin/hospitals/detail?id=' . $clinical['hospital_id'] . '" target="_blank">Hospital ' . htmlspecialchars($clinical['hospital_name']) . '</a>';
-                } else {
-                    echo 'Personal Clinic';
-                }
-                ?>
-            </h6>
-        </div>
-
-        <div class="clinical-record-body">
-
-            <div class="row">
-
-                <!-- Left Column -->
-                <div class="col-md-6">
-
-                    <div class="clinical-info-item">
-                        <i class="fas fa-clock text-primary"></i>
-                        <div>
-                            <small class="text-muted">Timing</small><br>
-                            <strong>
-                                <?php
-                                if (!empty($clinical['morning_opening_time'])) {
-                                    echo date('h:i A', strtotime($clinical['morning_opening_time']));
-                                    echo " - ";
-                                    echo date('h:i A', strtotime($clinical['morning_closing_time']));
-                                }
-
-                                if (!empty($clinical['evening_opening_time'])) {
-                                    echo "<br>";
-                                    echo date('h:i A', strtotime($clinical['evening_opening_time']));
-                                    echo " - ";
-                                    echo date('h:i A', strtotime($clinical['evening_closing_time']));
-                                }
-                                ?>
-                            </strong>
-                        </div>
-                    </div>
-
-                    <div class="clinical-info-item">
-                        <i class="fas fa-calendar-day text-success"></i>
-                        <div>
-                            <small class="text-muted">Working Days</small><br>
-                            <strong><?php echo htmlspecialchars($clinical['days']); ?></strong>
-                        </div>
-                    </div>
-
-                </div>
-
-                <!-- Right Column -->
-                <div class="col-md-6">
-
-                    <div class="clinical-info-item">
-                        <i class="fas fa-user-md text-info"></i>
-                        <div>
-                            <small class="text-muted">Shift</small><br>
-                            <strong>
-                                <?php
-                                if (!empty($clinical['morning_opening_time'])) {
-                                    echo 'Morning';
-                                }
-
-                                if (!empty($clinical['evening_opening_time'])) {
-                                    echo '<br>Evening';
-                                }
-                                ?>
-                            </strong>
-                        </div>
-                    </div>
-
-                    <div class="clinical-info-item">
-                        <i class="fas fa-phone text-warning"></i>
-                        <div>
-                            <small class="text-muted">Contact</small><br>
-                            <strong><?php echo htmlspecialchars($clinical['contact']); ?></strong>
-                        </div>
-                    </div>
-
-                </div>
-
-            </div>
-
-            <?php if (!empty($clinical['detail'])) { ?>
-                <div class="clinical-detail mt-3">
-                    <i class="fas fa-info-circle text-primary"></i>
-                    <div>
-                        <small class="text-muted">Detail</small><br>
-                        <strong><?php echo htmlspecialchars($clinical['detail']); ?></strong>
-                    </div>
-                </div>
-            <?php } ?>
-
-        </div>
-
+<section class="doctor-hero">
+    <!-- Background Particles -->
+    <div class="hero-bg-particles">
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
     </div>
-</div>
 
-                                <?php } ?>
+    <!-- Glow Orbs -->
+    <div class="hero-glow glow-1"></div>
+    <div class="hero-glow glow-2"></div>
+
+    <div class="container hero-container">
+        <div class="hero-card">
+            <div class="hero-profile">
+                <!-- Avatar -->
+                <div class="hero-avatar-wrapper">
+                    <div class="avatar-ring"></div>
+                    <div class="avatar-ring-inner">
+                        <?php if (!empty($doctor['doctor_pic'])): ?>
+                            <img src="<?php echo BASE_URL; ?>admin/inc/uploads/doctors/<?php echo $doctor['doctor_pic']; ?>" 
+                                 alt="<?php echo htmlspecialchars($doctor['doctor_name']); ?>" class="hero-avatar">
+                        <?php else: ?>
+                            <div class="hero-avatar-placeholder">
+                                <i class="fas fa-user-md"></i>
                             </div>
-                            
+                        <?php endif; ?>
+                    </div>
+                    <div class="online-badge"></div>
+                </div>
+
+                <!-- Info -->
+                <div class="hero-info">
+                    <div class="name-badge">
+                        <h1>Dr. <?php echo htmlspecialchars($doctor['doctor_name']); ?></h1>
+                        <?php if ($doctor['emergency_status'] == 1): ?>
+                            <span class="badge-status emergency">
+                                <i class="fas fa-exclamation-triangle"></i> Emergency
+                            </span>
+                        <?php else: ?>
+                            <span class="badge-status">Available</span>
+                        <?php endif; ?>
                     </div>
 
-                    <!-- Patient Feedback Section -->
-                    <div class="patient-feedback-section mt-5" data-aos="fade-up">
-                        <div class="section-header text-center mb-4">
-                            <h2 class="section-title-main">
-                                <i class="fas fa-comments me-3"></i>Patient Feedback
-                            </h2>
-                            <p class="section-subtitle">Share your experience and read reviews from other patients</p>
+                    <div class="specialty-tag">
+                        <i class="fas fa-stethoscope"></i> <?php echo htmlspecialchars($specialization); ?>
+                    </div>
+
+                    <div class="hero-meta">
+                        <span class="meta-item">
+                            <i class="fas fa-map-marker-alt"></i> <?php echo htmlspecialchars($doctor['city_name']); ?>
+                        </span>
+                        <?php if (!empty($doctor['experience_years']) && $doctor['experience_years'] != 0): ?>
+                            <span class="meta-item">
+                                <i class="fas fa-briefcase"></i> <?php echo $doctor['experience_years']; ?> Years
+                            </span>
+                        <?php endif; ?>
+                        <?php if (!empty($doctor['doctor_phone'])): ?>
+                            <span class="meta-item">
+                                <i class="fas fa-phone"></i> <?php echo htmlspecialchars($doctor['doctor_phone']); ?>
+                            </span>
+                        <?php endif; ?>
+                    </div>
+
+                    <?php if ($avg_rating > 0): ?>
+                        <div class="hero-rating">
+                            <span class="stars">
+                                <?php for ($i = 1; $i <= 5; $i++): ?>
+                                    <i class="fas fa-star <?php echo $i <= $avg_rating ? '' : 'text-muted'; ?>" style="opacity: <?php echo $i <= $avg_rating ? '1' : '0.3'; ?>;"></i>
+                                <?php endfor; ?>
+                            </span>
+                            <span class="score"><?php echo $avg_rating; ?></span>
+                            <span class="count">(<?php echo $total_reviews; ?> reviews)</span>
                         </div>
-                        
-                        <!-- Feedback Form -->
-                        <div class="feedback-form-container mb-5">
-                            <div class="feedback-form-card">
-                                <h4 class="form-title">
-                                    <i class="fas fa-pen me-2"></i>Share Your Feedback
-                                </h4>
-                                <form class="feedback-form" method="POST">
-                                    <div class="row">
-                                        <div class="col-md-6">
-                                            <div class="form-group">
-                                                <label for="commenterName" class="form-label">
-                                                    <i class="fas fa-user me-1"></i>Your Name
-                                                </label>
-                                                <input type="text" class="form-control" id="commenterName" 
-                                                       name="commenter_name" required 
-                                                       placeholder="Enter your full name">
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="form-group">
-                                                <label for="commenterEmail" class="form-label">
-                                                    <i class="fas fa-envelope me-1"></i>Email Address
-                                                </label>
-                                                <input type="email" class="form-control" id="commenterEmail" 
-                                                       name="commenter_gmail" required 
-                                                       placeholder="your.email@example.com">
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="form-group">
-                                        <label for="rating" class="form-label">
-                                            <i class="fas fa-star me-1"></i>Rating
-                                        </label>
-                                        <div class="rating-container">
-                                            <div class="star-rating" id="starRating">
-                                                <i class="fas fa-star star" data-rating="1"></i>
-                                                <i class="fas fa-star star" data-rating="2"></i>
-                                                <i class="fas fa-star star" data-rating="3"></i>
-                                                <i class="fas fa-star star" data-rating="4"></i>
-                                                <i class="fas fa-star star" data-rating="5"></i>
-                                            </div>
-                                            <input type="hidden" id="rating" name="stars" value="5" required>
-                                            <span class="rating-text">Excellent</span>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="form-group">
-                                        <label for="comment" class="form-label">
-                                            <i class="fas fa-comment me-1"></i>Your Feedback
-                                        </label>
-                                        <textarea class="form-control" id="comment" name="comment" 
-                                                  rows="4" required 
-                                                  placeholder="Share your experience with this doctor..."></textarea>
-                                    </div>
-                                    
-                                    <div class="form-actions">
-                                        <input type="hidden" name="entity_id" value="<?php echo $doctor['entity_id']; ?>">
-                                        <button type="submit" class="btn btn-primary btn-submit">
-                                            <i class="fas fa-paper-plane me-2"></i>Submit Feedback
-                                        </button>
-                                        <button type="reset" class="btn btn-outline-secondary btn-reset">
-                                            <i class="fas fa-redo me-2"></i>Reset
-                                        </button>
-                                    </div>
-                                </form>
+                    <?php endif; ?>
+
+                    <div class="hero-actions">
+                        <a href="tel:<?php echo $doctor['doctor_phone']; ?>" class="btn-hero btn-hero-primary">
+                            <i class="fas fa-phone-alt"></i> Call Now
+                        </a>
+                        <a href="#reviews" class="btn-hero btn-hero-secondary">
+                            <i class="fas fa-star"></i> Write Review
+                        </a>
+                        <a href="<?php echo BASE_URL; ?>doctors" class="btn-hero btn-hero-outline">
+                            <i class="fas fa-arrow-left"></i> Back
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ======================================== -->
+<!-- DETAIL SECTION - GLASS CARDS -->
+<!-- ======================================== -->
+<section class="glass-section">
+    <div class="container">
+
+        <!-- ===== ABOUT & CONTACT ===== -->
+        <div class="row g-4">
+            <div class="col-lg-6 fade-in-up fade-in-up-delay-1">
+                <div class="glass-card">
+                    <div class="card-header-custom">
+                        <h3><i class="fas fa-info-circle"></i> About Doctor</h3>
+                    </div>
+                    <p class="about-text-modern">
+                        <?php echo nl2br(htmlspecialchars($doctor['short_detail'] ?? 'No details available.')); ?>
+                        <?php if (!empty($doctor['other'])): ?>
+                            <br><br><?php echo nl2br(htmlspecialchars($doctor['other'])); ?>
+                        <?php endif; ?>
+                    </p>
+                    <?php if (!empty($doctor['static_clinical_info'])): ?>
+                        <div style="margin-top:16px; padding:16px; background:rgba(99,102,241,0.04); border-radius:12px; border-left:4px solid var(--primary);">
+                            <p style="font-size:0.9rem; color:var(--text-light); margin:0;">
+                                <strong>Clinical Notes:</strong> <?php echo nl2br(htmlspecialchars($doctor['static_clinical_info'])); ?>
+                            </p>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+
+            <div class="col-lg-6 fade-in-up fade-in-up-delay-2">
+                <div class="glass-card">
+                    <div class="card-header-custom">
+                        <h3><i class="fas fa-address-card"></i> Contact</h3>
+                    </div>
+                    <div class="contact-grid-modern">
+                        <div class="contact-item-modern">
+                            <div class="icon-box"><i class="fas fa-phone"></i></div>
+                            <div>
+                                <div class="label">Phone</div>
+                                <div class="value"><?php echo htmlspecialchars($doctor['doctor_phone'] ?? 'N/A'); ?></div>
                             </div>
                         </div>
-                        
-                        <!-- All Feedbacks Display -->
-                        <div class="feedbacks-display">
-                            <h4 class="feedbacks-title">
-                                <i class="fas fa-comments me-2"></i>Patient Reviews
-                            </h4>
-                            
-                            <?php 
-                            // Get all feedbacks for this doctor with pagination
-                            $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
-                            $per_page = 10;
-                            $offset = ($page - 1) * $per_page;
-                            
-                            $feedback_query = "SELECT * FROM feedback WHERE entity_id = " . $doctor['entity_id'] . " 
-                                           ORDER BY created_at DESC 
-                                           LIMIT $offset, $per_page";
-                            $feedback_result = mysqli_query($con, $feedback_query);
-                            
-                            // Get total feedback count for pagination
-                            $count_query = "SELECT COUNT(*) as total FROM feedback WHERE entity_id = " . $doctor['entity_id'];
-                            $count_result = mysqli_query($con, $count_query);
-                            $total_feedbacks = mysqli_fetch_assoc($count_result)['total'];
-                            $total_pages = ceil($total_feedbacks / $per_page);
-                            
-                            if(mysqli_num_rows($feedback_result) > 0): ?>
-                                <div class="feedbacks-grid">
-                                    <?php while($feedback = mysqli_fetch_assoc($feedback_result)): ?>
-                                        <div class="feedback-card">
-                                            <div class="feedback-header">
-                                                <div class="patient-info">
-                                                    <div class="patient-avatar">
-                                                        <i class="fas fa-user"></i>
-                                                    </div>
-                                                    <div class="patient-details">
-                                                        <h5 class="patient-name">
-                                                            <?php echo htmlspecialchars($feedback['commenter_name']); ?>
-                                                        </h5>
-                                                        <p class="patient-email">
-                                                            <?php echo htmlspecialchars($feedback['commenter_gmail']); ?>
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                                <div class="feedback-rating">
-                                                    <div class="stars">
-                                                        <?php for($i = 1; $i <= 5; $i++): ?>
-                                                            <i class="fas fa-star <?php echo $i <= $feedback['stars'] ? 'active' : ''; ?>"></i>
-                                                        <?php endfor; ?>
-                                                    </div>
-                                                    <span class="rating-number"><?php echo $feedback['stars']; ?>/5</span>
-                                                </div>
-                                            </div>
-                                            
-                                            <div class="feedback-content">
-                                                <p class="feedback-comment">
-                                                    <?php echo nl2br(htmlspecialchars($feedback['comment'])); ?>
-                                                </p>
-                                            </div>
-                                            
-                                            <div class="feedback-footer">
-                                                <div class="feedback-date">
-                                                    <i class="fas fa-calendar me-1"></i>
-                                                    <?php echo date('M d, Y', strtotime($feedback['created_at'])); ?>
-                                                </div>
-                                                <div class="feedback-actions">
-                                                    <button class="btn btn-sm btn-outline-primary like-btn">
-                                                        <i class="fas fa-thumbs-up me-1"></i>Helpful
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    <?php endwhile; ?>
+                        <div class="contact-item-modern">
+                            <div class="icon-box"><i class="fas fa-envelope"></i></div>
+                            <div>
+                                <div class="label">Email</div>
+                                <div class="value"><?php echo htmlspecialchars($doctor['doctor_email'] ?? 'N/A'); ?></div>
+                            </div>
+                        </div>
+                        <div class="contact-item-modern">
+                            <div class="icon-box"><i class="fas fa-map-marker-alt"></i></div>
+                            <div>
+                                <div class="label">City</div>
+                                <div class="value"><?php echo htmlspecialchars($doctor['city_name'] ?? 'N/A'); ?></div>
+                            </div>
+                        </div>
+                        <?php if (!empty($doctor['hospital_name'])): ?>
+                            <div class="contact-item-modern">
+                                <div class="icon-box"><i class="fas fa-hospital"></i></div>
+                                <div>
+                                    <div class="label">Hospital</div>
+                                    <div class="value"><?php echo htmlspecialchars($doctor['hospital_name']); ?></div>
                                 </div>
-                            <?php else: ?>
-                                <div class="no-feedbacks">
-                                    <i class="fas fa-comment-slash"></i>
-                                    <h5>No Reviews Yet</h5>
-                                    <p>Be the first to share your experience with this doctor!</p>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== CLINICAL INFORMATION ===== -->
+        <?php
+        $clinical_query = "SELECT ci.*, hospitals.hospital_name, hospitals.hospital_id
+                        FROM clinical_info ci 
+                        INNER JOIN doctor_in_hospital dih ON ci.doctor_in_hosp_id = dih.doctor_in_hosp_id 
+                        LEFT JOIN hospitals ON dih.hospital_id = hospitals.hospital_id
+                        WHERE dih.doctor_id = " . $doctor['doctor_id'] . "
+                        ORDER BY ci.season, ci.shift";
+        $clinical_result = mysqli_query($con, $clinical_query);
+        ?>
+
+        <?php if (mysqli_num_rows($clinical_result) > 0): ?>
+            <div class="glass-card fade-in-up fade-in-up-delay-3" style="margin-top:30px;">
+                <div class="card-header-custom">
+                    <h3><i class="fas fa-clock"></i> Clinical Schedule</h3>
+                    <span class="badge bg-primary"><?php echo mysqli_num_rows($clinical_result); ?> Records</span>
+                </div>
+
+                <div class="clinical-grid-modern">
+                    <?php while ($clinical = mysqli_fetch_assoc($clinical_result)): ?>
+                        <div class="clinical-card-modern">
+                            <div class="hospital-name">
+                                <i class="fas fa-hospital"></i>
+                                <?php
+                                if (!empty($clinical['hospital_name'])) {
+                                    echo htmlspecialchars($clinical['hospital_name']);
+                                } else {
+                                    echo 'Personal Clinic';
+                                }
+                                ?>
+                            </div>
+
+                            <?php if (!empty($clinical['morning_opening_time']) || !empty($clinical['morning_closing_time'])): ?>
+                                <div class="clinical-item-modern">
+                                    <i class="fas fa-sun text-warning"></i>
+                                    <span class="clabel">Morning</span>
+                                    <span class="cvalue">
+                                        <?php echo date('h:i A', strtotime($clinical['morning_opening_time'])); ?>
+                                        - 
+                                        <?php echo date('h:i A', strtotime($clinical['morning_closing_time'])); ?>
+                                    </span>
+                                </div>
+                            <?php endif; ?>
+
+                            <?php if (!empty($clinical['evening_opening_time']) || !empty($clinical['evening_closing_time'])): ?>
+                                <div class="clinical-item-modern">
+                                    <i class="fas fa-moon text-primary"></i>
+                                    <span class="clabel">Evening</span>
+                                    <span class="cvalue">
+                                        <?php echo date('h:i A', strtotime($clinical['evening_opening_time'])); ?>
+                                        - 
+                                        <?php echo date('h:i A', strtotime($clinical['evening_closing_time'])); ?>
+                                    </span>
+                                </div>
+                            <?php endif; ?>
+
+                            <div class="clinical-item-modern">
+                                <i class="fas fa-calendar-day text-success"></i>
+                                <span class="clabel">Working</span>
+                                <span class="cvalue"><?php echo htmlspecialchars($clinical['days'] ?? 'N/A'); ?></span>
+                            </div>
+
+                            <div class="clinical-item-modern">
+                                <i class="fas fa-calendar-times text-danger"></i>
+                                <span class="clabel">Off</span>
+                                <span class="cvalue"><?php echo htmlspecialchars($clinical['off_days'] ?? 'None'); ?></span>
+                            </div>
+
+                            <?php if (!empty($clinical['contact'])): ?>
+                                <div class="clinical-item-modern">
+                                    <i class="fas fa-phone"></i>
+                                    <span class="clabel">Contact</span>
+                                    <span class="cvalue"><?php echo htmlspecialchars($clinical['contact']); ?></span>
+                                </div>
+                            <?php endif; ?>
+
+                            <?php if (!empty($clinical['detail'])): ?>
+                                <div class="clinical-item-modern" style="border-top:1px dashed rgba(0,0,0,0.06); padding-top:8px; margin-top:4px;">
+                                    <i class="fas fa-info-circle text-info"></i>
+                                    <span class="clabel">Detail</span>
+                                    <span class="cvalue" style="font-size:0.8rem;"><?php echo htmlspecialchars($clinical['detail']); ?></span>
                                 </div>
                             <?php endif; ?>
                         </div>
-                        
-                        <!-- Pagination -->
-                        <?php if($total_pages > 1): ?>
-                            <div class="feedback-pagination mt-4">
-                                <nav aria-label="Feedback pagination">
-                                    <ul class="pagination justify-content-center">
-                                        <?php
-                                        // Previous page link
-                                        if($page > 1):
-                                            $prev_page = $page - 1;
-                                            echo '<li class="page-item">
-                                                <a class="page-link" href="?doctor_id=' . $doctor['doctor_id'] . '&page=' . $prev_page . '">
-                                                    <i class="fas fa-chevron-left"></i>
-                                                    Previous
-                                                </a>
-                                              </li>';
-                                        endif;
-                                        
-                                        // Page numbers
-                                        for($i = 1; $i <= $total_pages; $i++):
-                                            $active_class = ($i == $page) ? 'active' : '';
-                                            echo '<li class="page-item ' . $active_class . '">
-                                                <a class="page-link" href="?doctor_id=' . $doctor['doctor_id'] . '&page=' . $i . '">' . $i . '</a>
-                                              </li>';
-                                        endfor;
-                                        
-                                        // Next page link
-                                        if($page < $total_pages):
-                                            $next_page = $page + 1;
-                                            echo '<li class="page-item">
-                                                <a class="page-link" href="?doctor_id=' . $doctor['doctor_id'] . '&page=' . $next_page . '">
-                                                    Next
-                                                    <i class="fas fa-chevron-right"></i>
-                                                </a>
-                                              </li>';
-                                        endif;
-                                        ?>
-                                    </ul>
-                                </nav>
-                                
-                                <div class="pagination-info text-center mt-3">
-                                    <small class="text-muted">
-                                        Showing <?php echo ($offset + 1); ?> to <?php echo min($offset + $per_page, $total_feedbacks); ?> 
-                                        of <?php echo $total_feedbacks; ?> reviews
-                                    </small>
-                                </div>
-                            <?php endif; ?>
+                    <?php endwhile; ?>
+                </div>
+            </div>
+        <?php endif; ?>
+
+        <!-- ===== REVIEWS ===== -->
+        <div id="reviews" class="glass-card fade-in-up fade-in-up-delay-4" style="margin-top:30px;">
+            <div class="card-header-custom">
+                <h3><i class="fas fa-star"></i> Patient Reviews</h3>
+                <?php if ($total_reviews > 0): ?>
+                    <div style="display:flex; align-items:center; gap:8px; padding:6px 16px; background:#fef3c7; border-radius:50px;">
+                        <i class="fas fa-star" style="color:#f59e0b;"></i>
+                        <span style="font-weight:700;"><?php echo $avg_rating; ?></span>
+                        <span style="opacity:0.7;">(<?php echo $total_reviews; ?>)</span>
+                    </div>
+                <?php endif; ?>
+            </div>
+
+            <!-- Review Form -->
+            <div class="review-form-modern">
+                <h5 style="font-weight:700; margin-bottom:16px;">
+                    <i class="fas fa-pen" style="color:var(--primary);"></i> Share Your Experience
+                </h5>
+                <form method="POST">
+                    <input type="hidden" name="entity_id" value="<?php echo $doctor['entity_id']; ?>">
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Your Name *</label>
+                            <input type="text" class="form-control" name="commenter_name" required placeholder="Enter your name">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Email *</label>
+                            <input type="email" class="form-control" name="commenter_gmail" required placeholder="your@email.com">
                         </div>
                     </div>
 
+                    <div class="mb-3">
+                        <label class="form-label">Rating *</label>
+                        <div class="rating-select-modern">
+                            <?php for ($i = 5; $i >= 1; $i--): ?>
+                                <span class="star" data-value="<?php echo $i; ?>" onclick="setRatingModern(this)">
+                                    <i class="fas fa-star"></i>
+                                </span>
+                            <?php endfor; ?>
+                        </div>
+                        <input type="hidden" name="stars" id="ratingValueModern" value="5">
+                        <span class="text-muted" id="ratingLabelModern">Excellent</span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Your Review *</label>
+                        <textarea class="form-control" name="comment" rows="4" required placeholder="Share your experience..."></textarea>
+                    </div>
+
+                    <button type="submit" class="btn-submit-glass">
+                        <i class="fas fa-paper-plane me-2"></i> Submit Review
+                    </button>
+                </form>
+            </div>
+
+            <!-- Reviews List -->
+            <?php
+            $feedback_query = "SELECT * FROM feedback WHERE entity_id = " . $doctor['entity_id'] . " AND status = 1 
+                              ORDER BY created_at DESC LIMIT 10";
+            $feedback_result = mysqli_query($con, $feedback_query);
+            ?>
+
+            <?php if (mysqli_num_rows($feedback_result) > 0): ?>
+                <div class="reviews-grid-modern">
+                    <?php while ($feedback = mysqli_fetch_assoc($feedback_result)): ?>
+                        <div class="review-item-modern">
+                            <div class="review-header">
+                                <div>
+                                    <span class="reviewer-name"><?php echo htmlspecialchars($feedback['commenter_name']); ?></span>
+                                    <span class="reviewer-email"><?php echo htmlspecialchars($feedback['commenter_gmail']); ?></span>
+                                </div>
+                                <div class="review-stars">
+                                    <?php for ($i = 1; $i <= 5; $i++): ?>
+                                        <i class="fas fa-star <?php echo $i <= $feedback['stars'] ? '' : 'text-muted'; ?>" style="opacity: <?php echo $i <= $feedback['stars'] ? '1' : '0.3'; ?>;"></i>
+                                    <?php endfor; ?>
+                                </div>
+                            </div>
+                            <?php if (!empty($feedback['comment'])): ?>
+                                <p class="review-comment"><?php echo nl2br(htmlspecialchars($feedback['comment'])); ?></p>
+                            <?php endif; ?>
+                            <div class="review-date">
+                                <i class="fas fa-calendar me-1"></i> <?php echo date('d M Y', strtotime($feedback['created_at'])); ?>
+                            </div>
+                        </div>
+                    <?php endwhile; ?>
                 </div>
             <?php else: ?>
-                <div class="no-doctor-found" data-aos="fade-up">
-                    <i class="fas fa-user-md"></i>
-                    <h3>Doctor Not Found</h3>
-                    <p class="text-muted">The doctor you're looking for doesn't exist or has been removed.</p>
-                    <a href="doctors.php" class="btn btn-primary">
-                        <i class="fas fa-arrow-left me-2"></i>Back to Doctors
-                    </a>
+                <div class="text-center py-4" style="color:var(--text-light);">
+                    <i class="fas fa-comment-slash fa-2x mb-2" style="color:#cbd5e1;"></i>
+                    <h5 style="font-weight:600;">No Reviews Yet</h5>
+                    <p>Be the first to share your experience!</p>
                 </div>
             <?php endif; ?>
         </div>
+
+    </div>
+</section>
+
+<?php else: ?>
+    <!-- ===== NOT FOUND ===== -->
+    <section style="min-height:60vh; display:flex; align-items:center; justify-content:center; background:var(--bg);">
+        <div class="container text-center" style="animation: fadeInUp 0.7s ease-out;">
+            <i class="fas fa-user-md fa-4x" style="color:#cbd5e1; margin-bottom:20px;"></i>
+            <h3 style="font-weight:700;">Doctor Not Found</h3>
+            <p style="color:var(--text-light);">The doctor you're looking for doesn't exist.</p>
+            <a href="<?php echo BASE_URL; ?>doctors" class="btn-hero btn-hero-primary" style="margin-top:20px; display:inline-flex;">
+                <i class="fas fa-arrow-left me-2"></i> Back to Doctors
+            </a>
+        </div>
     </section>
+<?php endif; ?>
 
-    <!-- Footer -->
-    <?php include BASE_PATH.'/includes/footer.php';?>
+<!-- ======================================== -->
+<!-- FOOTER -->
+<!-- ======================================== -->
+<?php include BASE_PATH . '/includes/footer.php'; ?>
 
-    <script>
-        function bookAppointment(doctorId) {
-            // You can implement appointment booking functionality
-            alert('Booking appointment for Doctor ID: ' + doctorId + ' - Feature coming soon!');
-        }
-        
-        // Make updateStars function globally accessible
-        function updateStars(rating) {
-            console.log('Updating stars to rating:', rating);
-            const stars = document.querySelectorAll('.star');
-            stars.forEach((star, index) => {
-                if (index < rating) {
-                    star.classList.add('active');
-                } else {
-                    star.classList.remove('active');
-                }
-            });
-        }
-        
-        // Star Rating Functionality
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('Star rating initializing...');
-            
-            const stars = document.querySelectorAll('.star');
-            const ratingInput = document.getElementById('rating');
-            const ratingText = document.querySelector('.rating-text');
-            const ratingTexts = ['Poor', 'Fair', 'Good', 'Very Good', 'Excellent'];
-            
-            console.log('Found stars:', stars.length);
-            console.log('Rating input:', ratingInput);
-            console.log('Rating text:', ratingText);
-            
-            // Initialize stars with default rating
-            const initialRating = parseInt(ratingInput.value) || 5;
-            console.log('Initial rating:', initialRating);
-            updateStars(initialRating);
-            ratingText.textContent = ratingTexts[initialRating - 1];
-            
-            // Add click event to each star
-            stars.forEach((star, index) => {
-                console.log('Adding events to star:', index + 1);
-                
-                star.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    
-                    const rating = parseInt(this.dataset.rating);
-                    console.log('Star clicked, rating:', rating);
-                    
-                    ratingInput.value = rating;
-                    ratingText.textContent = ratingTexts[rating - 1];
-                    updateStars(rating);
-                    
-                    // Add visual feedback
-                    stars.forEach(s => s.style.transform = 'scale(1)');
-                    this.style.transform = 'scale(1.3)';
-                    setTimeout(() => {
-                        this.style.transform = 'scale(1)';
-                    }, 200);
-                    
-                    console.log('Rating updated to:', ratingInput.value);
-                });
-                
-                star.addEventListener('mouseenter', function() {
-                    const rating = parseInt(this.dataset.rating);
-                    updateStars(rating);
-                });
-                
-                // Make stars explicitly clickable
-                star.style.pointerEvents = 'auto';
-                star.style.cursor = 'pointer';
-            });
-            
-            // Reset to selected rating when mouse leaves the rating container
-            const starRatingContainer = document.querySelector('.star-rating');
-            if (starRatingContainer) {
-                starRatingContainer.addEventListener('mouseleave', function() {
-                    const currentRating = parseInt(ratingInput.value) || 5;
-                    updateStars(currentRating);
-                });
-            }
-        });
-        
-      
-        
-        // Notification Function
-        function showNotification(message, type) {
-            const notification = document.createElement('div');
-            notification.className = `notification notification-${type}`;
-            notification.innerHTML = `
-                <div class="notification-content">
-                    <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i>
-                    <span>${message}</span>
-                </div>
-            `;
-            
-            document.body.appendChild(notification);
-            
-            // Show notification
-            setTimeout(() => {
-                notification.classList.add('show');
-            }, 100);
-            
-            // Hide notification after 3 seconds
-            setTimeout(() => {
-                notification.classList.remove('show');
-                setTimeout(() => {
-                    document.body.removeChild(notification);
-                }, 300);
-            }, 3000);
-        }
-        
-        // Like Button Functionality
-        document.querySelectorAll('.like-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const feedbackId = this.closest('.feedback-card').dataset.feedbackId;
-                
-                if (this.classList.contains('liked')) {
-                    this.classList.remove('liked');
-                    this.innerHTML = '<i class="fas fa-thumbs-up me-1"></i>Helpful';
-                } else {
-                    this.classList.add('liked');
-                    this.innerHTML = '<i class="fas fa-thumbs-up me-1"></i>Liked';
-                }
-                
-                // Here you can send an AJAX request to update the database
-                // For now, we'll just toggle the UI state
-            });
-        });
-    </script>
+<script>
+// ============================================
+// MODERN STAR RATING
+// ============================================
+function setRatingModern(el) {
+    const stars = document.querySelectorAll('.rating-select-modern .star');
+    const value = el.dataset.value;
     
-    <style>
-        /* Notification Styles */
-        .notification {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: white;
-            border-radius: 12px;
-            padding: 15px 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            z-index: 9999;
-            transform: translateX(400px);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            max-width: 350px;
+    stars.forEach(star => {
+        star.classList.remove('active');
+        if (star.dataset.value <= value) {
+            star.classList.add('active');
         }
+    });
+    
+    document.getElementById('ratingValueModern').value = value;
+    
+    const labels = ['', 'Poor', 'Fair', 'Good', 'Very Good', 'Excellent'];
+    document.getElementById('ratingLabelModern').textContent = labels[value];
+}
+
+// Initialize rating
+document.addEventListener('DOMContentLoaded', function() {
+    const stars = document.querySelectorAll('.rating-select-modern .star');
+    const container = document.querySelector('.rating-select-modern');
+    
+    if (container) {
+        container.addEventListener('mouseleave', function() {
+            const current = document.getElementById('ratingValueModern').value;
+            stars.forEach(star => {
+                star.classList.remove('active');
+                if (star.dataset.value <= current) {
+                    star.classList.add('active');
+                }
+            });
+        });
         
-        .notification.show {
-            transform: translateX(0);
-        }
+        stars.forEach(star => {
+            star.addEventListener('mouseenter', function() {
+                const value = this.dataset.value;
+                stars.forEach(s => {
+                    s.classList.remove('active');
+                    if (s.dataset.value <= value) {
+                        s.classList.add('active');
+                    }
+                });
+            });
+        });
         
-        .notification-success {
-            border-left: 4px solid #28a745;
-        }
-        
-        .notification-error {
-            border-left: 4px solid #dc3545;
-        }
-        
-        .notification-content {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .notification-success i {
-            color: #28a745;
-        }
-        
-        .notification-error i {
-            color: #dc3545;
-        }
-        
-        .notification span {
-            color: #495057;
-            font-weight: 500;
-        }
-        
-        /* Like Button Styles */
-        .like-btn.liked {
-            background-color: #007bff;
-            color: white;
-            border-color: #007bff;
-        }
-        
-        .like-btn.liked:hover {
-            background-color: #0056b3;
-            border-color: #0056b3;
-        }
-        
-        /* Feedback Pagination Styles */
-        .feedback-pagination {
-            background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(248,249,250,0.95) 100%);
-            border-radius: 15px;
-            padding: 20px;
-            border: 1px solid rgba(102, 126, 234, 0.1);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
-        }
-        
-        .pagination {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-        
-        .pagination .page-item {
-            display: inline-block;
-        }
-        
-        .pagination .page-link {
-            display: inline-block;
-            padding: 10px 15px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            text-decoration: none;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 0.9rem;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            border: 1px solid transparent;
-        }
-        
-        .pagination .page-link:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
-            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
-        }
-        
-        .pagination .page-link i {
-            margin-right: 5px;
-            font-size: 0.8rem;
-        }
-        
-        .pagination .page-item.active .page-link {
-            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-            transform: scale(1.05);
-        }
-        
-        .pagination-info {
-            text-align: center;
-            margin-top: 15px;
-            color: #6c757d;
-            font-size: 0.9rem;
-        }
-        
-        .pagination-info small {
-            color: #495057;
-            font-weight: 500;
-        }
-        
-        /* Mobile Responsive for Pagination */
-        @media (max-width: 768px) {
-            .feedback-pagination {
-                padding: 15px;
+        // Set default (5 stars)
+        stars.forEach(star => {
+            if (star.dataset.value <= 5) {
+                star.classList.add('active');
             }
-            
-            .pagination {
-                flex-wrap: wrap;
-                gap: 8px;
-            }
-            
-            .pagination .page-link {
-                padding: 8px 12px;
-                font-size: 0.8rem;
-            }
-            
-            .pagination .page-link i {
-                font-size: 0.7rem;
-                margin-right: 3px;
-            }
-        }
-    </style>
-
-    <style>
-        .doctor-detail-card {
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 20px;
-            overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            margin-bottom: 40px;
-        }
-
-        .doctor-profile-section {
-            padding: 40px;
-            text-align: center;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-
-        .doctor-image-wrapper {
-            margin-bottom: 30px;
-        }
-
-        .doctor-profile-img {
-            width: 150px;
-            height: 150px;
-            border-radius: 50%;
-            border: 4px solid rgba(255, 255, 255, 0.3);
-            object-fit: cover;
-        }
-
-        .doctor-avatar-placeholder {
-            width: 150px;
-            height: 150px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.2);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto;
-            border: 4px solid rgba(255, 255, 255, 0.3);
-        }
-
-        .doctor-basic-info {
-            color: white;
-        }
-
-        .doctor-name {
-            font-size: 1.8rem;
-            font-weight: 700;
-            margin-bottom: 10px;
-        }
-
-        .doctor-specialization {
-            font-size: 1.1rem;
-            margin-bottom: 15px;
-            opacity: 0.9;
-        }
-
-        .doctor-experience {
-            font-size: 0.95rem;
-            margin: 0;
-        }
-
-        .doctor-rating {
-            font-size: 0.95rem;
-            margin: 15px 0 0 0;
-            padding: 15px;
-            background: linear-gradient(135deg, rgba(255,215,0,0.1) 0%, rgba(255,193,7,0.1) 100%);
-            border-radius: 12px;
-            border-left: 3px solid #ffc107;
-        }
-        
-        .doctor-rating i {
-            color: #ffc107;
-            margin-right: 8px;
-        }
-        
-        .rating-score {
-            font-weight: 700;
-            font-size: 1.1rem;
-            color: #212529;
-        }
-        
-        .rating-percentage {
-            font-weight: 600;
-            color: #28a745;
-            margin-left: 5px;
-        }
-        
-        .total-reviews {
-            display: block;
-            font-size: 0.85rem;
-            color: #6c757d;
-            margin-top: 5px;
-            font-style: italic;
-        }
-
-        .doctor-details-section {
-            padding: 40px;
-        }
-
-        .detail-section {
-            margin-bottom: 40px;
-        }
-
-        .section-title {
-            font-size: 1.3rem;
-            font-weight: 700;
-            color: var(--primary);
-            margin-bottom: 25px;
-            display: flex;
-            align-items: center;
-        }
-
-        .contact-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-        }
-
-        .contact-item {
-            display: flex;
-            align-items: center;
-            padding: 20px;
-            background: #f8f9fa;
-            border-radius: 10px;
-            transition: transform 0.3s ease;
-        }
-
-        .contact-item:hover {
-            transform: translateY(-2px);
-        }
-
-        .contact-item i {
-            font-size: 1.5rem;
-            color: var(--primary);
-            margin-right: 15px;
-            width: 30px;
-        }
-
-        .contact-item label {
-            display: block;
-            font-weight: 600;
-            color: #6c757d;
-            font-size: 0.85rem;
-            margin-bottom: 5px;
-        }
-
-        .contact-item span {
-            color: #212529;
-            font-weight: 500;
-        }
-
-        .professional-info {
-            background: #f8f9fa;
-            border-radius: 10px;
-            padding: 25px;
-        }
-
-        .info-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 15px 0;
-            border-bottom: 1px solid #e9ecef;
-        }
-
-        .info-row:last-child {
-            border-bottom: none;
-        }
-
-        .info-row label {
-            font-weight: 600;
-            color: #6c757d;
-        }
-
-        .info-row span {
-            color: #212529;
-            font-weight: 500;
-        }
-
-        .about-content {
-            background: #f8f9fa;
-            border-radius: 10px;
-            padding: 25px;
-            line-height: 1.6;
-        }
-
-        .action-buttons {
-            display: flex;
-            gap: 15px;
-            flex-wrap: wrap;
-        }
-
-        .no-doctor-found {
-            text-align: center;
-            padding: 80px 20px;
-            color: var(--dark);
-        }
-
-        .no-doctor-found i {
-            font-size: 5rem;
-            color: var(--primary);
-            margin-bottom: 30px;
-        }
-
-        .no-doctor-found h3 {
-            font-size: 2rem;
-            margin-bottom: 15px;
-        }
-
-        @media (max-width: 768px) {
-            .doctor-detail-card .row {
-                flex-direction: column;
-            }
-            
-            .doctor-profile-section {
-                padding: 30px 20px;
-            }
-            
-            .doctor-details-section {
-                padding: 30px 20px;
-            }
-            
-            .contact-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .action-buttons {
-                flex-direction: column;
-            }
-            
-            .action-buttons .btn {
-                width: 100%;
-            }
-        }
-    </style>
-</body>
-</html>
+        });
+    }
+});
+</script>
