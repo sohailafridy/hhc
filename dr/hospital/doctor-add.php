@@ -41,10 +41,11 @@ $is_edit = isset($_GET['id']) && is_numeric($_GET['id']);
 if ($is_edit) {
     $doctor_id = (int)$_GET['id'];
     
-    $check_query = "SELECT d.*, dct.type as specialization_name, e.status as estatus, e.reference as ref
+    $check_query = "SELECT d.*, dct.type as specialization_name, e.status as estatus, e.reference as ref, u.status as user_status
                     FROM doctors d
                     LEFT JOIN dr_cat_types dct ON d.cat_type_id = dct.dr_cat_type_id
                     LEFT JOIN entities e ON e.entity_id = d.entity_id
+                    LEFT JOIN users u ON u.user_id = d.user_id
                     WHERE d.doctor_id = $doctor_id AND d.hospital_id = $hospital_id AND d.approve = 1";
     $check_result = mysqli_query($con, $check_query);
     
@@ -56,6 +57,21 @@ if ($is_edit) {
         header("Location: " . BASE_URL . "hospital/doctors.php");
         exit();
     }
+}
+
+// ============================================
+// FETCH EXISTING DOCTORS FOR THIS HOSPITAL'S CITY
+// ============================================
+$existing_doctors = [];
+$existing_doctors_query = "SELECT d.doctor_id, d.doctor_name, dct.type as specialization 
+                           FROM doctors d
+                           LEFT JOIN dr_cat_types dct ON d.cat_type_id = dct.dr_cat_type_id
+                           LEFT JOIN users u ON u.user_id = d.user_id
+                           WHERE d.city_id = $city_id AND d.approve = 1 AND u.status = 1
+                           ORDER BY d.doctor_name ASC";
+$existing_doctors_result = mysqli_query($con, $existing_doctors_query);
+while ($row = mysqli_fetch_assoc($existing_doctors_result)) {
+    $existing_doctors[] = $row;
 }
 
 // ============================================
@@ -119,154 +135,87 @@ if ($categories_result) {
 // ============================================
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     
-    $doctor_name = mysqli_real_escape_string($con, $_POST['doctor_name']);
-    $cat_type_id = (int)$_POST['specialization'];
-    
-    if (isset($_POST['if_not_available']) && $_POST['if_not_available'] == 1) {
-        $doct_role = mysqli_real_escape_string($con, $_POST['specialization_txt']);
-        $new_cat = "INSERT INTO dr_cat_types (dr_cat_id, type) VALUES (12, '$doct_role')";
-        if (mysqli_query($con, $new_cat)) {
-            $cat_type_id = mysqli_insert_id($con);
-        }
-    }
-    
-    $experience_years = (int)$_POST['experience_years'];
-    $doctor_phone = mysqli_real_escape_string($con, $_POST['doctor_phone']);
-    $doctor_email = mysqli_real_escape_string($con, $_POST['doctor_email']);
-    $gender = mysqli_real_escape_string($con, $_POST['gender']);
-    $short_detail = mysqli_real_escape_string($con, $_POST['short_detail']);
-    $other = mysqli_real_escape_string($con, $_POST['other'] ?? '');
-    $static_clinical_info = mysqli_real_escape_string($con, $_POST['static_clinical_info'] ?? '');
-    $status = isset($_POST['status']) ? 1 : 0;
-    
-    $username = mysqli_real_escape_string($con, $_POST['username']);
-    $pass = mysqli_real_escape_string($con, $_POST['password']);
-    $password = !empty($pass) ? base64_encode($pass) : base64_encode('123456');
-    
-    $doctor_pic = '';
-    if (isset($_FILES['doctor_pic']) && $_FILES['doctor_pic']['error'] == 0) {
-        $target_dir = BASE_PATH . "/admin/inc/uploads/doctors/";
-        if (!file_exists($target_dir)) {
-            mkdir($target_dir, 0777, true);
-        }
-        $file_name = time() . '_' . basename($_FILES["doctor_pic"]["name"]);
-        $target_file = $target_dir . $file_name;
-        $imageFileType = strtolower(pathinfo($target_file, PATHINFO_EXTENSION));
-        
-        $allowed_types = array('jpg', 'jpeg', 'png', 'gif', 'webp');
-        if (in_array($imageFileType, $allowed_types)) {
-            if (move_uploaded_file($_FILES["doctor_pic"]["tmp_name"], $target_file)) {
-                $doctor_pic = $file_name;
-            }
-        }
-    }
-    
     // ============================================
-    // CLINICAL INFO DATA
+    // CHECK IF EXISTING DOCTOR SELECTED
     // ============================================
-    $clinical_data = isset($_POST['clinical_data']) ? $_POST['clinical_data'] : [];
+    $selected_existing_doctor = isset($_POST['existing_doctor_id']) && !empty($_POST['existing_doctor_id']) 
+        ? (int)$_POST['existing_doctor_id'] 
+        : 0;
     
-    if ($edit_mode) {
+    if ($selected_existing_doctor > 0) {
         // ============================================
-        // UPDATE DOCTOR
+        // EXISTING DOCTOR - Just add to doctor_in_hospital
         // ============================================
-        $update_query = "UPDATE doctors SET 
-                            doctor_name = '$doctor_name',
-                            cat_type_id = '$cat_type_id',
-                            experience_years = '$experience_years',
-                            doctor_phone = '$doctor_phone',
-                            doctor_email = '$doctor_email',
-                            gender = '$gender',
-                            short_detail = '$short_detail',
-                            other = '$other',
-                            static_clinical_info = '$static_clinical_info'";
+        $doctor_id = $selected_existing_doctor;
         
-        if (!empty($doctor_pic)) {
-            $update_query .= ", doctor_pic = '$doctor_pic'";
-        }
+        // Check if already assigned to this hospital
+        $check_dih = "SELECT * FROM doctor_in_hospital WHERE doctor_id = $doctor_id AND hospital_id = $hospital_id";
+        $check_dih_result = mysqli_query($con, $check_dih);
         
-        $update_query .= " WHERE doctor_id = $doctor_id AND hospital_id = $hospital_id";
-        
-        if (mysqli_query($con, $update_query)) {
-            // Update entity status
-            $entity_id = $doctor_data['entity_id'];
-            $ref = '';
-            if ($status == 0) {
-                $ref = mysqli_real_escape_string($con, $_POST['ref'] ?? '');
-            }
-            mysqli_query($con, "UPDATE entities SET status = '$status', reference = '$ref' WHERE entity_id = '$entity_id'");
-            
-            // ============================================
-            // UPDATE CLINICAL INFO
-            // ============================================
-            foreach ($clinical_data as $doctor_in_hosp_id => $data) {
-                $doctor_in_hosp_id = mysqli_real_escape_string($con, $doctor_in_hosp_id);
-                $morning_opening_time = mysqli_real_escape_string($con, $data['morning_opening_time'] ?? '');
-                $morning_closing_time = mysqli_real_escape_string($con, $data['morning_closing_time'] ?? '');
-                $evening_opening_time = mysqli_real_escape_string($con, $data['evening_opening_time'] ?? '');
-                $evening_closing_time = mysqli_real_escape_string($con, $data['evening_closing_time'] ?? '');
-                $season = mysqli_real_escape_string($con, $data['season'] ?? '');
-                $contact = mysqli_real_escape_string($con, $data['contact'] ?? '');
-                $days = mysqli_real_escape_string($con, $data['days'] ?? '');
-                $off_days = mysqli_real_escape_string($con, $data['off_days'] ?? '');
-                $detail = mysqli_real_escape_string($con, $data['detail'] ?? '');
-                $shift = '';
-                
-                // Check if at least one shift is filled
-                if ((empty($morning_opening_time) || empty($morning_closing_time)) && 
-                    (empty($evening_opening_time) || empty($evening_closing_time))) {
-                    continue; // Skip if no shift filled
-                }
-                
-                if (!empty($morning_opening_time) && !empty($morning_closing_time)) {
-                    $shift = 'Morning';
-                }
-                if (!empty($evening_opening_time) && !empty($evening_closing_time)) {
-                    $shift = $shift ? 'Both' : 'Evening';
-                }
-                
-                // Check if clinical info already exists
-                $check_query = "SELECT clinical_info_id FROM clinical_info WHERE doctor_in_hosp_id = $doctor_in_hosp_id";
-                $check_result = mysqli_query($con, $check_query);
-                
-                if (mysqli_num_rows($check_result) > 0) {
-                    $update_ci = "UPDATE clinical_info SET 
-                        morning_opening_time = '$morning_opening_time',
-                        morning_closing_time = '$morning_closing_time',
-                        evening_opening_time = '$evening_opening_time',
-                        evening_closing_time = '$evening_closing_time',
-                        season = '$season',
-                        contact = '$contact',
-                        days = '$days',
-                        off_days = '$off_days',
-                        shift = '$shift',
-                        detail = '$detail'
-                        WHERE doctor_in_hosp_id = $doctor_in_hosp_id";
-                    mysqli_query($con, $update_ci);
-                } else {
-                    $insert_ci = "INSERT INTO clinical_info 
-                        (doctor_in_hosp_id, morning_opening_time, morning_closing_time, 
-                         evening_opening_time, evening_closing_time, season, contact, 
-                         days, off_days, shift, detail) 
-                        VALUES 
-                        ('$doctor_in_hosp_id', '$morning_opening_time', '$morning_closing_time', 
-                         '$evening_opening_time', '$evening_closing_time', '$season', '$contact', 
-                         '$days', '$off_days', '$shift', '$detail')";
-                    mysqli_query($con, $insert_ci);
-                }
-            }
-            
-            $_SESSION['success_msg'] = "Doctor updated successfully!";
-            header("Location: " . BASE_URL . "hospital/doctors.php");
-            exit();
+        if (mysqli_num_rows($check_dih_result) > 0) {
+            $error_msg = "This doctor is already assigned to your hospital!";
         } else {
-            $error_msg = "Error: " . mysqli_error($con);
+            // Insert into doctor_in_hospital
+            $insert_dih = "INSERT INTO doctor_in_hospital (doctor_id, hospital_id) VALUES ($doctor_id, $hospital_id)";
+            if (mysqli_query($con, $insert_dih)) {
+                $_SESSION['success_msg'] = "Doctor assigned to hospital successfully!";
+                header("Location: " . BASE_URL . "hospital/doctors.php");
+                exit();
+            } else {
+                $error_msg = "Error: " . mysqli_error($con);
+            }
         }
         
     } else {
         // ============================================
-        // ADD NEW DOCTOR
+        // NEW DOCTOR - Full insert
         // ============================================
+        $doctor_name = mysqli_real_escape_string($con, $_POST['doctor_name']);
+        $cat_type_id = (int)$_POST['specialization'];
+        
+        if (isset($_POST['if_not_available']) && $_POST['if_not_available'] == 1) {
+            $doct_role = mysqli_real_escape_string($con, $_POST['specialization_txt']);
+            $new_cat = "INSERT INTO dr_cat_types (dr_cat_id, type) VALUES (12, '$doct_role')";
+            if (mysqli_query($con, $new_cat)) {
+                $cat_type_id = mysqli_insert_id($con);
+            }
+        }
+        
+        $experience_years = (int)$_POST['experience_years'];
+        $doctor_phone = mysqli_real_escape_string($con, $_POST['doctor_phone']);
+        $doctor_email = mysqli_real_escape_string($con, $_POST['doctor_email']);
+        $gender = mysqli_real_escape_string($con, $_POST['gender']);
+        $short_detail = mysqli_real_escape_string($con, $_POST['short_detail']);
+        $other = mysqli_real_escape_string($con, $_POST['other'] ?? '');
+        $static_clinical_info = mysqli_real_escape_string($con, $_POST['static_clinical_info'] ?? '');
+        $status = isset($_POST['status']) ? 1 : 0;
+        
+        $mahre_amraz = mysqli_real_escape_string($con, $_POST['mahre_amraz'] ?? '');
+        $notes = mysqli_real_escape_string($con, $_POST['notes'] ?? '');
+        
+        $username = mysqli_real_escape_string($con, $_POST['username']);
+        $pass = mysqli_real_escape_string($con, $_POST['password']);
+        $password = !empty($pass) ? base64_encode($pass) : base64_encode('123456');
+        
+        $doctor_pic = '';
+        if (isset($_FILES['doctor_pic']) && $_FILES['doctor_pic']['error'] == 0) {
+            $target_dir = BASE_PATH . "/admin/inc/uploads/doctors/";
+            if (!file_exists($target_dir)) {
+                mkdir($target_dir, 0777, true);
+            }
+            $file_name = time() . '_' . basename($_FILES["doctor_pic"]["name"]);
+            $target_file = $target_dir . $file_name;
+            $imageFileType = strtolower(pathinfo($target_file, PATHINFO_EXTENSION));
+            
+            $allowed_types = array('jpg', 'jpeg', 'png', 'gif', 'webp');
+            if (in_array($imageFileType, $allowed_types)) {
+                if (move_uploaded_file($_FILES["doctor_pic"]["tmp_name"], $target_file)) {
+                    $doctor_pic = $file_name;
+                }
+            }
+        }
+        
+        // Check if email already exists
         $email_check = "SELECT user_id FROM users WHERE email = '$doctor_email'";
         $email_check_result = mysqli_query($con, $email_check);
         
@@ -287,12 +236,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                                 entity_id, user_id, city_id, hospital_id, doctor_name, 
                                 cat_type_id, experience_years, doctor_phone, doctor_email, 
                                 doctor_type, gender, short_detail, other, static_clinical_info,
-                                doctor_pic, approve, created_at
+                                mahre_amraz, notes, doctor_pic, approve, status, created_at
                             ) VALUES (
                                 '$entity_id_new', '$user_id_new', '$city_id', '$hospital_id', '$doctor_name',
                                 '$cat_type_id', '$experience_years', '$doctor_phone', '$doctor_email',
                                 '1', '$gender', '$short_detail', '$other', '$static_clinical_info',
-                                '$doctor_pic', 1, NOW()
+                                '$mahre_amraz', '$notes', '$doctor_pic', 1, 1, NOW()
                             )";
             
             if (mysqli_query($con, $insert_query)) {
@@ -428,9 +377,68 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     padding: 30px;
 }
 
+/* ===== EXISTING DOCTOR SELECT ===== */
+.existing-doctor-section {
+    background: #f0f7ff;
+    border-radius: 12px;
+    padding: 20px;
+    border: 1px solid #dbeafe;
+    margin-bottom: 25px;
+}
+
+.existing-doctor-section .section-label {
+    font-weight: 600;
+    color: #1e40af;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.existing-doctor-section .form-control-modern {
+    background: white;
+}
+
+/* ===== SELECT2 STYLES ===== */
+.select2-container--bootstrap-5 .select2-selection {
+    border: 2px solid var(--border-color) !important;
+    border-radius: 10px !important;
+    min-height: 42px !important;
+    padding: 4px 12px !important;
+    background: var(--input-bg) !important;
+}
+
+.select2-container--bootstrap-5.select2-container--focus .select2-selection {
+    border-color: var(--primary-color) !important;
+    box-shadow: 0 0 0 4px rgba(79, 172, 254, 0.1) !important;
+}
+
+.select2-dropdown {
+    border: 2px solid var(--border-color) !important;
+    border-radius: 10px !important;
+    box-shadow: var(--shadow-soft) !important;
+}
+
+.select2-search__field {
+    border: 2px solid var(--border-color) !important;
+    border-radius: 8px !important;
+    padding: 6px 12px !important;
+    font-size: 13px !important;
+}
+
+.select2-results__option {
+    padding: 8px 14px !important;
+    font-size: 13px !important;
+}
+
+.select2-results__option--highlighted {
+    background: var(--primary-color) !important;
+    color: white !important;
+}
+
+/* ===== FORM STYLES ===== */
 .form-group {
     margin-bottom: 20px;
-    position: relative;
 }
 
 .form-label {
@@ -445,6 +453,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
 .form-label .required {
     color: #e74c3c;
+    font-weight: 700;
+    font-size: 16px;
+    margin-left: 2px;
+}
+
+.form-label .optional {
+    color: #94a3b8;
+    font-weight: 400;
+    font-size: 11px;
+    margin-left: 4px;
+    text-transform: none;
 }
 
 .form-control-modern {
@@ -487,93 +506,70 @@ textarea.form-control-modern {
     border: 3px solid white;
 }
 
-/* ===== CLINICAL INFO STYLES ===== */
-.clinical-section {
-    margin-top: 20px;
-    padding-top: 20px;
-    border-top: 2px solid #e2e8f0;
+.field-mahre {
+    border-left: 3px solid #f59e0b;
+    padding-left: 16px;
 }
 
-.clinical-section .section-title {
-    font-size: 16px;
-    font-weight: 700;
-    color: var(--text-color);
-    margin-bottom: 16px;
+.field-notes {
+    border-left: 3px solid #22c55e;
+    padding-left: 16px;
 }
 
-.clinical-section .section-title i {
-    color: var(--primary-color);
+.field-mahre .form-label i {
+    color: #f59e0b;
 }
 
-.hospital-clinical-card {
-    background: #f8fafc;
-    border-radius: 12px;
-    padding: 20px;
-    margin-bottom: 20px;
-    border: 1px solid #e2e8f0;
+.field-notes .form-label i {
+    color: #22c55e;
 }
 
-.hospital-clinical-card .hospital-name {
-    font-weight: 700;
-    font-size: 16px;
-    color: var(--text-color);
-    margin-bottom: 12px;
-    padding-bottom: 10px;
-    border-bottom: 2px solid var(--primary-color);
+.custom-switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 26px;
 }
 
-.clinical-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
+.custom-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
 }
 
-.clinical-grid .form-group {
-    margin-bottom: 12px;
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 34px;
 }
 
-.clinical-grid .form-label {
-    font-size: 11px;
-    text-transform: uppercase;
-    color: #64748b;
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
 }
 
-.clinical-grid .form-control-modern {
-    padding: 8px 12px;
-    font-size: 13px;
+input:checked + .slider {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
 }
 
-.clinical-grid .full-width {
-    grid-column: 1 / -1;
+input:checked + .slider:before {
+    transform: translateX(24px);
 }
 
-.shift-label {
-    font-weight: 600;
-    color: var(--text-color);
-    margin-bottom: 8px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.shift-label i {
-    font-size: 14px;
-}
-
-.shift-label .hint {
-    font-weight: 400;
-    color: #94a3b8;
-    font-size: 11px;
-}
-
-.clinical-divider {
-    grid-column: 1 / -1;
-    border: none;
-    border-top: 1px dashed #e2e8f0;
-    margin: 8px 0;
-}
-
-/* ===== BUTTONS ===== */
 .btn-action {
     padding: 10px 28px;
     border-radius: 50px;
@@ -633,20 +629,6 @@ textarea.form-control-modern {
     border-left: 4px solid #e74c3c;
 }
 
-/* ===== RESPONSIVE ===== */
-@media (max-width: 992px) {
-    .clinical-grid {
-        grid-template-columns: 1fr;
-    }
-}
-
-@media (max-width: 768px) {
-    .content-wrapper { padding: 16px; }
-    .page-header { padding: 20px; }
-    .page-title { font-size: 22px; }
-    .card-body-custom { padding: 20px; }
-}
-
 @keyframes fadeInUp {
     from { opacity: 0; transform: translateY(20px); }
     to { opacity: 1; transform: translateY(0); }
@@ -655,8 +637,13 @@ textarea.form-control-modern {
 .animate-up {
     animation: fadeInUp 0.5s ease-out forwards;
 }
-.delay-1 { animation-delay: 0.1s; }
-.delay-2 { animation-delay: 0.2s; }
+
+@media (max-width: 768px) {
+    .content-wrapper { padding: 16px; }
+    .page-header { padding: 20px; }
+    .page-title { font-size: 22px; }
+    .card-body-custom { padding: 20px; }
+}
 </style>
 
 <div class="content-wrapper">
@@ -700,7 +687,48 @@ textarea.form-control-modern {
             
             <input type="hidden" name="entity_id" value="<?php if(isset($doctor_data['entity_id'])){ echo $doctor_data['entity_id']; } ?>">
             
+            <!-- ============================================ -->
+            <!-- ===== EXISTING DOCTOR SELECTION ===== -->
+            <!-- ============================================ -->
+            <?php if (!empty($existing_doctors)): ?>
+            <div class="modern-card">
+                <div class="card-header-custom">
+                    <h5><i class="fas fa-user-check me-2"></i> Existing Doctors</h5>
+                    <span class="badge bg-primary"><?php echo count($existing_doctors); ?> Available</span>
+                </div>
+                <div class="card-body-custom">
+                    <div class="existing-doctor-section">
+                        <div class="section-label">
+                            <i class="fas fa-info-circle"></i>
+                            Select an existing doctor to assign to your hospital
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Select Doctor</label>
+                            <select class="form-control-modern" id="existingDoctorSelect" name="existing_doctor_id" style="width:100%;">
+                                <option value="">-- Select Existing Doctor --</option>
+                                <?php foreach ($existing_doctors as $doc): ?>
+                                    <option value="<?php echo $doc['doctor_id']; ?>">
+                                        <?php echo htmlspecialchars($doc['doctor_name']); ?> 
+                                        (<?php echo htmlspecialchars($doc['specialization'] ?? 'General'); ?>)
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                            <small class="text-muted">Selecting a doctor will auto-fill the form below. Submit will assign them to your hospital.</small>
+                        </div>
+                        <div class="text-center mt-2">
+                            <span class="text-muted">OR</span>
+                        </div>
+                        <div class="text-center mt-2">
+                            <small>Fill the form below to add a <strong>new doctor</strong> to the system.</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <?php endif; ?>
+            
+            <!-- ============================================ -->
             <!-- ===== HOSPITAL INFO ===== -->
+            <!-- ============================================ -->
             <div class="modern-card">
                 <div class="card-header-custom">
                     <h5><i class="fas fa-hospital me-2"></i> Hospital Information</h5>
@@ -730,8 +758,10 @@ textarea.form-control-modern {
                 </div>
             </div>
 
+            <!-- ============================================ -->
             <!-- ===== PERSONAL DETAILS ===== -->
-            <div class="modern-card">
+            <!-- ============================================ -->
+            <div class="modern-card" id="personalDetailsCard">
                 <div class="card-header-custom">
                     <h5><i class="fas fa-user me-2"></i> Personal Details</h5>
                 </div>
@@ -739,8 +769,11 @@ textarea.form-control-modern {
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label class="form-label">Username <span class="required">*</span></label>
-                                <input type="text" class="form-control-modern" name="username" 
+                                <label class="form-label">
+                                    Username
+                                    <span class="required">*</span>
+                                </label>
+                                <input type="text" class="form-control-modern" id="username" name="username" 
                                        placeholder="Enter username" required
                                        value="<?php echo $edit_mode ? htmlspecialchars($doctor_data['username'] ?? '') : ''; ?>"
                                        <?php echo $edit_mode ? 'readonly' : ''; ?>>
@@ -748,8 +781,15 @@ textarea.form-control-modern {
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label class="form-label">Password <?php echo $edit_mode ? '' : '<span class="required">*</span>'; ?></label>
-                                <input type="password" class="form-control-modern" name="password" 
+                                <label class="form-label">
+                                    Password
+                                    <?php if (!$edit_mode): ?>
+                                        <span class="required">*</span>
+                                    <?php else: ?>
+                                        <span class="optional">(Optional)</span>
+                                    <?php endif; ?>
+                                </label>
+                                <input type="password" class="form-control-modern" id="password" name="password" 
                                        placeholder="<?php echo $edit_mode ? 'Leave blank to keep current' : 'Enter password'; ?>"
                                        <?php echo $edit_mode ? '' : 'required'; ?>>
                                 <?php if (!$edit_mode): ?>
@@ -762,16 +802,22 @@ textarea.form-control-modern {
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label class="form-label">Doctor Name <span class="required">*</span></label>
-                                <input type="text" class="form-control-modern" name="doctor_name" required
+                                <label class="form-label">
+                                    Doctor Name
+                                    <span class="required">*</span>
+                                </label>
+                                <input type="text" class="form-control-modern" id="doctorName" name="doctor_name" required
                                        placeholder="Dr. John Doe"
                                        value="<?php echo $edit_mode ? htmlspecialchars($doctor_data['doctor_name']) : ''; ?>">
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label class="form-label">Email <span class="required">*</span></label>
-                                <input type="email" class="form-control-modern" name="doctor_email" required
+                                <label class="form-label">
+                                    Email
+                                    <span class="required">*</span>
+                                </label>
+                                <input type="email" class="form-control-modern" id="doctorEmail" name="doctor_email" required
                                        placeholder="doctor@example.com"
                                        value="<?php echo $edit_mode ? htmlspecialchars($doctor_data['doctor_email']) : ''; ?>">
                             </div>
@@ -781,16 +827,22 @@ textarea.form-control-modern {
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label class="form-label">Phone <span class="required">*</span></label>
-                                <input type="tel" class="form-control-modern" name="doctor_phone" required
+                                <label class="form-label">
+                                    Phone
+                                    <span class="required">*</span>
+                                </label>
+                                <input type="tel" class="form-control-modern" id="doctorPhone" name="doctor_phone" required
                                        placeholder="+92 300 1234567"
                                        value="<?php echo $edit_mode ? htmlspecialchars($doctor_data['doctor_phone']) : ''; ?>">
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label class="form-label">Gender <span class="required">*</span></label>
-                                <select class="form-control-modern" name="gender" required>
+                                <label class="form-label">
+                                    Gender
+                                    <span class="required">*</span>
+                                </label>
+                                <select class="form-control-modern" id="gender" name="gender" required>
                                     <option value="">Select Gender</option>
                                     <option value="Male" <?php echo ($edit_mode && $doctor_data['gender'] == 'Male') ? 'selected' : ''; ?>>Male</option>
                                     <option value="Female" <?php echo ($edit_mode && $doctor_data['gender'] == 'Female') ? 'selected' : ''; ?>>Female</option>
@@ -803,17 +855,23 @@ textarea.form-control-modern {
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label class="form-label">Experience (Years)</label>
-                                <input type="number" class="form-control-modern" name="experience_years" min="0" max="60"
+                                <label class="form-label">
+                                    Experience (Years)
+                                    <span class="optional">(Optional)</span>
+                                </label>
+                                <input type="number" class="form-control-modern" id="experienceYears" name="experience_years" min="0" max="60"
                                        placeholder="e.g. 5"
                                        value="<?php echo $edit_mode ? htmlspecialchars($doctor_data['experience_years']) : ''; ?>">
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label class="form-label">Specialization <span class="required">*</span></label>
-                                <select class="form-control-modern" name="specialization" id="specialization" required>
-                                    <option value="">Select Specialization</option>
+                                <label class="form-label">
+                                    Specialization
+                                    <span class="required">*</span>
+                                </label>
+                                <select class="form-control-modern" name="specialization" id="specializationSelect" style="width:100%;" required>
+                                    <option value="">-- Search Specialization --</option>
                                     <?php foreach ($categories_data as $category_id => $category): ?>
                                         <optgroup label="<?php echo htmlspecialchars($category['cat_name']); ?>">
                                             <?php foreach ($category['types'] as $type): ?>
@@ -828,7 +886,7 @@ textarea.form-control-modern {
                                 
                                 <div style="margin-top: 8px;">
                                     <input type="checkbox" value="1" id="if_not_available" name="if_not_available"> 
-                                    <label class="form-label text-danger" for="if_not_available" style="display:inline; font-size:12px;">Specialization not listed?</label>
+                                    <label class="form-label text-danger" for="if_not_available" style="display:inline; font-size:12px; text-transform:none;">Specialization not listed?</label>
                                 </div>
                                 <input type="text" class="form-control-modern" name="specialization_txt"
                                        placeholder="Enter Specialization" id="specialization_txt" style="display:none; margin-top:6px;">
@@ -839,8 +897,11 @@ textarea.form-control-modern {
                     <div class="row">
                         <div class="col-md-12">
                             <div class="form-group">
-                                <label class="form-label">Short Detail (Qualifications)</label>
-                                <input type="text" class="form-control-modern" name="short_detail" 
+                                <label class="form-label">
+                                    Short Detail (Qualifications)
+                                    <span class="optional">(Optional)</span>
+                                </label>
+                                <input type="text" class="form-control-modern" id="shortDetail" name="short_detail" 
                                        placeholder="MBBS/FCPS/LONDON/CHINA"
                                        value="<?php echo $edit_mode ? htmlspecialchars($doctor_data['short_detail']) : ''; ?>">
                             </div>
@@ -850,10 +911,44 @@ textarea.form-control-modern {
                     <div class="row">
                         <div class="col-md-12">
                             <div class="form-group">
-                                <label class="form-label">Other Information</label>
-                                <input type="text" class="form-control-modern" name="other"
+                                <label class="form-label">
+                                    Other Information
+                                    <span class="optional">(Optional)</span>
+                                </label>
+                                <input type="text" class="form-control-modern" id="other" name="other"
                                        placeholder="Incharge / DHQ / Department Head etc"
                                        value="<?php echo $edit_mode ? htmlspecialchars($doctor_data['other']) : ''; ?>">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ===== NEW FIELDS: MAHRE AMRAZ & NOTES ===== -->
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group field-mahre">
+                                <label class="form-label">
+                                    <i class="fas fa-star me-2" style="color:#f59e0b;"></i> ماہرِ امراض (Specialist in Disease)
+                                    <span class="optional">(Optional)</span>
+                                </label>
+                                <input type="text" class="form-control-modern" id="mahreAmraz" name="mahre_amraz" 
+                                       placeholder="مثال: ماہرِ قلب، ماہرِ اعصاب، ماہرِ اطفال"
+                                       value="<?php echo $edit_mode ? htmlspecialchars($doctor_data['mahre_amraz']) : ''; ?>">
+                                <small class="text-muted">وہ بیماری یا شعبہ جس میں ڈاکٹر مہارت رکھتا ہے</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group field-notes">
+                                <label class="form-label">
+                                    <i class="fas fa-sticky-note me-2" style="color:#22c55e;"></i> خصوصی نوٹس / آفرز (Notes / Special Offers)
+                                    <span class="optional">(Optional)</span>
+                                </label>
+                                <input type="text" class="form-control-modern" id="notes" name="notes" 
+                                       placeholder="مثال: مفت الٹراساؤنڈ، مفت ایکس رے، مفت مشورہ"
+                                       value="<?php echo $edit_mode ? htmlspecialchars($doctor_data['notes']) : ''; ?>">
+                                <small class="text-muted">کوئی خاص پیشکش، نوٹس یا ہدایات (جیسے: مفت الٹراساؤنڈ، مفت ایکس رے، ڈسکاؤنٹ)</small>
                             </div>
                         </div>
                     </div>
@@ -861,8 +956,11 @@ textarea.form-control-modern {
                     <div class="row">
                         <div class="col-md-12">
                             <div class="form-group">
-                                <label class="form-label">Clinical Info Detail</label>
-                                <textarea class="form-control-modern" name="static_clinical_info" rows="3"
+                                <label class="form-label">
+                                    Clinical Info Detail
+                                    <span class="optional">(Optional)</span>
+                                </label>
+                                <textarea class="form-control-modern" id="staticClinicalInfo" name="static_clinical_info" rows="3"
                                           placeholder="Add clinical notes or special instructions..."><?php echo $edit_mode ? htmlspecialchars($doctor_data['static_clinical_info']) : ''; ?></textarea>
                             </div>
                         </div>
@@ -870,7 +968,9 @@ textarea.form-control-modern {
                 </div>
             </div>
 
-            <!-- ===== CLINICAL INFORMATION ===== -->
+            <!-- ============================================ -->
+            <!-- ===== CLINICAL INFO SECTION ===== -->
+            <!-- ============================================ -->
             <?php if ($edit_mode && !empty($doctor_in_hosp_ids)): ?>
             <div class="modern-card">
                 <div class="card-header-custom">
@@ -878,9 +978,7 @@ textarea.form-control-modern {
                     <span class="badge bg-info text-white"><?php echo count($doctor_in_hosp_ids); ?> Hospital(s)</span>
                 </div>
                 <div class="card-body-custom">
-                    
                     <?php 
-                    // Get doctor_in_hospital data for display
                     $dih_query = "SELECT dih.doctor_in_hosp_id, h.hospital_name, h.hospital_id
                                   FROM doctor_in_hospital dih
                                   LEFT JOIN hospitals h ON dih.hospital_id = h.hospital_id
@@ -1013,12 +1111,13 @@ textarea.form-control-modern {
                             </div>
                         </div>
                     <?php endwhile; ?>
-                    
                 </div>
             </div>
             <?php endif; ?>
 
+            <!-- ============================================ -->
             <!-- ===== ADDITIONAL SETTINGS ===== -->
+            <!-- ============================================ -->
             <div class="modern-card">
                 <div class="card-header-custom">
                     <h5><i class="fas fa-cog me-2"></i> Additional Settings</h5>
@@ -1027,7 +1126,10 @@ textarea.form-control-modern {
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label class="form-label">Profile Picture</label>
+                                <label class="form-label">
+                                    Profile Picture
+                                    <span class="optional">(Optional)</span>
+                                </label>
                                 <input type="file" class="form-control-modern" name="doctor_pic" accept="image/*">
                                 <small class="text-muted mt-2 d-block">Recommended: 500x500px (JPG, PNG)</small>
                             </div>
@@ -1046,13 +1148,19 @@ textarea.form-control-modern {
                     <div class="row">
                         <div class="col-md-12">
                             <div class="form-group">
-                                <label class="custom-switch">
-                                    <input type="checkbox" id="estatus" name="status" value="1"
-                                        <?php echo (!$edit_mode || (isset($doctor_data['estatus']) && $doctor_data['estatus'] == 1)) ? 'checked' : ''; ?>>
-                                    <span class="slider"></span>
+                                <label class="form-label">
+                                    Status
+                                    <span class="required">*</span>
                                 </label>
-                                <span class="ms-3 fw-bold" id="statusLabel">Active</span>
-                                <small class="text-muted d-block mt-1">Enable to make this doctor visible in the public directory.</small>
+                                <div>
+                                    <label class="custom-switch">
+                                        <input type="checkbox" id="estatus" name="status" value="1"
+                                            <?php echo (!$edit_mode || (isset($doctor_data['estatus']) && $doctor_data['estatus'] == 1)) ? 'checked' : ''; ?>>
+                                        <span class="slider"></span>
+                                    </label>
+                                    <span class="ms-3 fw-bold" id="statusLabel">Active</span>
+                                    <small class="text-muted d-block mt-1">Enable to make this doctor visible in the public directory.</small>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1060,9 +1168,13 @@ textarea.form-control-modern {
                     <div class="row" id="refDiv" style="display: <?php echo ($edit_mode && isset($doctor_data['estatus']) && $doctor_data['estatus'] == 0) ? 'block' : 'none'; ?>;">
                         <div class="col-md-12">
                             <div class="form-group">
-                                <label class="form-label">Inactive Status Detail</label>
+                                <label class="form-label">
+                                    Inactive Status Detail
+                                    <span class="required">*</span>
+                                </label>
                                 <textarea class="form-control-modern" id="ref" name="ref" rows="4" 
-                                          placeholder="Reason for inactive status..."><?php if(isset($doctor_data['ref'])){ echo htmlspecialchars($doctor_data['ref']); } ?></textarea>
+                                          placeholder="Reason for inactive status..."
+                                          <?php echo ($edit_mode && isset($doctor_data['estatus']) && $doctor_data['estatus'] == 0) ? 'required' : ''; ?>><?php if(isset($doctor_data['ref'])){ echo htmlspecialchars($doctor_data['ref']); } ?></textarea>
                             </div>
                         </div>
                     </div>
@@ -1070,10 +1182,10 @@ textarea.form-control-modern {
             </div>
 
             <!-- ===== FORM ACTIONS ===== -->
-            <div class="text-center mt-4 mb-5">
-                <button type="submit" class="btn-action btn-save" id="submitBtn">
+            <div class="text-center mt-4 mb-5 animate-up delay-2">
+                <button type="submit" class="btn-action btn-save">
                     <i class="fas <?php echo $edit_mode ? 'fa-save' : 'fa-plus-circle'; ?> me-2"></i>
-                    <?php echo $edit_mode ? 'Update Doctor' : 'Add Doctor'; ?>
+                    <?php echo $edit_mode ? 'Update Doctor' : 'Add / Assign Doctor'; ?>
                 </button>
                 <a href="<?php echo BASE_URL; ?>hospital/doctors.php" class="btn-action btn-cancel ms-2">
                     <i class="fas fa-times me-2"></i> Cancel
@@ -1084,11 +1196,82 @@ textarea.form-control-modern {
     </div>
 </div>
 
+
+
+<?php include BASE_PATH . '/admin/inc/footer.php'; ?>
 <script>
+// ============================================
+// SELECT2 FOR SPECIALIZATION
+// ============================================
+$(document).ready(function() {
+    $('#specializationSelect').select2({
+        theme: 'bootstrap-5',
+        placeholder: 'Search Specialization...',
+        allowClear: true,
+        width: '100%',
+        dropdownCssClass: 'specialization-dropdown'
+    });
+    
+    // ============================================
+    // SELECT2 FOR EXISTING DOCTOR
+    // ============================================
+    $('#existingDoctorSelect').select2({
+        theme: 'bootstrap-5',
+        placeholder: 'Search existing doctor...',
+        allowClear: true,
+        width: '100%'
+    });
+    
+    // ============================================
+    // EXISTING DOCTOR SELECT - AUTO FILL FORM
+    // ============================================
+    $('#existingDoctorSelect').on('change', function() {
+        var doctorId = $(this).val();
+        if (doctorId) {
+            // Disable form fields to prevent editing
+            $('#personalDetailsCard input, #personalDetailsCard select, #personalDetailsCard textarea').prop('disabled', true);
+            
+            // Fetch doctor data via AJAX
+            $.ajax({
+                url: '<?php echo BASE_URL; ?>hospital/ajax/get-doctor.php',
+                type: 'GET',
+                data: { id: doctorId },
+                dataType: 'json',
+                success: function(data) {
+                    if (data.status) {
+                        var doc = data.data;
+                        $('#username').val(doc.username || '');
+                        $('#doctorName').val(doc.doctor_name || '');
+                        $('#doctorEmail').val(doc.doctor_email || '');
+                        $('#doctorPhone').val(doc.doctor_phone || '');
+                        $('#gender').val(doc.gender || '');
+                        $('#experienceYears').val(doc.experience_years || '');
+                        $('#specializationSelect').val(doc.cat_type_id || '').trigger('change');
+                        $('#shortDetail').val(doc.short_detail || '');
+                        $('#other').val(doc.other || '');
+                        $('#mahreAmraz').val(doc.mahre_amraz || '');
+                        $('#notes').val(doc.notes || '');
+                        $('#staticClinicalInfo').val(doc.static_clinical_info || '');
+                    }
+                },
+                error: function() {
+                    alert('Error fetching doctor data');
+                }
+            });
+        } else {
+            // Enable form fields
+            $('#personalDetailsCard input, #personalDetailsCard select, #personalDetailsCard textarea').prop('disabled', false);
+            // Clear form
+            $('#username, #doctorName, #doctorEmail, #doctorPhone, #experienceYears, #shortDetail, #other, #mahreAmraz, #notes, #staticClinicalInfo').val('');
+            $('#gender, #specializationSelect').val('').trigger('change');
+        }
+    });
+});
+
+// ============================================
+// STATUS SWITCH
+// ============================================
 document.addEventListener('DOMContentLoaded', function() {
-    // ============================================
-    // STATUS SWITCH
-    // ============================================
     const estatus = document.getElementById('estatus');
     const statusLabel = document.getElementById('statusLabel');
     const refDiv = document.getElementById('refDiv');
@@ -1115,22 +1298,32 @@ document.addEventListener('DOMContentLoaded', function() {
     // SPECIALIZATION - IF NOT AVAILABLE
     // ============================================
     const checkbox = document.getElementById('if_not_available');
-    const selectWrapper = document.getElementById('specialization');
+    const selectWrapper = document.getElementById('specializationSelect');
     const textWrapper = document.getElementById('specialization_txt');
 
     function toggleFields() {
         if (checkbox.checked) {
             selectWrapper.style.display = 'none';
-            selectWrapper.removeAttribute('required');
             textWrapper.style.display = 'block';
+            document.getElementById('specializationSelect').value = '';
             textWrapper.setAttribute('required', 'required');
-            document.getElementById('specialization').value = '';
+            selectWrapper.removeAttribute('required');
+            $('#specializationSelect').select2('destroy');
+            $('#specializationSelect').hide();
         } else {
             selectWrapper.style.display = 'block';
-            selectWrapper.setAttribute('required', 'required');
             textWrapper.style.display = 'none';
-            textWrapper.removeAttribute('required');
             document.getElementById('specialization_txt').value = '';
+            selectWrapper.setAttribute('required', 'required');
+            textWrapper.removeAttribute('required');
+            $('#specializationSelect').show();
+            $('#specializationSelect').select2({
+                theme: 'bootstrap-5',
+                placeholder: 'Search Specialization...',
+                allowClear: true,
+                width: '100%',
+                dropdownCssClass: 'specialization-dropdown'
+            });
         }
     }
 
@@ -1138,5 +1331,3 @@ document.addEventListener('DOMContentLoaded', function() {
     checkbox.addEventListener('change', toggleFields);
 });
 </script>
-
-<?php include BASE_PATH . '/admin/inc/footer.php'; ?>

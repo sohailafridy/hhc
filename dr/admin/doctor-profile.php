@@ -5,7 +5,7 @@ $entity_id = 0;
 if (isset($_GET['entity_id'])) {
     $entity_id = $_GET['entity_id'];
 }
-$user_id = $_SESSION['user_id'];
+
 // ============================================
 // DELETE CLINICAL INFO
 // ============================================
@@ -54,17 +54,19 @@ if (isset($_POST['toggle_emergency']) && is_numeric($_POST['toggle_emergency']) 
 // ============================================
 if (isset($_GET['delete_id']) && is_numeric($_GET['delete_id'])) {
     $delete_id = $_GET['delete_id'];
-    // 
+    $pic_query = "SELECT doctor_pic FROM doctors WHERE doctor_id = $delete_id";
+    $pic_result = mysqli_query($con, $pic_query);
+    $doctor_pic_data = mysqli_fetch_assoc($pic_result);
+    $doctor_pic = $doctor_pic_data ? $doctor_pic_data['doctor_pic'] : '';
     
-    $delete_query = "UPDATE users set status = 0 WHERE user_id = $delete_id";    
+    $delete_query = "DELETE FROM doctors WHERE doctor_id = $delete_id";
     if (mysqli_query($con, $delete_query)) {
-       $status_change_history = "INSERT INTO user_status_change_by
-            SET 
-            user_id = '". $delete_id ."',
-            change_by = '". $user_id ."',
-            status_to = 0
-        ";
-        mysqli_query($con, $status_change_history);
+        if (!empty($doctor_pic)) {
+            $pic_path = BASE_PATH . "/admin/inc/uploads/doctors/" . $doctor_pic;
+            if (file_exists($pic_path)) {
+                unlink($pic_path);
+            }
+        }
         $_SESSION['success_msg'] = "Doctor deleted successfully!";
     } else {
         $_SESSION['error_msg'] = "Error: " . mysqli_error($con);
@@ -90,7 +92,7 @@ if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
 $doctor_id = $_GET['id'];
 
 // ============================================
-// FETCH DOCTOR DETAILS
+// FETCH DOCTOR DETAILS - WITH NEW FIELDS
 // ============================================
 $query = "SELECT d.*, 
                 c.city_name,
@@ -176,6 +178,7 @@ $dih_count = mysqli_fetch_assoc($dih_result)['total'];
 }
 
 /* ===== PAGE HEADER ===== */
+/* ===== PAGE HEADER - FIXED TEXT COLORS ===== */
 .page-header-modern {
     background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
     border-radius: 20px;
@@ -186,42 +189,56 @@ $dih_count = mysqli_fetch_assoc($dih_result)['total'];
     overflow: hidden;
 }
 
-.page-header-modern::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    right: -15%;
-    width: 300px;
-    height: 300px;
-    background: rgba(255,255,255,0.06);
-    border-radius: 50%;
+/* Title */
+.page-header-title h1 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin: 0 0 4px;
+    color: #ffffff !important;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.15);
 }
 
-.page-header-modern::after {
-    content: '';
-    position: absolute;
-    bottom: -30%;
-    left: -5%;
-    width: 200px;
-    height: 200px;
-    background: rgba(255,255,255,0.04);
-    border-radius: 50%;
+/* Subtitle / Meta text */
+.page-header-title p {
+    margin: 0;
+    color: rgba(255,255,255,0.85) !important;
+    font-size: 0.95rem;
+    text-shadow: 0 1px 5px rgba(0,0,0,0.08);
 }
 
-.page-header-content {
-    position: relative;
-    z-index: 1;
-    display: flex;
+/* Badges - White text on semi-transparent background */
+.badge-custom {
+    padding: 4px 14px;
+    border-radius: 50px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: inline-flex;
     align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 16px;
+    gap: 6px;
+    color: #ffffff !important;
 }
 
-.page-header-left {
-    display: flex;
-    align-items: center;
-    gap: 20px;
+.badge-custom.specialization {
+    background: rgba(255,255,255,0.15);
+    color: rgba(255,255,255,0.9) !important;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+.badge-custom.mahre {
+    background: rgba(245,158,11,0.25);
+    color: #fcd34d !important;
+    border: 1px solid rgba(245,158,11,0.2);
+}
+
+.badge-custom.notes {
+    background: rgba(34,197,94,0.2);
+    color: #86efac !important;
+    border: 1px solid rgba(34,197,94,0.15);
+}
+
+.badge-custom i {
+    color: inherit;
+    opacity: 0.8;
 }
 
 .doctor-avatar {
@@ -292,6 +309,42 @@ $dih_count = mysqli_fetch_assoc($dih_result)['total'];
 
 .btn-action-header.danger:hover {
     background: rgba(239,68,68,0.5);
+}
+
+/* ===== DOCTOR INFO BADGES ===== */
+.doctor-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.badge-custom {
+    padding: 4px 14px;
+    border-radius: 50px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.badge-custom.specialization {
+    background: rgba(255,255,255,0.15);
+    color: rgba(255,255,255,0.9);
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+.badge-custom.mahre {
+    background: rgba(245,158,11,0.2);
+    color: #fbbf24;
+    border: 1px solid rgba(245,158,11,0.2);
+}
+
+.badge-custom.notes {
+    background: rgba(34,197,94,0.15);
+    color: #4ade80;
+    border: 1px solid rgba(34,197,94,0.15);
 }
 
 /* ===== STATS ROW ===== */
@@ -410,6 +463,60 @@ $dih_count = mysqli_fetch_assoc($dih_result)['total'];
     font-size: 0.9rem;
 }
 
+.info-row .value .badge-info {
+    padding: 2px 12px;
+    border-radius: 50px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.info-row .value .badge-info.primary { background: #dbeafe; color: #1e40af; }
+.info-row .value .badge-info.success { background: #d1fae5; color: #065f46; }
+.info-row .value .badge-info.warning { background: #fef3c7; color: #92400e; }
+
+/* ===== MAHRE AMRAZ & NOTES SECTION ===== */
+.mahre-section {
+    background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+    border-radius: 12px;
+    padding: 16px 20px;
+    border: 1px solid var(--border);
+    margin-top: 8px;
+}
+
+.mahre-section .mahre-label {
+    font-size: 0.75rem;
+    color: var(--muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.mahre-section .mahre-value {
+    font-weight: 600;
+    color: var(--text);
+    font-size: 1rem;
+    margin-top: 2px;
+}
+
+.mahre-section .notes-label {
+    font-size: 0.75rem;
+    color: var(--muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 12px;
+}
+
+.mahre-section .notes-value {
+    color: var(--text);
+    font-size: 0.95rem;
+    margin-top: 2px;
+    padding: 8px 12px;
+    background: white;
+    border-radius: 8px;
+    border-left: 3px solid var(--primary);
+}
+
 /* ===== CLINICAL CARDS ===== */
 .clinical-grid-cards {
     display: grid;
@@ -480,19 +587,6 @@ $dih_count = mysqli_fetch_assoc($dih_result)['total'];
     font-size: 0.8rem;
 }
 
-/* ===== SEASON BADGE ===== */
-.season-badge {
-    display: inline-block;
-    padding: 2px 12px;
-    border-radius: 50px;
-    font-size: 0.7rem;
-    font-weight: 600;
-}
-
-.season-badge.summer { background: #fee2e2; color: #991b1b; }
-.season-badge.winter { background: #dbeafe; color: #1e40af; }
-.season-badge.general { background: #f1f5f9; color: #475569; }
-
 /* ===== FEEDBACK ITEMS ===== */
 .feedback-item {
     padding: 14px 0;
@@ -556,15 +650,6 @@ $dih_count = mysqli_fetch_assoc($dih_result)['total'];
     .stats-row {
         grid-template-columns: repeat(2, 1fr);
     }
-}
-
-@media (max-width: 480px) {
-    .stats-row {
-        grid-template-columns: 1fr;
-    }
-    .page-header-actions {
-        justify-content: center;
-    }
     .info-row {
         flex-direction: column;
         align-items: flex-start;
@@ -575,53 +660,88 @@ $dih_count = mysqli_fetch_assoc($dih_result)['total'];
         width: 100%;
     }
 }
+
+@media (max-width: 480px) {
+    .stats-row {
+        grid-template-columns: 1fr;
+    }
+    .page-header-actions {
+        justify-content: center;
+    }
+}
 </style>
 
 <div class="content-wrapper">
 
-    <!-- ===== PAGE HEADER ===== -->
-    <div class="page-header-modern">
-        <div class="page-header-content">
-            <div class="page-header-left">
-                <?php if (!empty($doctor['doctor_pic'])): ?>
-                    <img src="<?php echo BASE_URL; ?>admin/inc/uploads/doctors/<?php echo $doctor['doctor_pic']; ?>" 
-                         alt="<?php echo htmlspecialchars($doctor['doctor_name']); ?>" class="doctor-avatar">
-                <?php else: ?>
-                    <div class="doctor-avatar-placeholder">
-                        <i class="fas fa-user-md"></i>
-                    </div>
-                <?php endif; ?>
-                <div class="page-header-title">
-                    <h1>Dr. <?php echo htmlspecialchars($doctor['doctor_name']); ?></h1>
-                    <p>
-                        <i class="fas fa-stethoscope me-1"></i> <?php echo htmlspecialchars($doctor['cat_type'] ?? 'General'); ?>
-                        <span class="mx-2">|</span>
-                        <i class="fas fa-tag me-1"></i> <?php echo htmlspecialchars($doctor['cat_name'] ?? 'N/A'); ?>
-                        <span class="mx-2">|</span>
-                        <span class="badge <?php echo $doctor['estatus'] == 1 ? 'bg-success' : 'bg-danger'; ?>">
-                            <?php echo $doctor['estatus'] == 1 ? 'Active' : 'Inactive'; ?>
+   <!-- ===== PAGE HEADER ===== -->
+<div class="page-header-modern">
+    <div class="page-header-content">
+        <div class="page-header-left">
+            <?php if (!empty($doctor['doctor_pic'])): ?>
+                <img src="<?php echo BASE_URL; ?>admin/inc/uploads/doctors/<?php echo $doctor['doctor_pic']; ?>" 
+                     alt="<?php echo htmlspecialchars($doctor['doctor_name']); ?>" class="doctor-avatar">
+            <?php else: ?>
+                <div class="doctor-avatar-placeholder">
+                    <i class="fas fa-user-md"></i>
+                </div>
+            <?php endif; ?>
+            <div class="page-header-title">
+                <h1 style="color: #ffffff !important; text-shadow: 0 2px 10px rgba(0,0,0,0.15);">
+                    Dr. <?php echo htmlspecialchars($doctor['doctor_name']); ?>
+                </h1>
+                <p style="color: rgba(255,255,255,0.85) !important; text-shadow: 0 1px 5px rgba(0,0,0,0.08);">
+                    <i class="fas fa-stethoscope me-1"></i> <?php echo htmlspecialchars($doctor['cat_type'] ?? 'General'); ?>
+                    <span class="mx-2">|</span>
+                    <i class="fas fa-tag me-1"></i> <?php echo htmlspecialchars($doctor['cat_name'] ?? 'N/A'); ?>
+                    <span class="mx-2">|</span>
+                    <span class="badge <?php echo $doctor['estatus'] == 1 ? 'bg-success' : 'bg-danger'; ?>">
+                        <?php echo $doctor['estatus'] == 1 ? 'Active' : 'Inactive'; ?>
+                    </span>
+                    <?php if ($doctor['emergency_status'] == 1): ?>
+                        <span class="badge bg-warning text-dark ms-1">
+                            <i class="fas fa-exclamation-triangle"></i> Emergency
                         </span>
-                        <?php if ($doctor['emergency_status'] == 1): ?>
-                            <span class="badge bg-warning text-dark ms-1">
-                                <i class="fas fa-exclamation-triangle"></i> Emergency
-                            </span>
-                        <?php endif; ?>
-                    </p>
+                    <?php endif; ?>
+                </p>
+                
+                <!-- ===== DOCTOR BADGES - FIXED COLORS ===== -->
+                <div class="doctor-badges">
+                    <!-- Short Detail Badge -->
+                    <?php if (!empty($doctor['short_detail'])): ?>
+                        <span class="badge-custom specialization">
+                            <i class="fas fa-graduation-cap"></i> <?php echo htmlspecialchars($doctor['short_detail']); ?>
+                        </span>
+                    <?php endif; ?>
+                    
+                    <!-- Mahere Amraz Badge -->
+                    <?php if (!empty($doctor['mahre_amraz'])): ?>
+                        <span class="badge-custom mahre">
+                            <i class="fas fa-star"></i> ماہرِ امراض: <?php echo htmlspecialchars($doctor['mahre_amraz']); ?>
+                        </span>
+                    <?php endif; ?>
+                    
+                    <!-- Notes Badge -->
+                    <?php if (!empty($doctor['notes'])): ?>
+                        <span class="badge-custom notes">
+                            <i class="fas fa-sticky-note"></i> <?php echo htmlspecialchars($doctor['notes']); ?>
+                        </span>
+                    <?php endif; ?>
                 </div>
             </div>
-            <div class="page-header-actions">
-                <a href="<?php echo BASE_URL; ?>admin/doctors/add?id=<?php echo $doctor['doctor_id']; ?>" class="btn-action-header">
-                    <i class="fas fa-edit"></i> Edit
-                </a>
-                <a href="javascript:void(0)" onclick="deleteDoctor(<?php echo $doctor['user_id']; ?>)" class="btn-action-header danger">
-                    <i class="fas fa-trash"></i> Delete
-                </a>
-                <a href="<?php echo BASE_URL; ?>admin/doctors/list" class="btn-action-header">
-                    <i class="fas fa-arrow-left"></i> Back
-                </a>
-            </div>
+        </div>
+        <div class="page-header-actions">
+            <a href="<?php echo BASE_URL; ?>admin/doctors/add?id=<?php echo $doctor['doctor_id']; ?>" class="btn-action-header">
+                <i class="fas fa-edit"></i> Edit
+            </a>
+            <a href="javascript:void(0)" onclick="deleteDoctor(<?php echo $doctor['doctor_id']; ?>)" class="btn-action-header danger">
+                <i class="fas fa-trash"></i> Delete
+            </a>
+            <a href="<?php echo BASE_URL; ?>admin/doctors/list" class="btn-action-header">
+                <i class="fas fa-arrow-left"></i> Back
+            </a>
         </div>
     </div>
+</div>
 
     <!-- ===== STATS ROW ===== -->
     <div class="stats-row">
@@ -672,6 +792,50 @@ $dih_count = mysqli_fetch_assoc($dih_result)['total'];
                         <span class="label">Full Name</span>
                         <span class="value">Dr. <?php echo htmlspecialchars($doctor['doctor_name']); ?></span>
                     </div>
+                    
+                    <!-- ===== SPECIALIZATION ===== -->
+                    <div class="info-row">
+                        <span class="label">Specialization</span>
+                        <span class="value">
+                            <span class="badge-info primary"><?php echo htmlspecialchars($doctor['cat_type'] ?? 'General'); ?></span>
+                        </span>
+                    </div>
+                    
+                    <!-- ===== SHORT DETAIL ===== -->
+                    <?php if (!empty($doctor['short_detail'])): ?>
+                        <div class="info-row">
+                            <span class="label">Qualifications</span>
+                            <span class="value" style="text-align: right;"><?php echo htmlspecialchars($doctor['short_detail']); ?></span>
+                        </div>
+                    <?php endif; ?>
+                    
+                    <!-- ===== MAHRE AMRAZ (NEW) ===== -->
+                    <div class="info-row">
+                        <span class="label">
+                            <i class="fas fa-star" style="color: #f59e0b;"></i> ماہرِ امراض
+                        </span>
+                        <span class="value">
+                            <?php if (!empty($doctor['mahre_amraz'])): ?>
+                                <span class="badge-info warning"><?php echo htmlspecialchars($doctor['mahre_amraz']); ?></span>
+                            <?php else: ?>
+                                <span class="text-muted">N/A</span>
+                            <?php endif; ?>
+                        </span>
+                    </div>
+                    
+                    <!-- ===== NOTES (NEW) ===== -->
+                    <?php if (!empty($doctor['notes'])): ?>
+                        <div class="info-row" style="display: block; border-bottom: none; padding-bottom: 4px;">
+                            <span class="label" style="display: block; margin-bottom: 6px;">
+                                <i class="fas fa-sticky-note" style="color: #22c55e;"></i> Notes
+                            </span>
+                            <div style="background: #f0fdf4; padding: 10px 14px; border-radius: 8px; border-left: 3px solid #22c55e; font-size: 0.9rem; color: var(--text);">
+                                <?php echo nl2br(htmlspecialchars($doctor['notes'])); ?>
+                            </div>
+                        </div>
+                    <?php endif; ?>
+                    
+                    <!-- ===== OTHER FIELDS ===== -->
                     <div class="info-row">
                         <span class="label">Email</span>
                         <span class="value"><?php echo htmlspecialchars($doctor['doctor_email']); ?></span>
@@ -688,25 +852,11 @@ $dih_count = mysqli_fetch_assoc($dih_result)['total'];
                         <span class="label">Experience</span>
                         <span class="value"><?php echo $doctor['experience_years'] ?? 0; ?> Years</span>
                     </div>
-                    <div class="info-row">
-                        <span class="label">Specialization</span>
-                        <span class="value"><?php echo htmlspecialchars($doctor['cat_type'] ?? 'General'); ?></span>
-                    </div>
-                    <div class="info-row">
-                        <span class="label">Category</span>
-                        <span class="value"><?php echo htmlspecialchars($doctor['cat_name'] ?? 'N/A'); ?></span>
-                    </div>
-                    <?php if (!empty($doctor['short_detail'])): ?>
-                    <div class="info-row">
-                        <span class="label">Qualifications</span>
-                        <span class="value" style="text-align: right;"><?php echo htmlspecialchars($doctor['short_detail']); ?></span>
-                    </div>
-                    <?php endif; ?>
                     <?php if (!empty($doctor['other'])): ?>
-                    <div class="info-row">
-                        <span class="label">Other Info</span>
-                        <span class="value" style="text-align: right;"><?php echo htmlspecialchars($doctor['other']); ?></span>
-                    </div>
+                        <div class="info-row">
+                            <span class="label">Other Info</span>
+                            <span class="value" style="text-align: right;"><?php echo htmlspecialchars($doctor['other']); ?></span>
+                        </div>
                     <?php endif; ?>
                 </div>
             </div>
@@ -741,20 +891,20 @@ $dih_count = mysqli_fetch_assoc($dih_result)['total'];
                         </span>
                     </div>
                     <?php if ($doctor['estatus'] == 0 && !empty($doctor['ref'])): ?>
-                    <div class="info-row">
-                        <span class="label">Inactive Reason</span>
-                        <span class="value text-danger" style="text-align: right;"><?php echo htmlspecialchars($doctor['ref']); ?></span>
-                    </div>
+                        <div class="info-row">
+                            <span class="label">Inactive Reason</span>
+                            <span class="value text-danger" style="text-align: right;"><?php echo htmlspecialchars($doctor['ref']); ?></span>
+                        </div>
                     <?php endif; ?>
                     <div class="info-row">
                         <span class="label">Created At</span>
                         <span class="value"><?php echo date('d M Y, h:i A', strtotime($doctor['created_at'])); ?></span>
                     </div>
                     <?php if (!empty($doctor['updated_at'])): ?>
-                    <div class="info-row">
-                        <span class="label">Updated At</span>
-                        <span class="value"><?php echo date('d M Y, h:i A', strtotime($doctor['updated_at'])); ?></span>
-                    </div>
+                        <div class="info-row">
+                            <span class="label">Updated At</span>
+                            <span class="value"><?php echo date('d M Y, h:i A', strtotime($doctor['updated_at'])); ?></span>
+                        </div>
                     <?php endif; ?>
                 </div>
             </div>
@@ -797,16 +947,16 @@ $dih_count = mysqli_fetch_assoc($dih_result)['total'];
 
             <!-- Static Clinical Info -->
             <?php if (!empty($doctor['static_clinical_info'])): ?>
-            <div class="info-card">
-                <div class="info-card-header">
-                    <h5><i class="fas fa-notes-medical"></i> Clinical Notes</h5>
-                </div>
-                <div class="info-card-body">
-                    <div class="p-3 bg-light rounded-3 border-start border-4 border-primary">
-                        <?php echo nl2br(htmlspecialchars($doctor['static_clinical_info'])); ?>
+                <div class="info-card">
+                    <div class="info-card-header">
+                        <h5><i class="fas fa-notes-medical"></i> Clinical Notes</h5>
+                    </div>
+                    <div class="info-card-body">
+                        <div class="p-3 bg-light rounded-3 border-start border-4 border-primary">
+                            <?php echo nl2br(htmlspecialchars($doctor['static_clinical_info'])); ?>
+                        </div>
                     </div>
                 </div>
-            </div>
             <?php endif; ?>
 
         </div>
@@ -859,7 +1009,7 @@ $dih_count = mysqli_fetch_assoc($dih_result)['total'];
                                                     ?>
                                                 </h6>
                                                 <span class="ms-auto">
-                                                    <span class="season-badge <?php echo strtolower($season_name); ?>">
+                                                    <span class="badge bg-light text-dark">
                                                         <?php echo $season_name; ?>
                                                     </span>
                                                 </span>

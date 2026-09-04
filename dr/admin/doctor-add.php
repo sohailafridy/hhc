@@ -77,6 +77,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $static_clinical_info = mysqli_real_escape_string($con, $_POST['static_clinical_info']);
     $status = isset($_POST['status']) ? 1 : 0;
     
+    // ===== NEW FIELDS =====
+    $mahre_amraz = mysqli_real_escape_string($con, $_POST['mahre_amraz']);
+    $notes = mysqli_real_escape_string($con, $_POST['notes']);
+    
     // Handle doctor type specific fields
     $hospital_id = null;
     $clinic_name = '';
@@ -103,7 +107,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $imageFileType = strtolower(pathinfo($target_file, PATHINFO_EXTENSION));
         
         // Allow certain file formats
-        $allowed_types = array('jpg', 'jpeg', 'png', 'gif');
+        $allowed_types = array('jpg', 'jpeg', 'png', 'gif', 'webp');
         if (in_array($imageFileType, $allowed_types)) {
             if (move_uploaded_file($_FILES["doctor_pic"]["tmp_name"], $target_file)) {
                 $doctor_pic = $file_name;
@@ -112,8 +116,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
     
     if ($edit_mode) {
-        // Update existing doctor
-        $update_query = "UPDATE doctors SET city_id = '$city_id', doctor_name = '$doctor_name', cat_type_id = '$specialization', experience_years = '$experience_years', doctor_phone = '$doctor_phone', doctor_email = '$doctor_email', doctor_type = '$doctor_type', gender = '$gender', other = '$other', static_clinical_info = '$static_clinical_info'";
+        // Update existing doctor - ADDED NEW FIELDS
+        $update_query = "UPDATE doctors SET 
+                            city_id = '$city_id', 
+                            doctor_name = '$doctor_name', 
+                            cat_type_id = '$specialization', 
+                            experience_years = '$experience_years', 
+                            doctor_phone = '$doctor_phone', 
+                            doctor_email = '$doctor_email', 
+                            doctor_type = '$doctor_type', 
+                            gender = '$gender', 
+                            other = '$other', 
+                            static_clinical_info = '$static_clinical_info',
+                            mahre_amraz = '$mahre_amraz',
+                            notes = '$notes'";
         
         // Update type-specific fields
         if ($doctor_type == 1) {
@@ -157,7 +173,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
 
     } else {
-        // Insert new doctor
+        // Insert new doctor - ADDED NEW FIELDS
         $hospital_id_value = ($doctor_type == 1 && !empty($hospital_id)) ? "'" . $hospital_id . "'" : "NULL";
         
         $generate_ent_it = "INSERT INTO entities (entity_type,status, created_at) VALUES ('doctor',1,date('Y-m-d'))";
@@ -175,8 +191,19 @@ VALUES ('$user_name', '$doctor_email', '$password', 2, 1, '$created_at')";
 
 
 
-         $insert_query = "INSERT INTO doctors (entity_id, user_id, city_id, hospital_id, doctor_name, short_detail, cat_type_id, experience_years, doctor_phone, doctor_email, doctor_type, clinic_name, clinic_address, doctor_pic, static_clinical_info, approve, gender, other, created_at) 
-                       VALUES ($entity_id,$userid, '$city_id', $hospital_id_value, '$doctor_name', '$short_detail', '$specialization', '$experience_years', '$doctor_phone', '$doctor_email', '$doctor_type', '$clinic_name', '$clinic_address', '$doctor_pic', '$static_clinical_info', 1, '$gender', '$other', NOW())";
+         $insert_query = "INSERT INTO doctors (
+                            entity_id, user_id, city_id, hospital_id, doctor_name, 
+                            short_detail, cat_type_id, experience_years, doctor_phone, 
+                            doctor_email, doctor_type, clinic_name, clinic_address, 
+                            doctor_pic, static_clinical_info, approve, gender, other, 
+                            mahre_amraz, notes, created_at
+                        ) VALUES (
+                            $entity_id, $userid, '$city_id', $hospital_id_value, '$doctor_name', 
+                            '$short_detail', '$specialization', '$experience_years', '$doctor_phone', 
+                            '$doctor_email', '$doctor_type', '$clinic_name', '$clinic_address', 
+                            '$doctor_pic', '$static_clinical_info', 1, '$gender', '$other',
+                            '$mahre_amraz', '$notes', NOW()
+                        )";
         
         if (mysqli_query($con, $insert_query)) {
             $last_insert_id = mysqli_insert_id($con);
@@ -309,9 +336,24 @@ VALUES ('$user_name', '$doctor_email', '$password', 2, 1, '$created_at')";
         color: #555;
         margin-bottom: 8px;
         display: block;
-        font-size: 14px;
+        font-size: 13px;
         text-transform: uppercase;
         letter-spacing: 0.5px;
+    }
+
+    .form-label .required {
+        color: #e74c3c;
+        font-weight: 700;
+        font-size: 16px;
+        margin-left: 2px;
+    }
+
+    .form-label .optional {
+        color: #94a3b8;
+        font-weight: 400;
+        font-size: 11px;
+        margin-left: 4px;
+        text-transform: none;
     }
 
     .form-control-modern {
@@ -338,6 +380,63 @@ VALUES ('$user_name', '$doctor_email', '$password', 2, 1, '$created_at')";
         background-repeat: no-repeat;
         background-position: right 15px center;
         background-size: 16px;
+    }
+
+    /* ===== SELECT2 CUSTOM STYLES ===== */
+    .select2-container--bootstrap-5 .select2-selection {
+        border: 2px solid var(--border-color) !important;
+        border-radius: 12px !important;
+        min-height: 48px !important;
+        padding: 6px 12px !important;
+        background: var(--input-bg) !important;
+    }
+
+    .select2-container--bootstrap-5.select2-container--focus .select2-selection {
+        border-color: var(--primary-color) !important;
+        box-shadow: 0 0 0 4px rgba(79, 172, 254, 0.1) !important;
+    }
+
+    .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
+        font-size: 15px !important;
+        color: #333 !important;
+        padding-left: 0 !important;
+    }
+
+    .select2-container--bootstrap-5 .select2-selection--single .select2-selection__placeholder {
+        color: #94a3b8 !important;
+    }
+
+    .select2-dropdown {
+        border: 2px solid var(--border-color) !important;
+        border-radius: 12px !important;
+        box-shadow: var(--shadow-soft) !important;
+    }
+
+    .select2-search__field {
+        border: 2px solid var(--border-color) !important;
+        border-radius: 8px !important;
+        padding: 8px 12px !important;
+        font-size: 14px !important;
+    }
+
+    .select2-search__field:focus {
+        border-color: var(--primary-color) !important;
+        outline: none !important;
+    }
+
+    .select2-results__option {
+        padding: 10px 16px !important;
+        font-size: 14px !important;
+    }
+
+    .select2-results__option--highlighted {
+        background: var(--primary-color) !important;
+        color: white !important;
+    }
+
+    .select2-results__option[aria-selected="true"] {
+        background: rgba(79, 172, 254, 0.1) !important;
+        color: var(--text-color) !important;
     }
 
     .toggle-container {
@@ -494,6 +593,25 @@ VALUES ('$user_name', '$doctor_email', '$password', 2, 1, '$created_at')";
         background: rgba(118, 75, 162, 0.1);
         color: #764ba2;
     }
+
+    /* ===== NEW FIELDS STYLING ===== */
+    .field-mahre {
+        border-left: 3px solid #f59e0b;
+        padding-left: 16px;
+    }
+
+    .field-notes {
+        border-left: 3px solid #22c55e;
+        padding-left: 16px;
+    }
+
+    .field-mahre .form-label i {
+        color: #f59e0b;
+    }
+
+    .field-notes .form-label i {
+        color: #22c55e;
+    }
     
     /* Animation */
     @keyframes fadeInUp {
@@ -576,7 +694,8 @@ if ($categories_result) {
 
         <form method="POST" action="" enctype="multipart/form-data" class="animate-up delay-1">
             <input type="hidden" name="doctor_type" id="doctor_type" value="<?php echo $edit_mode ? $doctor_data['doctor_type'] : '1'; ?>">
-             <input type="hidden" name="entity_id" value="<?php if(isset($doctor_data['entity_id'])){ echo $doctor_data['entity_id']; } ?>">
+            <input type="hidden" name="entity_id" value="<?php if(isset($doctor_data['entity_id'])){ echo $doctor_data['entity_id']; } ?>">
+            
             <!-- Mode Selection -->
             <div class="modern-card">
                 <div class="card-body-custom">
@@ -607,7 +726,10 @@ if ($categories_result) {
                         </div>
                         <div class="card-body-custom">
                             <div class="form-group">
-                                <label class="form-label">City</label>
+                                <label class="form-label">
+                                    City
+                                    <span class="required">*</span>
+                                </label>
                                 <select class="form-control-modern" id="cityId" name="city_id" required>
                                     <option value="">Select City</option>
                                     <?php 
@@ -621,11 +743,13 @@ if ($categories_result) {
                                 </select>
                             </div>
 
-                            <!-- <div id="hospital_section" style="display:none;"> -->
-                            <div id="hospital_section" >
+                            <div id="hospital_section">
                                 <div class="form-group">
-                                    <label class="form-label">Hospital</label>
-                                    <select class="form-control-modern" id="hospitalId" name="hospital_id">
+                                    <label class="form-label">
+                                        Hospital
+                                        <span class="required">*</span>
+                                    </label>
+                                    <select class="form-control-modern" id="hospitalId" name="hospital_id" required>
                                         <option value="">Select Hospital</option>
                                         <?php 
                                         mysqli_data_seek($hospitals_result, 0);
@@ -642,15 +766,22 @@ if ($categories_result) {
 
                             <div id="clinic_section" style="display:none;">
                                 <div class="form-group">
-                                    <label class="form-label">Clinic Name</label>
+                                    <label class="form-label">
+                                        Clinic Name
+                                        <span class="required">*</span>
+                                    </label>
                                     <input type="text" class="form-control-modern" id="clinicName" name="clinic_name" 
                                            placeholder="e.g. Dr. Smith's Care"
-                                           value="<?php echo $edit_mode ? htmlspecialchars($doctor_data['clinic_name']) : ''; ?>">
+                                           value="<?php echo $edit_mode ? htmlspecialchars($doctor_data['clinic_name']) : ''; ?>"
+                                           required>
                                 </div>
                                 <div class="form-group">
-                                    <label class="form-label">Clinic Address</label>
+                                    <label class="form-label">
+                                        Clinic Address
+                                        <span class="required">*</span>
+                                    </label>
                                     <textarea class="form-control-modern" id="clinicAddress" name="clinic_address" rows="3"
-                                              placeholder="Full address of the clinic"><?php echo $edit_mode ? htmlspecialchars($doctor_data['clinic_address']) : ''; ?></textarea>
+                                              placeholder="Full address of the clinic" required><?php echo $edit_mode ? htmlspecialchars($doctor_data['clinic_address']) : ''; ?></textarea>
                                 </div>
                             </div>
                         </div>
@@ -667,25 +798,40 @@ if ($categories_result) {
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <label class="form-label">Username</label>
-                                        <input type="text" class="form-control-modern" name="username" min="0" 
-                                               placeholder="e.g. 5"
-                                               value="">
+                                        <label class="form-label">
+                                            Username
+                                            <span class="required">*</span>
+                                        </label>
+                                        <input type="text" class="form-control-modern" name="username" 
+                                               placeholder="Enter username" required
+                                               value="<?php echo $edit_mode ? htmlspecialchars($doctor_data['username'] ?? '') : ''; ?>"
+                                               <?php echo $edit_mode ? 'readonly' : ''; ?>>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <label class="form-label">Password</label>
+                                        <label class="form-label">
+                                            Password
+                                            <?php if (!$edit_mode): ?>
+                                                <span class="required">*</span>
+                                            <?php else: ?>
+                                                <span class="optional">(Optional)</span>
+                                            <?php endif; ?>
+                                        </label>
                                         <input type="password" class="form-control-modern" name="password" 
-                                               placeholder="Contact Number"
-                                               value="">
+                                               placeholder="<?php echo $edit_mode ? 'Leave blank to keep current' : 'Enter password'; ?>"
+                                               <?php echo $edit_mode ? '' : 'required'; ?>>
                                     </div>
                                 </div>
                             </div>
+
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <label class="form-label">Doctor Name</label>
+                                        <label class="form-label">
+                                            Doctor Name
+                                            <span class="required">*</span>
+                                        </label>
                                         <input type="text" class="form-control-modern" name="doctor_name" required
                                                placeholder="Dr. John Doe"
                                                value="<?php echo $edit_mode ? htmlspecialchars($doctor_data['doctor_name']) : ''; ?>">
@@ -693,9 +839,13 @@ if ($categories_result) {
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <label class="form-label">Specialization</label>
-                                        <select class="form-control-modern" name="specialization" id="specialization">
-                                            <option value="">Select Specialization</option>
+                                        <label class="form-label">
+                                            Specialization
+                                            <span class="required">*</span>
+                                        </label>
+                                        <!-- ===== SELECT2 SEARCHABLE DROPDOWN ===== -->
+                                        <select class="form-control-modern" name="specialization" id="specializationSelect" required>
+                                            <option value="">Search Specialization...</option>
                                             <?php foreach ($categories_data as $category_id => $category): ?>
                                                 <optgroup label="<?php echo htmlspecialchars($category['cat_name']); ?>">
                                                     <?php foreach ($category['types'] as $type): ?>
@@ -708,14 +858,12 @@ if ($categories_result) {
                                             <?php endforeach; ?>
                                         </select>
 
+                                        <div style="margin-top: 8px;">
+                                            <input type="checkbox" value="1" id="if_not_available" name="if_not_available"> 
+                                            <label class="form-label text-danger" for="if_not_available" style="display:inline; font-size:12px; text-transform:none;">Specialization not listed?</label>
+                                        </div>
                                         <input type="text" class="form-control-modern" name="specialization_txt"
-                                               placeholder="Enter Specialization" id="specialization_txt" style="display:none;">
-
-
-
-                                        <input type="checkbox" value="1" id="if_not_available" name="if_not_available"> 
-                                        <label class="form-label text-danger" for="if_not_available">If not availabel</label>
-
+                                               placeholder="Enter Specialization" id="specialization_txt" style="display:none; margin-top:6px;">
                                     </div>
                                 </div>
                             </div>
@@ -723,7 +871,10 @@ if ($categories_result) {
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <label class="form-label">Experience (Years)</label>
+                                        <label class="form-label">
+                                            Experience (Years)
+                                            <span class="optional">(Optional)</span>
+                                        </label>
                                         <input type="number" class="form-control-modern" name="experience_years" min="0" 
                                                placeholder="e.g. 5"
                                                value="<?php echo $edit_mode ? htmlspecialchars($doctor_data['experience_years']) : ''; ?>">
@@ -731,22 +882,33 @@ if ($categories_result) {
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <label class="form-label">Phone Number</label>
+                                        <label class="form-label">
+                                            Phone Number
+                                            <span class="required">*</span>
+                                        </label>
                                         <input type="tel" class="form-control-modern" name="doctor_phone" 
                                                placeholder="Contact Number"
-                                               value="<?php echo $edit_mode ? htmlspecialchars($doctor_data['doctor_phone']) : ''; ?>">
+                                               value="<?php echo $edit_mode ? htmlspecialchars($doctor_data['doctor_phone']) : ''; ?>"
+                                               required>
                                     </div>
                                 </div>
                             </div>
 
                             <div class="form-group">
-                                <label class="form-label">Short Detail</label>
+                                <label class="form-label">
+                                    Short Detail
+                                    <span class="optional">(Optional)</span>
+                                </label>
                                 <input type="text" class="form-control-modern" name="short_detail" 
                                        placeholder="MBBS/FCPS/LONDON/CHINA"
                                        value="<?php echo $edit_mode ? htmlspecialchars($doctor_data['short_detail']) : ''; ?>">
                             </div>
+                            
                             <div class="form-group">
-                                <label class="form-label">Other</label>
+                                <label class="form-label">
+                                    Other
+                                    <span class="optional">(Optional)</span>
+                                </label>
                                 <input type="text" class="form-control-modern" name="other"
                                        placeholder="Incharge/DHQ etc"
                                        value="<?php echo $edit_mode ? htmlspecialchars($doctor_data['other']) : ''; ?>">
@@ -755,15 +917,22 @@ if ($categories_result) {
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <label class="form-label">Email Address</label>
+                                        <label class="form-label">
+                                            Email Address
+                                            <span class="required">*</span>
+                                        </label>
                                         <input type="email" class="form-control-modern" name="doctor_email"
                                             placeholder="doctor@example.com"
-                                            value="<?php echo $edit_mode ? htmlspecialchars($doctor_data['doctor_email']) : ''; ?>">
+                                            value="<?php echo $edit_mode ? htmlspecialchars($doctor_data['doctor_email']) : ''; ?>"
+                                            required>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <label class="form-label">Gender</label>
+                                        <label class="form-label">
+                                            Gender
+                                            <span class="required">*</span>
+                                        </label>
                                         <select class="form-control-modern" name="gender" id="gender" required>
                                             <option value="">Select Gender</option>
                                             <option value="Male" <?php echo ($edit_mode && $doctor_data['gender'] == 'Male') ? 'selected' : ''; ?>>Male</option>
@@ -774,18 +943,50 @@ if ($categories_result) {
                                 </div>
                             </div>
 
-
-                             <div class="row">
+                            <!-- ===== NEW FIELDS: MAHRE AMRAZ & NOTES ===== -->
+                            <div class="row">
                                 <div class="col-md-12">
-                                    <div class="form-group">
-                                        <label class="form-label">Clincal Info Detail</label>
-                                        <textarea class="form-control-modern" name="static_clinical_info"><?php echo $edit_mode ? htmlspecialchars($doctor_data['static_clinical_info']) : ''; ?></textarea>
+                                    <div class="form-group field-mahre">
+                                        <label class="form-label">
+                                            <i class="fas fa-star me-2" style="color:#f59e0b;"></i> ماہرِ امراض (Specialist in Disease)
+                                            <span class="optional">(Optional)</span>
+                                        </label>
+                                        <input type="text" class="form-control-modern" name="mahre_amraz" 
+                                               placeholder="مثال: ماہرِ قلب، ماہرِ اعصاب، ماہرِ اطفال"
+                                               value="<?php echo $edit_mode ? htmlspecialchars($doctor_data['mahre_amraz']) : ''; ?>">
+                                        <small class="text-muted">وہ بیماری یا شعبہ جس میں ڈاکٹر مہارت رکھتا ہے</small>
                                     </div>
                                 </div>
                             </div>
 
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="form-group field-notes">
+                                        <label class="form-label">
+                                            <i class="fas fa-sticky-note me-2" style="color:#22c55e;"></i> خصوصی نوٹس / آفرز (Notes / Special Offers)
+                                            <span class="optional">(Optional)</span>
+                                        </label>
+                                        <input type="text" class="form-control-modern" name="notes" 
+                                               placeholder="مثال: مفت الٹراساؤنڈ، مفت ایکس رے، مفت مشورہ"
+                                               value="<?php echo $edit_mode ? htmlspecialchars($doctor_data['notes']) : ''; ?>">
+                                        <small class="text-muted">کوئی خاص پیشکش، نوٹس یا ہدایات (جیسے: مفت الٹراساؤنڈ، مفت ایکس رے، ڈسکاؤنٹ)</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- ===== END NEW FIELDS ===== -->
 
-
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="form-group">
+                                        <label class="form-label">
+                                            Clinical Info Detail
+                                            <span class="optional">(Optional)</span>
+                                        </label>
+                                        <textarea class="form-control-modern" name="static_clinical_info" rows="3"
+                                                  placeholder="Add clinical notes or special instructions..."><?php echo $edit_mode ? htmlspecialchars($doctor_data['static_clinical_info']) : ''; ?></textarea>
+                                    </div>
+                                </div>
+                            </div>
 
                         </div>
                     </div>
@@ -802,7 +1003,10 @@ if ($categories_result) {
                             <div class="row align-items-center">
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <label class="form-label">Doctor Picture</label>
+                                        <label class="form-label">
+                                            Doctor Picture
+                                            <span class="optional">(Optional)</span>
+                                        </label>
                                         <input type="file" class="form-control-modern" name="doctor_pic" accept="image/*">
                                         <small class="text-muted mt-2 d-block">Recommended size: 500x500px (JPG, PNG)</small>
                                     </div>
@@ -818,27 +1022,35 @@ if ($categories_result) {
                             <hr style="border-top: 1px solid #eee; margin: 30px 0;">
                             
                             <div class="form-group">
-                                <label class="custom-switch" style="vertical-align: middle;">
-                                    <input type="checkbox" id="estatus" name="status" value="1"
-                                        <?php echo (!$edit_mode || (isset($doctor_data['estatus']) && $doctor_data['estatus'] == 1)) ? 'checked' : ''; ?>>
-                                    <span class="slider"></span>
+                                <label class="form-label">
+                                    Active Status
+                                    <span class="required">*</span>
                                 </label>
-
-                                <span class="ms-3 fw-bold">Active Status</span>
-                                <small class="text-muted d-block mt-1">
-                                    Enable to make this doctor visible in the public directory.
-                                </small>
-
-                                <div class="mb-3" id="refDiv">
-                                    <label for="ref" class="form-label">Inactive Status Detail</label>
-                                    <textarea class="form-control" id="ref" name="ref" rows="5"><?php if(isset($doctor_data['ref'])){ echo $doctor_data['ref']; } ?></textarea>
+                                <div>
+                                    <label class="custom-switch" style="vertical-align: middle;">
+                                        <input type="checkbox" id="estatus" name="status" value="1"
+                                            <?php echo (!$edit_mode || (isset($doctor_data['estatus']) && $doctor_data['estatus'] == 1)) ? 'checked' : ''; ?>>
+                                        <span class="slider"></span>
+                                    </label>
+                                    <span class="ms-3 fw-bold" id="statusLabel">Active</span>
+                                    <small class="text-muted d-block mt-1">
+                                        Enable to make this doctor visible in the public directory.
+                                    </small>
                                 </div>
+                            </div>
+
+                            <div class="mb-3" id="refDiv" style="display: <?php echo ($edit_mode && isset($doctor_data['estatus']) && $doctor_data['estatus'] == 0) ? 'block' : 'none'; ?>;">
+                                <label for="ref" class="form-label">
+                                    Inactive Status Detail
+                                    <span class="required">*</span>
+                                </label>
+                                <textarea class="form-control" id="ref" name="ref" rows="5"
+                                          <?php echo ($edit_mode && isset($doctor_data['estatus']) && $doctor_data['estatus'] == 0) ? 'required' : ''; ?>><?php if(isset($doctor_data['ref'])){ echo $doctor_data['ref']; } ?></textarea>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-
 
             <script>
 document.addEventListener('DOMContentLoaded', function () {
@@ -880,152 +1092,163 @@ document.addEventListener('DOMContentLoaded', function () {
     </div>
 </div>
 <?php include BASE_PATH.'/admin/inc/footer.php';?>
+
 <script>
     $(document).ready(function() {
+        // ===== SELECT2 FOR CITY =====
         $('#cityId').select2({
             theme: 'bootstrap-5',
             placeholder: 'Search city...',
             allowClear: true,
             width: '100%'
         });
-                $('#hospitalId').select2({
-                theme: 'bootstrap-5',
-                placeholder: 'Search hospital...',
-                allowClear: true,
-                width: '100%'
-            });
-            //  $('#specialization').select2({
-            //     theme: 'bootstrap-5',
-            //     placeholder: 'Search hospital...',
-            //     allowClear: true,
-            //     width: '100%'
-            // });
-});
 
+        // ===== SELECT2 FOR HOSPITAL =====
+        $('#hospitalId').select2({
+            theme: 'bootstrap-5',
+            placeholder: 'Search hospital...',
+            allowClear: true,
+            width: '100%'
+        });
 
+        // ===== SELECT2 FOR SPECIALIZATION - WITH SEARCH =====
+        $('#specializationSelect').select2({
+            theme: 'bootstrap-5',
+            placeholder: 'Search Specialization...',
+            allowClear: true,
+            width: '100%',
+            dropdownCssClass: 'specialization-dropdown'
+        });
+    });
 
-document.addEventListener('DOMContentLoaded', function() {
-    const toggle = document.getElementById('personal_clinic_toggle');
-    const hospitalSection = document.getElementById('hospital_section');
-    const clinicSection = document.getElementById('clinic_section');
-    const hospitalId = document.getElementById('hospitalId');
-    const clinicName = document.getElementById('clinicName');
-    const clinicAddress = document.getElementById('clinicAddress');
-    const doctorTypeInput = document.getElementById('doctor_type');
-    const modeBadge = document.getElementById('mode_badge');
-    const citySelect = document.getElementById('cityId');
-    
-    // Initial State
-    updateView();
-    filterHospitals();
+    document.addEventListener('DOMContentLoaded', function() {
+        const toggle = document.getElementById('personal_clinic_toggle');
+        const hospitalSection = document.getElementById('hospital_section');
+        const clinicSection = document.getElementById('clinic_section');
+        const hospitalId = document.getElementById('hospitalId');
+        const clinicName = document.getElementById('clinicName');
+        const clinicAddress = document.getElementById('clinicAddress');
+        const doctorTypeInput = document.getElementById('doctor_type');
+        const modeBadge = document.getElementById('mode_badge');
+        const citySelect = document.getElementById('cityId');
+        
+        // Initial State
+        updateView();
+        filterHospitals();
 
-    // Event Listeners
-    toggle.addEventListener('change', updateView);
-    citySelect.addEventListener('change', filterHospitals);
+        // Event Listeners
+        toggle.addEventListener('change', updateView);
+        citySelect.addEventListener('change', filterHospitals);
 
-    function updateView() {
-        if (toggle.checked) {
-            // Clinic Mode
-            hospitalSection.style.display = 'none';
-            clinicSection.style.display = 'block';
-            
-            hospitalId.removeAttribute('required');
-            clinicName.setAttribute('required', 'required');
-            clinicAddress.setAttribute('required', 'required');
-            
-            doctorTypeInput.value = '2';
-            modeBadge.className = 'badge-status clinic';
-            modeBadge.innerHTML = '<i class="icofont icofont-building"></i> Clinic Mode';
-        } else {
-            // Hospital Mode
-            clinicSection.style.display = 'none';
-            // Only show hospital if city is selected
-            if ($('#cityId').val()) { // Use Select2 method to check if city is selected
-                hospitalSection.style.display = 'block';
-            } else {
+        function updateView() {
+            if (toggle.checked) {
+                // Clinic Mode
                 hospitalSection.style.display = 'none';
+                clinicSection.style.display = 'block';
+                
+                hospitalId.removeAttribute('required');
+                clinicName.setAttribute('required', 'required');
+                clinicAddress.setAttribute('required', 'required');
+                
+                doctorTypeInput.value = '2';
+                modeBadge.className = 'badge-status clinic';
+                modeBadge.innerHTML = '<i class="icofont icofont-building"></i> Clinic Mode';
+            } else {
+                // Hospital Mode
+                clinicSection.style.display = 'none';
+                if ($('#cityId').val()) {
+                    hospitalSection.style.display = 'block';
+                } else {
+                    hospitalSection.style.display = 'none';
+                }
+                
+                clinicName.removeAttribute('required');
+                clinicAddress.removeAttribute('required');
+                
+                if ($('#cityId').val()) {
+                    hospitalId.setAttribute('required', 'required');
+                }
+                
+                doctorTypeInput.value = '1';
+                modeBadge.className = 'badge-status hospital';
+                modeBadge.innerHTML = '<i class="icofont icofont-hospital"></i> Hospital Mode';
             }
+        }
+
+        function filterHospitals() {
+            const selectedCity = $('#cityId').val();
+            const options = hospitalId.options;
+            let hasVisibleOptions = false;
             
-            clinicName.removeAttribute('required');
-            clinicAddress.removeAttribute('required');
-            
-            if ($('#cityId').val()) { // Use Select2 method to check if city is selected
+            if (!selectedCity) {
+                hospitalSection.style.display = 'block';
+                $('#hospitalId').val('');
+                hospitalId.removeAttribute('required');
+                return;
+            }
+
+            if (!toggle.checked) {
+                hospitalSection.style.display = 'block';
                 hospitalId.setAttribute('required', 'required');
             }
+
+            for (let i = 0; i < options.length; i++) {
+                const option = options[i];
+                if (option.value === "") continue;
+
+                const hospitalCity = option.getAttribute('data-city');
+                if (hospitalCity == selectedCity) {
+                    option.style.display = 'block';
+                    hasVisibleOptions = true;
+                } else {
+                    option.style.display = 'none';
+                }
+            }
             
-            doctorTypeInput.value = '1';
-            modeBadge.className = 'badge-status hospital';
-            modeBadge.innerHTML = '<i class="icofont icofont-hospital"></i> Hospital Mode';
-        }
-    }
-
-    function filterHospitals() {
-        const selectedCity = $('#cityId').val(); // Use Select2 method to get value
-        const options = hospitalId.options;
-        let hasVisibleOptions = false;
-        
-        if (!selectedCity) {
-            hospitalSection.style.display = 'block';
-            $('#hospitalId').val(''); // Use Select2 method to clear
-            hospitalId.removeAttribute('required');
-            return;
-        }
-
-        // Show section if in Hospital Mode
-        if (!toggle.checked) {
-            hospitalSection.style.display = 'block';
-            hospitalId.setAttribute('required', 'required');
-        }
-
-        for (let i = 0; i < options.length; i++) {
-            const option = options[i];
-            if (option.value === "") continue; // Skip default option
-
-            const hospitalCity = option.getAttribute('data-city');
-            if (hospitalCity == selectedCity) {
-                option.style.display = 'block';
-                hasVisibleOptions = true;
-            } else {
-                option.style.display = 'none';
+            const currentOption = options[hospitalId.selectedIndex];
+            if (currentOption && currentOption.style.display === 'none') {
+                hospitalId.value = '';
             }
         }
-        
-        // Reset selection if current selection is now hidden
-        const currentOption = options[hospitalId.selectedIndex];
-        if (currentOption && currentOption.style.display === 'none') {
-            hospitalId.value = '';
+    });
+
+    // if specialization not available in dropdown
+    document.addEventListener('DOMContentLoaded', function() {
+        const checkbox = document.getElementById('if_not_available');
+        const selectWrapper = document.getElementById('specializationSelect');
+        const textWrapper = document.getElementById('specialization_txt');
+
+        function toggleFields() {
+            if (checkbox.checked) {
+                selectWrapper.style.display = 'none';
+                textWrapper.style.display = 'block';
+                document.getElementById('specializationSelect').value = '';
+                // Make text field required when checkbox is checked
+                textWrapper.setAttribute('required', 'required');
+                selectWrapper.removeAttribute('required');
+                // Destroy and recreate Select2 when hidden/shown
+                $('#specializationSelect').select2('destroy');
+                $('#specializationSelect').hide();
+            } else {
+                selectWrapper.style.display = 'block';
+                textWrapper.style.display = 'none';
+                document.getElementById('specialization_txt').value = '';
+                // Make select field required when checkbox is unchecked
+                selectWrapper.setAttribute('required', 'required');
+                textWrapper.removeAttribute('required');
+                // Reinitialize Select2
+                $('#specializationSelect').show();
+                $('#specializationSelect').select2({
+                    theme: 'bootstrap-5',
+                    placeholder: 'Search Specialization...',
+                    allowClear: true,
+                    width: '100%',
+                    dropdownCssClass: 'specialization-dropdown'
+                });
+            }
         }
-    }
-});
 
-
-
-
-// if specialization not available in dropdown
-document.addEventListener('DOMContentLoaded', function() {
-    const checkbox = document.getElementById('if_not_available');
-    const selectWrapper = document.getElementById('specialization');
-    const textWrapper = document.getElementById('specialization_txt');
-
-    // Function to toggle visibility
-    function toggleFields() {
-        if (checkbox.checked) {
-            selectWrapper.style.display = 'none';
-            textWrapper.style.display = 'block';
-            // Optional: agar chahein to select ka value khali kar den
-            document.getElementById('specialization').value = '';
-        } else {
-            selectWrapper.style.display = 'block';
-            textWrapper.style.display = 'none';
-            // Optional: text field clear kar sakte ho
-            document.getElementById('specialization_txt').value = '';
-        }
-    }
-
-    // Initial check on page load
-    toggleFields();
-
-    // Jab checkbox change ho
-    checkbox.addEventListener('change', toggleFields);
-});
+        toggleFields();
+        checkbox.addEventListener('change', toggleFields);
+    });
 </script>
