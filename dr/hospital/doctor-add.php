@@ -46,7 +46,8 @@ if ($is_edit) {
                     LEFT JOIN dr_cat_types dct ON d.cat_type_id = dct.dr_cat_type_id
                     LEFT JOIN entities e ON e.entity_id = d.entity_id
                     LEFT JOIN users u ON u.user_id = d.user_id
-                    WHERE d.doctor_id = $doctor_id AND d.hospital_id = $hospital_id AND d.approve = 1";
+                    LEFT JOIN doctor_in_hospital dih ON dih.doctor_id = d.doctor_id
+                    WHERE dih.doctor_id = $doctor_id AND dih.hospital_id = $hospital_id AND d.approve = 1";
     $check_result = mysqli_query($con, $check_query);
     
     if (mysqli_num_rows($check_result) > 0) {
@@ -54,7 +55,7 @@ if ($is_edit) {
         $doctor_data = mysqli_fetch_assoc($check_result);
     } else {
         $_SESSION['error_msg'] = "Doctor not found or you don't have permission to edit.";
-        header("Location: " . BASE_URL . "hospital/doctors.php");
+        header("Location: " . BASE_URL . "hospital/doctors/list");
         exit();
     }
 }
@@ -85,7 +86,7 @@ if ($edit_mode) {
     $dih_query = "SELECT dih.doctor_in_hosp_id, h.hospital_name, h.hospital_id
                   FROM doctor_in_hospital dih
                   LEFT JOIN hospitals h ON dih.hospital_id = h.hospital_id
-                  WHERE dih.doctor_id = $doctor_id";
+                  WHERE dih.doctor_id = $doctor_id AND dih.hospital_id = $hospital_id";
     $dih_result = mysqli_query($con, $dih_query);
     
     while ($row = mysqli_fetch_assoc($dih_result)) {
@@ -982,7 +983,7 @@ input:checked + .slider:before {
                     $dih_query = "SELECT dih.doctor_in_hosp_id, h.hospital_name, h.hospital_id
                                   FROM doctor_in_hospital dih
                                   LEFT JOIN hospitals h ON dih.hospital_id = h.hospital_id
-                                  WHERE dih.doctor_id = $doctor_id";
+                                  WHERE dih.doctor_id = $doctor_id AND dih.hospital_id = $hospital_id";
                     $dih_result = mysqli_query($con, $dih_query);
                     
                     while ($rs = mysqli_fetch_assoc($dih_result)): 

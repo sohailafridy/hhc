@@ -2,9 +2,9 @@
 // ============================================
 // START SESSION & INCLUDE CONFIG
 // ============================================
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+// if (session_status() === PHP_SESSION_NONE) {
+//     session_start();
+// }
 
 include '../config.php';
 
@@ -19,7 +19,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['type'] != 'hospital') {
 $user_id = $_SESSION['user_id'];
 
 // Get hospital data
-$hospital_query = "SELECT * FROM hospitals WHERE user_id = $user_id AND approve = 1";
+ $hospital_query = "SELECT * FROM hospitals WHERE user_id = $user_id AND approve = 1";
 $hospital_result = mysqli_query($con, $hospital_query);
 $hospital_data = mysqli_fetch_assoc($hospital_result);
 
@@ -36,8 +36,9 @@ $hospital_name = $hospital_data['hospital_name'];
 // GET DOCTOR ID
 // ============================================
 if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
-    header("Location: " . BASE_URL . "hospital/doctors.php");
-    exit();
+    $doctor_id = (int)$_GET['id'];
+    // header("Location: " . BASE_URL . "hospital/doctors/list");
+    // exit();
 }
 
 $doctor_id = (int)$_GET['id'];
@@ -45,7 +46,7 @@ $doctor_id = (int)$_GET['id'];
 // ============================================
 // FETCH DOCTOR DETAILS
 // ============================================
-$query = "SELECT d.*, 
+ $query = "SELECT d.*, 
                  c.city_name,
                  dct.type as specialization,
                  e.status as estatus,
@@ -56,14 +57,20 @@ $query = "SELECT d.*,
           LEFT JOIN cities c ON d.city_id = c.city_id
           LEFT JOIN dr_cat_types dct ON d.cat_type_id = dct.dr_cat_type_id
           LEFT JOIN entities e ON d.entity_id = e.entity_id
+          LEFT JOIN doctor_in_hospital dih ON dih.doctor_id = d.doctor_id
           LEFT JOIN users u ON d.user_id = u.user_id
-          WHERE d.doctor_id = $doctor_id AND d.hospital_id = $hospital_id AND d.approve = 1";
+          WHERE dih.doctor_id = $doctor_id AND dih.hospital_id = $hospital_id AND d.approve = 1";
+
+
+
+
+
 
 $result = mysqli_query($con, $query);
 
 if (mysqli_num_rows($result) == 0) {
     $_SESSION['error_msg'] = "Doctor not found or you don't have permission.";
-    header("Location: " . BASE_URL . "hospital/doctors.php");
+    header("Location: " . BASE_URL . "hospital/doctors/list");
     exit();
 }
 
