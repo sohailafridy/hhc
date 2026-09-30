@@ -8,7 +8,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $message = mysqli_real_escape_string($con, $_POST['message']);
         $rating = intval($_POST['rating']);
 
-        $insert_query = "INSERT INTO feedback (commenter_name, email, comment, stars, entity_id, status, created_at)
+        $insert_query = "INSERT INTO feedback (commenter_name, email, comment, stars, user_id, status, created_at)
                        VALUES ('$name', '$email', '$message', $rating, 1,1, NOW())";
 
         if (mysqli_query($con, $insert_query)) {
@@ -24,7 +24,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <?php
 $reviews = [];
-$reviews_query = "SELECT * FROM feedback WHERE entity_id = 1 ORDER BY created_at DESC";
+$reviews_query = "SELECT * FROM feedback WHERE user_id = 1 ORDER BY created_at DESC";
 $reviews_result = mysqli_query($con, $reviews_query);
 $total_stars = 0;
 

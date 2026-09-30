@@ -1,51 +1,43 @@
 <?php include '../includes/header.php'; ?>
 <?php
-    // Get Kohat city ID
-    // $kohat_result = mysqli_query($con, "SELECT city_id FROM cities WHERE city_name = '$city'");
-    // $kohat_city_data = mysqli_fetch_assoc($kohat_result);
-    // $cityid = $kohat_city_data ? $kohat_city_data['city_id'] : 0;
-    
-   
-    
     // Handle search and filters
     $search = isset($_GET['search']) ? mysqli_real_escape_string($con, $_GET['search']) : '';
     $city = isset($_GET['city']) ? (int)$_GET['city'] : $city_id; // Default to Kohat if not set
 
     // Pagination
-    $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+    $page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
     $per_page = 10;
     $offset = ($page - 1) * $per_page;
 
     // Build WHERE clause
     $where_clause = '';
-    $where_clause = ' AND h.approve = 1';
     if (!empty($search)) {
         $where_clause .= " AND h.hospital_name LIKE '%$search%' ";
     }
-    if (!empty($city) && $city !=0) {
+    if (!empty($city) && $city != 0) {
         $where_clause .= " AND h.city_id = '$city' ";
     }
 
-    // Count total hospitals for pagination
-    $count_query = "SELECT COUNT(*) as total 
-                    FROM hospitals h 
-                    LEFT JOIN cities c ON h.city_id = c.city_id 
-                    LEFT JOIN entities e ON e.entity_id = h.entity_id
-                    WHERE e.status = 1 AND h.approve = 1 $where_clause";
+    // Count total hospitals for pagination (status users table se)
+    $count_query = "SELECT COUNT(*) as total
+                    FROM hospitals h
+                    LEFT JOIN cities c ON h.city_id = c.city_id
+                    LEFT JOIN users u ON u.user_id = h.user_id
+                    WHERE u.status = 1 AND h.approve = 1 $where_clause";
     $count_result = mysqli_query($con, $count_query);
     $total_row = mysqli_fetch_assoc($count_result);
     $total_hospitals = $total_row['total'];
     $total_pages = ceil($total_hospitals / $per_page);
 
     // Fetch hospitals with pagination
-    $query = "SELECT h.*, c.city_name 
-             FROM hospitals h 
-             LEFT JOIN cities c ON h.city_id = c.city_id 
-             LEFT JOIN entities e ON e.entity_id = h.entity_id
-             WHERE e.status = 1 AND h.approve = 1 $where_clause
+    $query = "SELECT h.*, c.city_name
+             FROM hospitals h
+             LEFT JOIN cities c ON h.city_id = c.city_id
+             LEFT JOIN users u ON u.user_id = h.user_id
+             WHERE u.status = 1 AND h.approve = 1 $where_clause
              ORDER BY h.hospital_name ASC
              LIMIT $per_page OFFSET $offset";
-    
+
     $result = mysqli_query($con, $query);
 ?>
 
@@ -86,7 +78,7 @@
                                 $city_result = mysqli_query($con, $city_query);
                                 while($city_row = mysqli_fetch_assoc($city_result)) {
                                     $selected = ($city == $city_row['city_id']) ? 'selected' : '';
-                                    echo '<option value="'.$city_row['city_id'].'" '.$selected.'>'.$city_row['city_name'].'</option>';
+                                    echo '<option value="'.$city_row['city_id'].'" '.$selected.'>'.htmlspecialchars($city_row['city_name']).'</option>';
                                 }
                                 ?>
                             </select>
@@ -112,7 +104,8 @@
                 $hospital_index = 0;
                 if (mysqli_num_rows($result) > 0) {
                     while($row = mysqli_fetch_assoc($result)) {
-                        $hosp_stars_q = mysqli_query($con, "SELECT AVG(stars) as stars FROM `feedback` WHERE entity_id='". $row['entity_id'] ."'");
+                        // Rating (feedback table me user_id se)
+                        $hosp_stars_q = mysqli_query($con, "SELECT AVG(stars) as stars FROM `feedback` WHERE user_id='". (int)$row['user_id'] ."'");
                         $hosp_stars = mysqli_fetch_assoc($hosp_stars_q);
                         $hosp_stars = $hosp_stars['stars'];
                         $hospital_rating = $hosp_stars ? number_format((float)$hosp_stars, 1) : 'New';
@@ -179,14 +172,14 @@
                         <?php
                         $start_page = max(1, $page - 2);
                         $end_page = min($total_pages, $page + 2);
-                        
+
                         if ($start_page > 1) {
                             echo '<li class="page-item"><a class="page-link" href="?page=1&search='.urlencode($search).'&city='.$city.'">1</a></li>';
                             if ($start_page > 2) {
                                 echo '<li class="page-item disabled"><a class="page-link" href="#">...</a></li>';
                             }
                         }
-                        
+
                         for ($i = $start_page; $i <= $end_page; $i++) {
                             if ($i == $page) {
                                 echo '<li class="page-item active"><a class="page-link" href="#">'.$i.'</a></li>';
@@ -194,7 +187,7 @@
                                 echo '<li class="page-item"><a class="page-link" href="?page='.$i.'&search='.urlencode($search).'&city='.$city.'">'.$i.'</a></li>';
                             }
                         }
-                        
+
                         if ($end_page < $total_pages) {
                             if ($end_page < $total_pages - 1) {
                                 echo '<li class="page-item disabled"><a class="page-link" href="#">...</a></li>';
@@ -219,7 +212,7 @@
                         <?php endif; ?>
                     </ul>
                 </nav>
-                
+
                 <!-- Results Info -->
                 <div class="text-center mt-3">
                     <p class="text-muted">
@@ -567,17 +560,17 @@ $(document).ready(function() {
                 padding: 15px 10px;
                 min-height: 200px;
             }
-            
+
             .speciality-icon {
                 width: 45px;
                 height: 45px;
                 margin-bottom: 10px;
             }
-            
+
             .speciality-title {
                 font-size: 0.85rem;
             }
-            
+
             .speciality-btn {
                 padding: 4px 12px;
                 font-size: 0.65rem;
@@ -589,7 +582,7 @@ $(document).ready(function() {
                 padding: 12px 8px;
                 min-height: 180px;
             }
-            
+
             .speciality-icon {
                 width: 40px;
                 height: 40px;
@@ -599,7 +592,7 @@ $(document).ready(function() {
             .speciality-icon i {
                 font-size: 1.1rem;
             }
-            
+
             .speciality-title {
                 font-size: 0.8rem;
             }
@@ -609,7 +602,7 @@ $(document).ready(function() {
                 font-size: 0.7rem;
                 margin-bottom: 8px;
             }
-            
+
             .speciality-btn {
                 padding: 3px 8px;
                 font-size: 0.6rem;

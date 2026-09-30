@@ -39,7 +39,7 @@ if(!sessionStorage.getItem('locationAttempted')) {
 <?php
 
 if(isset($_SESSION['city']) && !empty($_SESSION['city'])) {
-        $city = $_SESSION['city'];
+        $city = mysqli_real_escape_string($con, $_SESSION['city']);
         
         $check = mysqli_query($con, "SELECT * FROM cities WHERE city_name = '$city'");
         if(mysqli_num_rows($check) == 0){
@@ -78,12 +78,12 @@ $experience = isset($_GET['experience']) ? $_GET['experience'] : '';
 $lady_doctor = isset($_GET['lady_doctor']) ? 1 : 0;
 
 // Pagination
-$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+$page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
 $per_page = 10;
 $offset = ($page - 1) * $per_page;
 
-// Build query with filters
-$where_conditions = ["e.status = 1"];
+// Build query with filters (status users table se, alias: u)
+$where_conditions = ["u.status = 1"];
 
 if (!empty($search)) {
     $where_conditions[] = "(d.doctor_name LIKE '%$search%' OR dct.type LIKE '%$search%')";
@@ -120,7 +120,7 @@ if (!empty($experience)) {
 if ($lady_doctor) {
     // Note: This would need a gender field in database for proper implementation
     // For now, we'll use a placeholder condition
-    $where_conditions[] = "d.doctor_name LIKE '%Dr.%' OR d.doctor_name LIKE '%Miss%' OR d.doctor_name LIKE '%Mrs.%'";
+    $where_conditions[] = "(d.doctor_name LIKE '%Dr.%' OR d.doctor_name LIKE '%Miss%' OR d.doctor_name LIKE '%Mrs.%')";
 }
 
 $where_clause = "WHERE " . implode(" AND ", $where_conditions);
@@ -130,7 +130,7 @@ $count_query = "SELECT COUNT(*) as total
                 FROM doctors d 
                 LEFT JOIN dr_cat_types dct ON d.cat_type_id = dct.dr_cat_id 
                 LEFT JOIN cities c ON d.city_id = c.city_id 
-                LEFT JOIN entities e ON e.entity_id = d.entity_id 
+                LEFT JOIN users u ON u.user_id = d.user_id 
                 LEFT JOIN hospitals h ON d.hospital_id = h.hospital_id 
                 $where_clause";
 
