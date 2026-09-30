@@ -798,7 +798,7 @@ textarea.form-control {
                         <div class="col-md-6">
                             <label class="form-label" for="hospitalPhone">Helpline / Phone <span class="required">*</span></label>
                             <input type="text" class="form-control" id="hospitalPhone" name="hospital_phone"
-                                   placeholder="e.g. 091-1234567" required
+                                   placeholder="e.g. 091-1234567" 
                                    value="<?php echo $edit_mode ? htmlspecialchars($hospital_data['hospital_phone'] ?? '') : ''; ?>">
                         </div>
                         <div class="col-md-6">

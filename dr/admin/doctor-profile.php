@@ -1,23 +1,24 @@
 <?php include '../config.php'; ?>
 
 <?php
-$entity_id = 0;
-if (isset($_GET['entity_id'])) {
-    $entity_id = $_GET['entity_id'];
+$user_id = 0;
+if (isset($_GET['user_id'])) {
+    $user_id = (int)$_GET['user_id'];
 }
 
 // ============================================
 // DELETE CLINICAL INFO
 // ============================================
 if(isset($_REQUEST['del_clinic_id']) && $_REQUEST['del_clinic_id'] != 0){
+    $del_clinic_id = (int)$_REQUEST['del_clinic_id'];
     $doctor_in_hospital = "DELETE FROM doctor_in_hospital
       WHERE doctor_in_hosp_id = (
          SELECT doctor_in_hosp_id
          FROM clinical_info
-         WHERE clinical_info_id = '" . $_REQUEST['del_clinic_id'] . "'
+         WHERE clinical_info_id = '" . $del_clinic_id . "'
       )";
     if(mysqli_query($con, $doctor_in_hospital)){
-        $clinic_info = "DELETE FROM clinical_info WHERE clinical_info_id = '" . $_REQUEST['del_clinic_id'] . "'";
+        $clinic_info = "DELETE FROM clinical_info WHERE clinical_info_id = '" . $del_clinic_id . "'";
         if(mysqli_query($con, $clinic_info)){
             $_SESSION['success_msg'] = "Clinical information deleted successfully!";
         }
@@ -30,7 +31,7 @@ if(isset($_REQUEST['del_clinic_id']) && $_REQUEST['del_clinic_id'] != 0){
 $check = mysqli_query($con, "SELECT COUNT(doctor_in_hosp_id) as ids 
     FROM doctor_in_hospital 
     WHERE doctor_in_hosp_id NOT IN (SELECT doctor_in_hosp_id FROM clinical_info) 
-    AND doctor_in_hospital.doctor_id = '" . $_GET['id'] . "'");
+    AND doctor_in_hospital.doctor_id = '" . (int)$_GET['id'] . "'");
 $ids = mysqli_fetch_assoc($check);
 $ids = $ids['ids'];
 
@@ -38,7 +39,7 @@ $ids = $ids['ids'];
 // EMERGENCY STATUS TOGGLE
 // ============================================
 if (isset($_POST['toggle_emergency']) && is_numeric($_POST['toggle_emergency']) && isset($_POST['status'])) {
-    $doctor_id = $_POST['toggle_emergency'];
+    $doctor_id = (int)$_POST['toggle_emergency'];
     $new_status = $_POST['status'] == 1 ? 1 : 0;
     $update_query = "UPDATE doctors SET emergency_status = $new_status WHERE doctor_id = $doctor_id";
     if (mysqli_query($con, $update_query)) {
@@ -53,7 +54,7 @@ if (isset($_POST['toggle_emergency']) && is_numeric($_POST['toggle_emergency']) 
 // DELETE DOCTOR
 // ============================================
 if (isset($_GET['delete_id']) && is_numeric($_GET['delete_id'])) {
-    $delete_id = $_GET['delete_id'];
+    $delete_id = (int)$_GET['delete_id'];
     $pic_query = "SELECT doctor_pic FROM doctors WHERE doctor_id = $delete_id";
     $pic_result = mysqli_query($con, $pic_query);
     $doctor_pic_data = mysqli_fetch_assoc($pic_result);
@@ -89,7 +90,7 @@ if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
     exit();
 }
 
-$doctor_id = $_GET['id'];
+$doctor_id = (int)$_GET['id'];
 
 // ============================================
 // FETCH DOCTOR DETAILS - WITH NEW FIELDS
@@ -99,8 +100,7 @@ $query = "SELECT d.*,
                 h.hospital_name,
                 dc.cat_name,
                 dct.type as cat_type,
-                e.status as estatus,
-                e.reference as ref,
+                u.status as estatus,
                 u.username,
                 u.password
           FROM doctors d 
@@ -108,7 +108,6 @@ $query = "SELECT d.*,
           LEFT JOIN hospitals h ON d.hospital_id = h.hospital_id
           LEFT JOIN dr_cat_types dct ON dct.dr_cat_type_id = d.cat_type_id
           LEFT JOIN dr_categories dc ON dc.dr_cat_id = dct.dr_cat_id
-          LEFT JOIN entities e ON e.entity_id = d.entity_id
           LEFT JOIN users u ON u.user_id = d.user_id
           WHERE d.doctor_id = $doctor_id";
 $result = mysqli_query($con, $query);
@@ -119,19 +118,19 @@ if (mysqli_num_rows($result) == 0) {
 }
 
 $doctor = mysqli_fetch_assoc($result);
-$entity_id = $doctor['entity_id'];
+$user_id = (int)$doctor['user_id'];
 
 // ============================================
 // FETCH RATING & REVIEWS
 // ============================================
 $rating_query = "SELECT AVG(stars) as avg_rating, COUNT(feedback_id) as total_reviews 
-                 FROM feedback WHERE entity_id = $entity_id AND status = 1";
+                 FROM feedback WHERE user_id = $user_id AND status = 1";
 $rating_result = mysqli_query($con, $rating_query);
 $rating_data = mysqli_fetch_assoc($rating_result);
 $avg_rating = $rating_data['avg_rating'] ? round($rating_data['avg_rating'], 1) : 0;
 $total_reviews = $rating_data['total_reviews'] ? $rating_data['total_reviews'] : 0;
 
-$feedback_query = "SELECT f.* FROM feedback f WHERE f.entity_id = $entity_id AND status = 1 ORDER BY f.created_at DESC LIMIT 10";
+$feedback_query = "SELECT f.* FROM feedback f WHERE f.user_id = $user_id AND f.status = 1 ORDER BY f.created_at DESC LIMIT 10";
 $feedback_result = mysqli_query($con, $feedback_query);
 
 // ============================================
@@ -153,523 +152,7 @@ $dih_result = mysqli_query($con, $dih_query);
 $dih_count = mysqli_fetch_assoc($dih_result)['total'];
 ?>
 
-<style>
-:root {
-    --primary: #4f46e5;
-    --primary-light: #818cf8;
-    --primary-dark: #3730a3;
-    --success: #22c55e;
-    --warning: #f59e0b;
-    --danger: #ef4444;
-    --info: #06b6d4;
-    --text: #0f172a;
-    --muted: #64748b;
-    --border: #e2e8f0;
-    --bg: #f1f5f9;
-    --card: #ffffff;
-    --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
-    --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
-}
-
-.content-wrapper {
-    background: var(--bg);
-    min-height: 100vh;
-    padding: 24px 32px 60px;
-}
-
-/* ===== PAGE HEADER ===== */
-/* ===== PAGE HEADER - FIXED TEXT COLORS ===== */
-.page-header-modern {
-    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
-    border-radius: 20px;
-    padding: 28px 35px;
-    color: white;
-    margin-bottom: 30px;
-    position: relative;
-    overflow: hidden;
-}
-
-/* Title */
-.page-header-title h1 {
-    font-size: 1.8rem;
-    font-weight: 700;
-    margin: 0 0 4px;
-    color: #ffffff !important;
-    text-shadow: 0 2px 10px rgba(0,0,0,0.15);
-}
-
-/* Subtitle / Meta text */
-.page-header-title p {
-    margin: 0;
-    color: rgba(255,255,255,0.85) !important;
-    font-size: 0.95rem;
-    text-shadow: 0 1px 5px rgba(0,0,0,0.08);
-}
-
-/* Badges - White text on semi-transparent background */
-.badge-custom {
-    padding: 4px 14px;
-    border-radius: 50px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    color: #ffffff !important;
-}
-
-.badge-custom.specialization {
-    background: rgba(255,255,255,0.15);
-    color: rgba(255,255,255,0.9) !important;
-    border: 1px solid rgba(255,255,255,0.1);
-}
-
-.badge-custom.mahre {
-    background: rgba(245,158,11,0.25);
-    color: #fcd34d !important;
-    border: 1px solid rgba(245,158,11,0.2);
-}
-
-.badge-custom.notes {
-    background: rgba(34,197,94,0.2);
-    color: #86efac !important;
-    border: 1px solid rgba(34,197,94,0.15);
-}
-
-.badge-custom i {
-    color: inherit;
-    opacity: 0.8;
-}
-
-.doctor-avatar {
-    width: 80px;
-    height: 80px;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 3px solid rgba(255,255,255,0.3);
-}
-
-.doctor-avatar-placeholder {
-    width: 80px;
-    height: 80px;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.15);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 2.5rem;
-    color: rgba(255,255,255,0.5);
-    border: 3px solid rgba(255,255,255,0.2);
-}
-
-.page-header-title h1 {
-    font-size: 1.8rem;
-    font-weight: 700;
-    margin: 0 0 4px;
-}
-
-.page-header-title p {
-    margin: 0;
-    opacity: 0.85;
-    font-size: 0.95rem;
-}
-
-.page-header-actions {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-}
-
-.btn-action-header {
-    padding: 10px 20px;
-    border-radius: 10px;
-    font-weight: 600;
-    font-size: 0.85rem;
-    border: none;
-    color: white;
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    transition: all 0.3s ease;
-    background: rgba(255,255,255,0.15);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255,255,255,0.1);
-}
-
-.btn-action-header:hover {
-    background: rgba(255,255,255,0.25);
-    color: white;
-    transform: translateY(-2px);
-}
-
-.btn-action-header.danger {
-    background: rgba(239,68,68,0.3);
-}
-
-.btn-action-header.danger:hover {
-    background: rgba(239,68,68,0.5);
-}
-
-/* ===== DOCTOR INFO BADGES ===== */
-.doctor-badges {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-top: 8px;
-}
-
-.badge-custom {
-    padding: 4px 14px;
-    border-radius: 50px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.badge-custom.specialization {
-    background: rgba(255,255,255,0.15);
-    color: rgba(255,255,255,0.9);
-    border: 1px solid rgba(255,255,255,0.1);
-}
-
-.badge-custom.mahre {
-    background: rgba(245,158,11,0.2);
-    color: #fbbf24;
-    border: 1px solid rgba(245,158,11,0.2);
-}
-
-.badge-custom.notes {
-    background: rgba(34,197,94,0.15);
-    color: #4ade80;
-    border: 1px solid rgba(34,197,94,0.15);
-}
-
-/* ===== STATS ROW ===== */
-.stats-row {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: 16px;
-    margin-bottom: 30px;
-}
-
-.stat-card {
-    background: white;
-    border-radius: 14px;
-    padding: 16px 20px;
-    box-shadow: var(--shadow);
-    text-align: center;
-    border: 1px solid var(--border);
-    transition: all 0.3s ease;
-}
-
-.stat-card:hover {
-    transform: translateY(-3px);
-    box-shadow: var(--shadow-lg);
-}
-
-.stat-card .stat-number {
-    font-size: 1.8rem;
-    font-weight: 700;
-    color: var(--text);
-    line-height: 1.2;
-}
-
-.stat-card .stat-label {
-    font-size: 0.8rem;
-    color: var(--muted);
-    font-weight: 500;
-    margin-top: 2px;
-}
-
-.stat-card .stat-icon {
-    font-size: 1.2rem;
-    margin-bottom: 4px;
-}
-
-/* ===== DETAIL GRID ===== */
-.detail-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 24px;
-}
-
-.detail-grid .full-width {
-    grid-column: 1 / -1;
-}
-
-/* ===== INFO CARDS ===== */
-.info-card {
-    background: white;
-    border-radius: 16px;
-    overflow: hidden;
-    box-shadow: var(--shadow);
-    border: 1px solid var(--border);
-    margin-bottom: 24px;
-}
-
-.info-card-header {
-    padding: 16px 24px;
-    background: #f8fafc;
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-
-.info-card-header h5 {
-    margin: 0;
-    font-weight: 700;
-    font-size: 1rem;
-    color: var(--text);
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.info-card-header h5 i {
-    color: var(--primary);
-    font-size: 1.1rem;
-}
-
-.info-card-body {
-    padding: 20px 24px;
-}
-
-/* ===== INFO ROWS ===== */
-.info-row {
-    display: flex;
-    justify-content: space-between;
-    padding: 10px 0;
-    border-bottom: 1px solid #f1f5f9;
-}
-
-.info-row:last-child {
-    border-bottom: none;
-}
-
-.info-row .label {
-    font-weight: 600;
-    color: var(--muted);
-    font-size: 0.85rem;
-}
-
-.info-row .value {
-    font-weight: 500;
-    color: var(--text);
-    text-align: right;
-    font-size: 0.9rem;
-}
-
-.info-row .value .badge-info {
-    padding: 2px 12px;
-    border-radius: 50px;
-    font-size: 0.75rem;
-    font-weight: 600;
-}
-
-.info-row .value .badge-info.primary { background: #dbeafe; color: #1e40af; }
-.info-row .value .badge-info.success { background: #d1fae5; color: #065f46; }
-.info-row .value .badge-info.warning { background: #fef3c7; color: #92400e; }
-
-/* ===== MAHRE AMRAZ & NOTES SECTION ===== */
-.mahre-section {
-    background: linear-gradient(135deg, #f8fafc, #f1f5f9);
-    border-radius: 12px;
-    padding: 16px 20px;
-    border: 1px solid var(--border);
-    margin-top: 8px;
-}
-
-.mahre-section .mahre-label {
-    font-size: 0.75rem;
-    color: var(--muted);
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.mahre-section .mahre-value {
-    font-weight: 600;
-    color: var(--text);
-    font-size: 1rem;
-    margin-top: 2px;
-}
-
-.mahre-section .notes-label {
-    font-size: 0.75rem;
-    color: var(--muted);
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-top: 12px;
-}
-
-.mahre-section .notes-value {
-    color: var(--text);
-    font-size: 0.95rem;
-    margin-top: 2px;
-    padding: 8px 12px;
-    background: white;
-    border-radius: 8px;
-    border-left: 3px solid var(--primary);
-}
-
-/* ===== CLINICAL CARDS ===== */
-.clinical-grid-cards {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-}
-
-.clinical-card-modern {
-    background: white;
-    border-radius: 12px;
-    border: 1px solid var(--border);
-    overflow: hidden;
-    transition: all 0.3s ease;
-}
-
-.clinical-card-modern:hover {
-    box-shadow: var(--shadow-lg);
-    transform: translateY(-2px);
-}
-
-.clinical-card-header {
-    padding: 12px 18px;
-    background: linear-gradient(135deg, #4f46e5, #7c3aed);
-    color: white;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.clinical-card-header h6 {
-    margin: 0;
-    font-weight: 600;
-    font-size: 0.9rem;
-}
-
-.clinical-card-body {
-    padding: 14px 18px;
-}
-
-.clinical-info-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 6px 0;
-    border-bottom: 1px solid #f8fafc;
-}
-
-.clinical-info-row:last-child {
-    border-bottom: none;
-}
-
-.clinical-info-row i {
-    width: 20px;
-    color: var(--primary);
-    font-size: 0.9rem;
-}
-
-.clinical-info-row .c-label {
-    font-weight: 500;
-    color: var(--muted);
-    font-size: 0.75rem;
-    min-width: 80px;
-}
-
-.clinical-info-row .c-value {
-    font-weight: 500;
-    color: var(--text);
-    font-size: 0.8rem;
-}
-
-/* ===== FEEDBACK ITEMS ===== */
-.feedback-item {
-    padding: 14px 0;
-    border-bottom: 1px solid #f1f5f9;
-}
-
-.feedback-item:last-child {
-    border-bottom: none;
-}
-
-.feedback-item .feedback-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.feedback-item .feedback-name {
-    font-weight: 600;
-    font-size: 0.9rem;
-}
-
-.feedback-item .feedback-rating {
-    color: var(--warning);
-    font-size: 0.85rem;
-}
-
-.feedback-item .feedback-comment {
-    color: var(--text);
-    font-size: 0.9rem;
-    line-height: 1.6;
-    margin: 4px 0 0;
-}
-
-.feedback-item .feedback-date {
-    font-size: 0.75rem;
-    color: var(--muted);
-}
-
-/* ===== RESPONSIVE ===== */
-@media (max-width: 992px) {
-    .detail-grid {
-        grid-template-columns: 1fr;
-    }
-    .content-wrapper { padding: 16px; }
-    .clinical-grid-cards { grid-template-columns: 1fr; }
-}
-
-@media (max-width: 768px) {
-    .page-header-content {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-    .page-header-actions {
-        width: 100%;
-    }
-    .page-header-left {
-        flex-direction: column;
-        text-align: center;
-        width: 100%;
-    }
-    .stats-row {
-        grid-template-columns: repeat(2, 1fr);
-    }
-    .info-row {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 4px;
-    }
-    .info-row .value {
-        text-align: left;
-        width: 100%;
-    }
-}
-
-@media (max-width: 480px) {
-    .stats-row {
-        grid-template-columns: 1fr;
-    }
-    .page-header-actions {
-        justify-content: center;
-    }
-}
-</style>
+<link rel="stylesheet" href="<?= BASE_URL ?>style/doctor-profile-admin.css">
 
 <div class="content-wrapper">
 

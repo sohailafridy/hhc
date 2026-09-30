@@ -3,16 +3,16 @@
 <?php
 // Handle delete operation - MUST be before any HTML output
 if (isset($_GET['delete_id']) && is_numeric($_GET['delete_id'])) {
-    $delete_id = $_GET['delete_id'];
+    $delete_id = (int)$_GET['delete_id'];
     
     // First, get laboratory picture to delete file
-    $pic_query = "SELECT lab_pic FROM laboratories WHERE lab_id = $delete_id";
+    $pic_query = "SELECT lab_pic FROM laboratories WHERE user_id = $delete_id";
     $pic_result = mysqli_query($con, $pic_query);
     $lab_pic_data = mysqli_fetch_assoc($pic_result);
     $lab_pic = $lab_pic_data ? $lab_pic_data['lab_pic'] : '';
     
     // Delete laboratory from database
-    $delete_query = "UPDATE entities set status=0 WHERE entity_id = $delete_id";
+    $delete_query = "UPDATE users set status=0 WHERE user_id = $delete_id";
     
     if (mysqli_query($con, $delete_query)) {
         // Delete picture file if it exists
@@ -46,18 +46,18 @@ if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
     exit();
 }
 
-$lab_id = $_GET['id'];
+$lab_id = (int)$_GET['id'];
 
 // Fetch laboratory details with related information
 $query = "SELECT l.*, 
                 c.city_name,
                 h.hospital_name,
-                e.status as estatus,
-                e.entity_id as e_id
+                u.status as estatus,
+                u.user_id as u_id
           FROM laboratories l 
           LEFT JOIN cities c ON l.city_id = c.city_id
           LEFT JOIN hospitals h ON l.hospital_id = h.hospital_id
-          LEFT JOIN entities e ON e.entity_id = l.entity_id
+          LEFT JOIN users u ON u.user_id = l.user_id
           WHERE l.lab_id = $lab_id";
 $result = mysqli_query($con, $query);
 
@@ -67,223 +67,15 @@ if (mysqli_num_rows($result) == 0) {
 }
 
 $laboratory = mysqli_fetch_assoc($result);
-$entity_id = $laboratory['entity_id'];
+$user_id = (int)$laboratory['user_id'];
 // Fetch feedbacks for this laboratory
 $feedback_query = "SELECT f.* FROM feedback f 
-WHERE f.entity_id = $entity_id ORDER BY f.created_at DESC LIMIT 10";
+WHERE f.user_id = $user_id ORDER BY f.created_at DESC LIMIT 10";
 $feedback_result = mysqli_query($con, $feedback_query);
 
 ?>
 
-<style>
-    .laboratory-profile-header {
-        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
-        color: white;
-        padding: 30px;
-        border-radius: 15px;
-        margin-bottom: 30px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-    }
-    
-    .laboratory-profile-header h2 {
-        color: white;
-        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-        font-weight: 700;
-        margin-bottom: 15px;
-    }
-    
-    .laboratory-profile-header p {
-        color: rgba(255,255,255,0.95);
-        text-shadow: 0 1px 3px rgba(0,0,0,0.3);
-        font-size: 16px;
-        margin-bottom: 8px;
-        font-weight: 500;
-    }
-    
-    .laboratory-profile-header i {
-        color: rgba(255,255,255,0.9);
-        margin-right: 10px;
-        font-size: 16px;
-    }
-    
-    .laboratory-avatar {
-        width: 120px;
-        height: 120px;
-        border-radius: 50%;
-        border: 4px solid white;
-        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-        object-fit: cover;
-    }
-    
-    .info-card {
-        background: white;
-        border-radius: 15px;
-        box-shadow: 0 5px 20px rgba(0,0,0,0.08);
-        margin-bottom: 25px;
-        overflow: hidden;
-    }
-    
-    .info-card-header {
-        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-        padding: 20px 25px;
-        border-bottom: 1px solid #dee2e6;
-    }
-    
-    .info-card-header h5 {
-        margin: 0;
-        color: #495057;
-        font-weight: 600;
-        font-size: 18px;
-    }
-    
-    .info-card-body {
-        padding: 25px;
-    }
-    
-    .info-item {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 15px 0;
-        border-bottom: 1px solid #f1f3f4;
-    }
-    
-    .info-item:last-child {
-        border-bottom: none;
-    }
-    
-    .info-label {
-        font-weight: 600;
-        color: #6c757d;
-        font-size: 14px;
-    }
-    
-    .info-value {
-        font-weight: 500;
-        color: #212529;
-        font-size: 15px;
-        text-align: right;
-    }
-    
-    .feedback-card {
-        background: white;
-        border-radius: 15px;
-        box-shadow: 0 5px 20px rgba(0,0,0,0.08);
-        margin-bottom: 20px;
-        overflow: hidden;
-    }
-    
-    .feedback-item {
-        padding: 20px 25px;
-        border-bottom: 1px solid #f1f3f4;
-        transition: background 0.3s ease;
-    }
-    
-    .feedback-item:hover {
-        background: #f8f9fa;
-    }
-    
-    .feedback-item:last-child {
-        border-bottom: none;
-    }
-    
-    .feedback-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 10px;
-    }
-    
-    .feedback-name {
-        font-weight: 600;
-        color: #495057;
-        font-size: 16px;
-    }
-    
-    .feedback-email {
-        color: #6c757d;
-        font-size: 14px;
-    }
-    
-    .feedback-rating {
-        color: #ffc107;
-        font-size: 18px;
-    }
-    
-    .feedback-comment {
-        color: #495057;
-        font-size: 15px;
-        line-height: 1.6;
-        margin-top: 10px;
-        padding: 15px;
-        background: #f8f9fa;
-        border-radius: 10px;
-        border-left: 4px solid #dc3545;
-    }
-    
-    .feedback-date {
-        color: #6c757d;
-        font-size: 13px;
-        margin-top: 10px;
-    }
-    
-    .badge-status {
-        padding: 6px 15px;
-        border-radius: 20px;
-        font-weight: 600;
-        font-size: 12px;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-    
-    .badge-active {
-        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-        color: white;
-    }
-    
-    .badge-inactive {
-        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
-        color: white;
-    }
-    
-    .btn-action {
-        padding: 10px 25px;
-        border-radius: 50px;
-        font-weight: 600;
-        border: none;
-        transition: all 0.3s ease;
-        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-        text-decoration: none;
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-    }
-    
-    .btn-edit {
-        background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
-        color: white;
-    }
-    
-    .btn-delete {
-        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
-        color: white;
-    }
-    
-    .btn-back {
-        background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
-        color: white;
-    }
-    
-    .btn-action:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-    }
-    
-    .padding{
-      padding: 0 28px !important;
-    }
-</style>
-
+<link rel="stylesheet" href="<?= BASE_URL ?>style/lab-detail-admin.css">
 <div class="content-wrapper">
    <!-- Container-fluid starts -->
    <div class="container-fluid">
@@ -401,7 +193,7 @@ $feedback_result = mysqli_query($con, $feedback_query);
                   <a href="<?php echo BASE_URL; ?>admin/laboratories/add?id=<?php echo $laboratory['lab_id']; ?>" class="btn-action btn-edit me-3">
                      <i class="fas fa-edit"></i> Edit Laboratory
                   </a>
-                  <a href="javascript:void(0)" onclick="deleteLaboratory(<?php echo $laboratory['entity_id']; ?>)" class="btn-action btn-delete me-3">
+                  <a href="javascript:void(0)" onclick="deleteLaboratory(<?php echo $laboratory['user_id']; ?>)" class="btn-action btn-delete me-3">
                      <i class="fas fa-trash"></i> Delete Laboratory
                   </a>
                   <a href="<?php echo BASE_URL; ?>admin/laboratories/list" class="btn-action btn-back">
@@ -460,9 +252,9 @@ $feedback_result = mysqli_query($con, $feedback_query);
 </div>
 
 <script>
-function deleteLaboratory(entity_id) {
+function deleteLaboratory(user_id) {
     if (confirm('Are you sure you want to delete this laboratory? This action cannot be undone.')) {
-        window.location.href = '?delete_id=' + entity_id;
+        window.location.href = '?delete_id=' + user_id;
     }
 }
 </script>

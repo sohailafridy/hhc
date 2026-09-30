@@ -1,0 +1,489 @@
+.lab-profile-section {
+    padding: 80px 0;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    position: relative;
+}
+
+.lab-profile-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border-radius: 24px;
+    padding: 40px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.lab-image-wrapper {
+    position: relative;
+    overflow: hidden;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.lab-image {
+    width: 100%;
+    height: 300px;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.lab-image-wrapper:hover .lab-image {
+    transform: scale(1.05);
+}
+
+.lab-info {
+    padding-left: 30px;
+}
+
+.lab-header {
+    margin-bottom: 30px;
+}
+
+.lab-name {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: var(--dark);
+    margin-bottom: 10px;
+    background: var(--gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.lab-rating {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.stars {
+    color: #ffc107;
+    font-size: 1.2rem;
+}
+
+.rating-text {
+    color: var(--secondary);
+    font-weight: 600;
+}
+
+.lab-details {
+    margin-bottom: 30px;
+}
+
+.detail-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.detail-item i {
+    color: var(--primary);
+    font-size: 1.2rem;
+    margin-top: 2px;
+    width: 24px;
+}
+
+.detail-content {
+    flex: 1;
+}
+
+.detail-label {
+    display: block;
+    font-weight: 600;
+    color: var(--dark);
+    margin-bottom: 4px;
+    font-size: 0.9rem;
+}
+
+.detail-value {
+    color: #6b6b6b ;
+    font-weight: 500;
+    line-height: 1.5;
+}
+
+.lab-actions {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.btn-appointment-large {
+    background: var(--gradient);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 15px 30px;
+    font-weight: 600;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+}
+
+.btn-appointment-large:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4);
+    color: white;
+}
+
+.btn-call-large {
+    border: 2px solid var(--primary);
+    color: var(--primary);
+    border-radius: 12px;
+    padding: 15px 30px;
+    font-weight: 600;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background: transparent;
+}
+
+.btn-call-large:hover {
+    background: var(--primary);
+    color: white;
+    transform: translateY(-2px);
+}
+
+.doctors-list-section {
+    background: #f8fafc;
+}
+
+.section-header {
+    text-align: center;
+    margin-bottom: 50px;
+}
+
+.section-title {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: var(--dark);
+    margin-bottom: 10px;
+}
+
+.section-subtitle {
+    color: var(--secondary);
+    font-size: 1.1rem;
+    font-weight: 500;
+}
+
+.doctors-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 30px;
+    margin-bottom: 40px;
+}
+
+@media (max-width: 768px) {
+    .lab-profile-card {
+        padding: 20px;
+    }
+    
+    .lab-info {
+        padding-left: 0;
+        margin-top: 20px;
+    }
+    
+    .lab-name {
+        font-size: 2rem;
+    }
+    
+    .lab-actions {
+        justify-content: center;
+    }
+    
+    .btn-appointment-large,
+    .btn-call-large {
+        flex: 1;
+        text-align: center;
+    }
+}
+
+/* Lab Reviews Section Styles */
+.lab-reviews-section {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+}
+
+.review-form-card {
+    background: white;
+    border-radius: 20px;
+    padding: 40px;
+    margin-bottom: 50px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.review-form-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.review-form-header h3 {
+    color: var(--dark);
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+}
+
+.review-form-header p {
+    color: var(--secondary);
+    font-size: 1rem;
+}
+
+.review-form .form-group {
+    margin-bottom: 25px;
+}
+
+.review-form .form-label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: var(--dark);
+    font-size: 0.95rem;
+}
+
+.review-form .form-control {
+    width: 100%;
+    padding: 12px 15px;
+    border: 2px solid #e9ecef;
+    border-radius: 10px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.review-form .form-control:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+    outline: none;
+}
+
+.rating-input {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.star-rating {
+    display: flex;
+    gap: 5px;
+}
+
+.star-rating input[type="radio"] {
+    display: none;
+}
+
+.star-rating .star {
+    font-size: 1.5rem;
+    color: #ddd;
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.star-rating .star:hover {
+    color: #ffc107;
+}
+
+.star-rating input[type="radio"]:checked ~ .star {
+    color: #ddd;
+}
+
+.star-rating input[type="radio"]:checked + .star,
+.star-rating input[type="radio"]:checked ~ .star {
+    color: #ffc107;
+}
+
+.rating-text {
+    color: var(--secondary);
+    font-size: 0.9rem;
+}
+
+.btn-submit-review {
+       background: linear-gradient(135deg, var(--primary) 0%, var(--medical-blue) 100%);
+    color: black;
+    /* border: none; */
+    padding: 15px 40px;
+    border-radius: 50px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 5px 15px rgba(74, 144, 226, 0.3);
+}
+
+.reviews-grid {
+    display: grid;
+    gap: 25px;
+    margin-bottom: 40px;
+}
+
+.review-card {
+    background: white;
+    border-radius: 16px;
+    padding: 30px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+}
+
+.review-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+}
+
+.review-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 20px;
+}
+
+.reviewer-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.reviewer-avatar {
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--medical-blue) 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.2rem;
+}
+
+.reviewer-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--dark);
+    margin-bottom: 5px;
+}
+
+.review-date {
+    color: var(--secondary);
+    font-size: 0.85rem;
+}
+
+.review-rating {
+    display: flex;
+    gap: 2px;
+}
+
+.review-rating i {
+    color: #ffc107;
+    font-size: 1rem;
+}
+
+.review-content {
+    margin-bottom: 20px;
+}
+
+.review-content p {
+    color: var(--dark);
+    line-height: 1.6;
+    font-size: 1rem;
+}
+
+.review-footer {
+    border-top: 1px solid #f1f3f4;
+    padding-top: 15px;
+}
+
+.review-actions {
+    display: flex;
+    gap: 15px;
+}
+
+.btn-helpful,
+.btn-report {
+    background: none;
+    border: 1px solid #e9ecef;
+    padding: 8px 15px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: var(--secondary);
+}
+
+.btn-helpful:hover {
+    border-color: #28a745;
+    color: #28a745;
+    background: rgba(40, 167, 69, 0.1);
+}
+
+.btn-report:hover {
+    border-color: #dc3545;
+    color: #dc3545;
+    background: rgba(220, 53, 69, 0.1);
+}
+
+.load-more-container {
+    text-align: center;
+}
+
+.btn-load-more {
+    background: linear-gradient(135deg, var(--secondary) 0%, #4caf50 100%);
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 50px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-load-more:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(80, 200, 120, 0.3);
+}
+
+.no-reviews {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--secondary);
+}
+
+.no-reviews i {
+    font-size: 4rem;
+    margin-bottom: 20px;
+    opacity: 0.5;
+}
+
+.no-reviews h3 {
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+}
+
+.no-reviews p {
+    font-size: 1rem;
+}
+
+@media (max-width: 768px) {
+    .review-form-card {
+        padding: 25px;
+    }
+    
+    .review-header {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .reviewer-info {
+        width: 100%;
+    }
+    
+    .review-rating {
+        align-self: flex-start;
+    }
+    
+    .review-actions {
+        justify-content: center;
+    }
+    
+    .btn-helpful,
+    .btn-report {
+        flex: 1;
+        text-align: center;
+    }
+}

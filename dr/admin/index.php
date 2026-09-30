@@ -1,4 +1,5 @@
 <?php include '../config.php'; ?>
+<?php include '../check_auth.php'; ?>
 
 <?php
 // Fetch counts for dashboard
@@ -26,6 +27,13 @@ $blood_banks_count = mysqli_fetch_assoc($blood_banks_count_result)['total'];
 $users_count_query = "SELECT COUNT(*) as total FROM users WHERE status = 1";
 $users_count_result = mysqli_query($con, $users_count_query);
 $users_count = mysqli_fetch_assoc($users_count_result)['total'];
+
+
+
+// cities count
+$city_count_query = "SELECT COUNT(*) as total FROM cities WHERE status = 1 AND approve=1";
+$city_count_result = mysqli_query($con, $city_count_query);
+$city_count = mysqli_fetch_assoc($city_count_result)['total'];
 
 // Feedbacks count
 $feedbacks_count_query = "SELECT COUNT(*) as total FROM feedback WHERE status = 1";
@@ -446,42 +454,62 @@ $recent_doctors_result = mysqli_query($con, $recent_doctors_query);
 
     <!-- ===== STATS GRID ===== -->
     <div class="stats-grid">
-        <div class="stat-card">
-            <div class="stat-icon blue"><i class="fas fa-user-md"></i></div>
-            <div class="stat-number"><?php echo $doctors_count; ?></div>
-            <div class="stat-label">Total Doctors</div>
-            <span class="stat-change up"><i class="fas fa-arrow-up"></i> Active</span>
-        </div>
-        <div class="stat-card">
-            <div class="stat-icon green"><i class="fas fa-hospital"></i></div>
-            <div class="stat-number"><?php echo $hospitals_count; ?></div>
-            <div class="stat-label">Total Hospitals</div>
-            <span class="stat-change up"><i class="fas fa-arrow-up"></i> Active</span>
-        </div>
-        <div class="stat-card">
-            <div class="stat-icon orange"><i class="fas fa-flask"></i></div>
-            <div class="stat-number"><?php echo $labs_count; ?></div>
-            <div class="stat-label">Total Laboratories</div>
-            <span class="stat-change up"><i class="fas fa-arrow-up"></i> Active</span>
-        </div>
-        <div class="stat-card">
-            <div class="stat-icon red"><i class="fas fa-tint"></i></div>
-            <div class="stat-number"><?php echo $blood_banks_count; ?></div>
-            <div class="stat-label">Blood Banks</div>
-            <span class="stat-change up"><i class="fas fa-arrow-up"></i> Active</span>
-        </div>
-        <div class="stat-card">
-            <div class="stat-icon purple"><i class="fas fa-users"></i></div>
-            <div class="stat-number"><?php echo $users_count; ?></div>
-            <div class="stat-label">Total Users</div>
-            <span class="stat-change up"><i class="fas fa-arrow-up"></i> Registered</span>
-        </div>
-        <div class="stat-card">
-            <div class="stat-icon cyan"><i class="fas fa-star"></i></div>
-            <div class="stat-number"><?php echo $feedbacks_count; ?></div>
-            <div class="stat-label">Total Feedbacks</div>
-            <span class="stat-change up"><i class="fas fa-arrow-up"></i> Reviews</span>
-        </div>
+        <a href="<?=BASE_URL?>admin/cities/list">
+            <div class="stat-card">
+                <div class="stat-icon blue"><i class="fas fa-map-marker-alt"></i></div>
+                <div class="stat-number"><?php echo $city_count; ?></div>
+                <div class="stat-label">Total Cities</div>
+                <span class="stat-change up"><i class="fas fa-arrow-up"></i> Active</span>
+            </div>
+        </a>
+        <a href="<?=BASE_URL?>admin/hospitals/list">
+            <div class="stat-card">
+                <div class="stat-icon green"><i class="fas fa-hospital"></i></div>
+                <div class="stat-number"><?php echo $hospitals_count; ?></div>
+                <div class="stat-label">Total Hospitals</div>
+                <span class="stat-change up"><i class="fas fa-arrow-up"></i> Active</span>
+            </div>
+        </a>
+        <a href="<?=BASE_URL?>admin/doctors/list">    
+            <div class="stat-card">
+                <div class="stat-icon blue"><i class="fas fa-user-md"></i></div>
+                <div class="stat-number"><?php echo $doctors_count; ?></div>
+                <div class="stat-label">Total Doctors</div>
+                <span class="stat-change up"><i class="fas fa-arrow-up"></i> Active</span>
+            </div>
+        </a>
+        <a href="<?=BASE_URL?>admin/laboratories/list">    
+            <div class="stat-card">
+                <div class="stat-icon orange"><i class="fas fa-flask"></i></div>
+                <div class="stat-number"><?php echo $labs_count; ?></div>
+                <div class="stat-label">Total Laboratories</div>
+                <span class="stat-change up"><i class="fas fa-arrow-up"></i> Active</span>
+            </div>
+        </a>
+        <a href="<?=BASE_URL?>admin/blood-banks/list">   
+            <div class="stat-card">
+                <div class="stat-icon red"><i class="fas fa-tint"></i></div>
+                <div class="stat-number"><?php echo $blood_banks_count; ?></div>
+                <div class="stat-label">Blood Banks</div>
+                <span class="stat-change up"><i class="fas fa-arrow-up"></i> Active</span>
+            </div>
+        </a>
+        <a href="<?=BASE_URL?>admin/users">    
+            <div class="stat-card">
+                <div class="stat-icon purple"><i class="fas fa-users"></i></div>
+                <div class="stat-number"><?php echo $users_count; ?></div>
+                <div class="stat-label">Total Users</div>
+                <span class="stat-change up"><i class="fas fa-arrow-up"></i> Registered</span>
+            </div>
+        </a>
+        <a href="#">    
+            <div class="stat-card">
+                <div class="stat-icon cyan"><i class="fas fa-star"></i></div>
+                <div class="stat-number"><?php echo $feedbacks_count; ?></div>
+                <div class="stat-label">Total Feedbacks</div>
+                <span class="stat-change up"><i class="fas fa-arrow-up"></i> Reviews</span>
+            </div>
+        </a>
     </div>
 
     <!-- ===== DASHBOARD GRID ===== -->

@@ -3,6 +3,7 @@
 <?php
 // Get doctor ID from URL
 $doctor_id = isset($_GET['doctor_id']) ? (int)$_GET['doctor_id'] : 0;
+$doctor = null;
 
 if ($doctor_id > 0) {
     // Fetch doctor details - INCLUDING NEW FIELDS
@@ -10,22 +11,22 @@ if ($doctor_id > 0) {
              FROM doctors d 
              LEFT JOIN cities c ON d.city_id = c.city_id 
              LEFT JOIN hospitals h ON d.hospital_id = h.hospital_id 
-             LEFT JOIN entities e ON e.entity_id = d.entity_id
-             WHERE d.doctor_id = $doctor_id AND e.status = 1 AND d.approve=1";
+             LEFT JOIN users u ON u.user_id = d.user_id
+             WHERE d.doctor_id = $doctor_id AND u.status = 1 AND d.approve=1";
     $result = mysqli_query($con, $query);
     $doctor = mysqli_fetch_assoc($result);
 }
 
 // Submit review
-if (isset($_REQUEST['entity_id']) && $_REQUEST['entity_id'] != 0) {
-    $entity_id = $_REQUEST['entity_id'];
+if (isset($_POST['user_id']) && (int)$_POST['user_id'] != 0) {
+    $user_id = (int)$_POST['user_id'];
     $commenter_name = isset($_POST['commenter_name']) ? trim($_POST['commenter_name']) : '';
     $commenter_gmail = isset($_POST['commenter_gmail']) ? trim($_POST['commenter_gmail']) : '';
     $comment = isset($_POST['comment']) ? trim($_POST['comment']) : '';
     $stars = isset($_POST['stars']) ? (int)$_POST['stars'] : 5;
 
-    $insert_query = "INSERT INTO feedback (entity_id, commenter_name, commenter_gmail, comment, stars, status, created_at, updated_at) 
-                    VALUES ($entity_id,
+    $insert_query = "INSERT INTO feedback (user_id, commenter_name, commenter_gmail, comment, stars, status, created_at, updated_at) 
+                    VALUES ($user_id,
                     '" . mysqli_real_escape_string($con, $commenter_name) . "', 
                     '" . mysqli_real_escape_string($con, $commenter_gmail) . "', 
                     '" . mysqli_real_escape_string($con, $comment) . "', 
@@ -34,580 +35,7 @@ if (isset($_REQUEST['entity_id']) && $_REQUEST['entity_id'] != 0) {
 }
 ?>
 
-<style>
-:root {
-    --primary: #4f46e5;
-    --primary-light: #818cf8;
-    --primary-dark: #3730a3;
-    --secondary: #0ea5e9;
-    --success: #22c55e;
-    --warning: #f59e0b;
-    --danger: #ef4444;
-    --text: #0f172a;
-    --muted: #64748b;
-    --bg: #f1f5f9;
-    --card: #ffffff;
-    --border: #e2e8f0;
-    --shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
-    --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
-    --shadow-xl: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
-}
-
-/* ===== PAGE HEADER ===== */
-.page-header {
-    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
-    padding: 80px 0 50px;
-    color: white;
-    position: relative;
-    overflow: hidden;
-}
-
-.page-header::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    right: -10%;
-    width: 400px;
-    height: 400px;
-    background: rgba(255,255,255,0.06);
-    border-radius: 50%;
-}
-
-.page-header::after {
-    content: '';
-    position: absolute;
-    bottom: -30%;
-    left: -5%;
-    width: 300px;
-    height: 300px;
-    background: rgba(255,255,255,0.04);
-    border-radius: 50%;
-}
-
-.page-header h1 {
-    font-size: 3rem;
-    font-weight: 800;
-    margin-bottom: 8px;
-    text-shadow: 0 2px 10px rgba(0,0,0,0.15);
-}
-
-.page-header p {
-    font-size: 1.1rem;
-    opacity: 0.9;
-}
-
-/* ===== SECTION ===== */
-.section-padding {
-    padding: 60px 0;
-}
-
-/* ===== DOCTOR PROFILE CARD ===== */
-.doctor-profile-card {
-    background: white;
-    border-radius: 20px;
-    overflow: hidden;
-    box-shadow: var(--shadow-xl);
-    margin-bottom: 40px;
-    border: 1px solid rgba(255,255,255,0.1);
-}
-
-.doctor-profile-card .profile-left {
-    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
-    padding: 40px 30px;
-    color: white;
-    text-align: center;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-}
-
-.profile-avatar {
-    width: 140px;
-    height: 140px;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 4px solid rgba(255,255,255,0.3);
-    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-    margin-bottom: 20px;
-}
-
-.profile-avatar-placeholder {
-    width: 140px;
-    height: 140px;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.15);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 4rem;
-    color: rgba(255,255,255,0.5);
-    border: 4px solid rgba(255,255,255,0.2);
-    margin-bottom: 20px;
-}
-
-.profile-left h2 {
-    font-size: 1.8rem;
-    font-weight: 700;
-    margin-bottom: 4px;
-    color: #ffffff;
-    text-shadow: 0 2px 10px rgba(0,0,0,0.15);
-}
-
-.profile-left .specialty {
-    font-size: 1rem;
-    opacity: 0.9;
-    margin-bottom: 4px;
-    color: rgba(255,255,255,0.9);
-}
-
-.profile-left .qualification {
-    font-size: 0.9rem;
-    opacity: 0.8;
-    color: rgba(255,255,255,0.8);
-}
-
-/* ===== NEW: MAHRE AMRAZ ===== */
-.profile-left .mahre-amraz {
-    font-size: 0.95rem;
-    margin-top: 8px;
-    padding: 6px 18px;
-    background: rgba(245,158,11,0.2);
-    border-radius: 50px;
-    border: 1px solid rgba(245,158,11,0.2);
-    color: #fcd34d;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.profile-left .mahre-amraz i {
-    color: #fcd34d;
-    font-size: 0.8rem;
-}
-
-/* ===== NEW: NOTES ===== */
-.profile-left .doctor-notes {
-    font-size: 0.85rem;
-    margin-top: 10px;
-    padding: 8px 16px;
-    background: rgba(34,197,94,0.15);
-    border-radius: 8px;
-    border-left: 3px solid #22c55e;
-    color: #86efac;
-    text-align: left;
-    width: 100%;
-    max-width: 280px;
-}
-
-.profile-left .doctor-notes i {
-    color: #86efac;
-    margin-right: 6px;
-}
-
-.profile-left .experience {
-    font-size: 0.9rem;
-    opacity: 0.85;
-    margin-top: 8px;
-    color: rgba(255,255,255,0.85);
-}
-
-.profile-left .rating-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 6px 18px;
-    background: rgba(255,255,255,0.15);
-    border-radius: 50px;
-    font-size: 0.9rem;
-    margin-top: 12px;
-    border: 1px solid rgba(255,255,255,0.1);
-    color: rgba(255,255,255,0.9);
-}
-
-.profile-left .rating-badge i {
-    color: #fbbf24;
-}
-
-/* Profile Right */
-.profile-right {
-    padding: 30px 35px;
-}
-
-.profile-right .section-title {
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: var(--text);
-    margin-bottom: 16px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.profile-right .section-title i {
-    color: var(--primary);
-}
-
-.contact-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-    margin-bottom: 24px;
-}
-
-.contact-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 12px 16px;
-    background: #f8fafc;
-    border-radius: 12px;
-    border: 1px solid var(--border);
-    transition: all 0.3s ease;
-}
-
-.contact-item:hover {
-    border-color: var(--primary);
-    background: #f0f7ff;
-}
-
-.contact-item i {
-    width: 36px;
-    height: 36px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--primary);
-    color: white;
-    border-radius: 10px;
-    font-size: 0.9rem;
-    flex-shrink: 0;
-}
-
-.contact-item .label {
-    font-size: 0.7rem;
-    color: var(--muted);
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.contact-item .value {
-    font-size: 0.9rem;
-    font-weight: 500;
-    color: var(--text);
-}
-
-.about-text {
-    color: var(--muted);
-    line-height: 1.8;
-    font-size: 0.95rem;
-}
-
-/* ===== CLINICAL INFO ===== */
-.clinical-section {
-    background: white;
-    border-radius: 20px;
-    padding: 30px 35px;
-    box-shadow: var(--shadow);
-    margin-bottom: 30px;
-    border: 1px solid var(--border);
-}
-
-.clinical-section .section-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 24px;
-    padding-bottom: 16px;
-    border-bottom: 2px solid var(--border);
-}
-
-.clinical-section .section-header h3 {
-    font-size: 1.3rem;
-    font-weight: 700;
-    color: var(--text);
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.clinical-section .section-header h3 i {
-    color: var(--primary);
-}
-
-.clinical-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
-}
-
-.clinical-card {
-    background: #f8fafc;
-    border-radius: 14px;
-    padding: 20px;
-    border: 1px solid var(--border);
-    transition: all 0.3s ease;
-}
-
-.clinical-card:hover {
-    border-color: var(--primary);
-    box-shadow: var(--shadow);
-}
-
-.clinical-card .hospital-name {
-    font-weight: 700;
-    font-size: 1rem;
-    color: var(--primary);
-    margin-bottom: 12px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.clinical-card .hospital-name i {
-    font-size: 0.9rem;
-}
-
-.clinical-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 4px 0;
-    font-size: 0.85rem;
-}
-
-.clinical-item i {
-    width: 18px;
-    color: var(--primary);
-    font-size: 0.8rem;
-}
-
-.clinical-item .label {
-    color: var(--muted);
-    font-weight: 500;
-    min-width: 90px;
-}
-
-.clinical-item .value {
-    color: var(--text);
-    font-weight: 500;
-}
-
-/* ===== REVIEWS SECTION ===== */
-.reviews-section {
-    background: white;
-    border-radius: 20px;
-    padding: 30px 35px;
-    box-shadow: var(--shadow);
-    border: 1px solid var(--border);
-}
-
-.reviews-section .section-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 24px;
-    padding-bottom: 16px;
-    border-bottom: 2px solid var(--border);
-}
-
-.reviews-section .section-header h3 {
-    font-size: 1.3rem;
-    font-weight: 700;
-    color: var(--text);
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.reviews-section .section-header .rating-summary {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 6px 16px;
-    background: #fef3c7;
-    border-radius: 50px;
-}
-
-.reviews-section .section-header .rating-summary i {
-    color: #f59e0b;
-}
-
-.reviews-section .section-header .rating-summary .score {
-    font-weight: 700;
-    font-size: 1.1rem;
-}
-
-/* Review Form */
-.review-form {
-    background: #f8fafc;
-    border-radius: 14px;
-    padding: 24px;
-    margin-bottom: 30px;
-    border: 1px solid var(--border);
-}
-
-.review-form h4 {
-    font-size: 1rem;
-    font-weight: 700;
-    margin-bottom: 16px;
-}
-
-.review-form .form-control {
-    border-radius: 10px;
-    border: 2px solid var(--border);
-    padding: 10px 14px;
-    transition: all 0.3s ease;
-}
-
-.review-form .form-control:focus {
-    border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(79,70,229,0.1);
-}
-
-.review-form .rating-select {
-    display: flex;
-    gap: 8px;
-    margin: 8px 0 16px;
-}
-
-.review-form .rating-select .star {
-    font-size: 1.8rem;
-    color: #d1d5db;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.review-form .rating-select .star:hover,
-.review-form .rating-select .star.active {
-    color: #f59e0b;
-    transform: scale(1.1);
-}
-
-.btn-submit-review {
-    background: linear-gradient(135deg, #4f46e5, #7c3aed);
-    color: white;
-    border: none;
-    padding: 10px 30px;
-    border-radius: 10px;
-    font-weight: 600;
-    transition: all 0.3s ease;
-}
-
-.btn-submit-review:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(79,70,229,0.3);
-    color: white;
-}
-
-/* Review List */
-.review-item {
-    padding: 16px 0;
-    border-bottom: 1px solid #f1f5f9;
-}
-
-.review-item:last-child {
-    border-bottom: none;
-}
-
-.review-item .review-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.review-item .reviewer-name {
-    font-weight: 600;
-    font-size: 0.95rem;
-}
-
-.review-item .reviewer-email {
-    font-size: 0.8rem;
-    color: var(--muted);
-}
-
-.review-item .review-stars {
-    color: #f59e0b;
-    font-size: 0.9rem;
-}
-
-.review-item .review-comment {
-    color: var(--text);
-    font-size: 0.95rem;
-    line-height: 1.6;
-    margin: 6px 0 0;
-}
-
-.review-item .review-date {
-    font-size: 0.75rem;
-    color: var(--muted);
-    margin-top: 4px;
-}
-
-/* No Reviews */
-.no-reviews {
-    text-align: center;
-    padding: 40px 20px;
-    color: var(--muted);
-}
-
-.no-reviews i {
-    font-size: 3rem;
-    color: #cbd5e1;
-    margin-bottom: 12px;
-}
-
-/* ===== RESPONSIVE ===== */
-@media (max-width: 992px) {
-    .clinical-grid {
-        grid-template-columns: 1fr;
-    }
-    .contact-grid {
-        grid-template-columns: 1fr;
-    }
-}
-
-@media (max-width: 768px) {
-    .page-header h1 {
-        font-size: 2.2rem;
-    }
-    .profile-left {
-        padding: 30px 20px;
-    }
-    .profile-right {
-        padding: 20px;
-    }
-    .clinical-section,
-    .reviews-section {
-        padding: 20px;
-    }
-    .review-form {
-        padding: 16px;
-    }
-    .profile-avatar {
-        width: 100px;
-        height: 100px;
-    }
-}
-
-@media (max-width: 480px) {
-    .page-header h1 {
-        font-size: 1.8rem;
-    }
-    .section-padding {
-        padding: 40px 0;
-    }
-    .contact-item {
-        flex-direction: column;
-        text-align: center;
-    }
-    .profile-left .doctor-notes {
-        max-width: 100%;
-    }
-}
-</style>
+<link rel="stylesheet" href="<?= BASE_URL ?>style/doctor-detail.css">
 
 <!-- Navbar -->
 <?php include BASE_PATH . '/includes/menu.php'; ?>
@@ -645,7 +73,7 @@ if (isset($_REQUEST['entity_id']) && $_REQUEST['entity_id'] != 0) {
                             
                             <div class="specialty">
                                 <?php
-                                $spec_query = "SELECT `type` FROM dr_cat_types WHERE dr_cat_type_id = " . $doctor['cat_type_id'];
+                                $spec_query = "SELECT `type` FROM dr_cat_types WHERE dr_cat_type_id = " . (int)$doctor['cat_type_id'];
                                 $spec_result = mysqli_query($con, $spec_query);
                                 $spec = mysqli_fetch_assoc($spec_result);
                                 echo $spec ? htmlspecialchars($spec['type']) : 'General Practitioner';
@@ -679,7 +107,7 @@ if (isset($_REQUEST['entity_id']) && $_REQUEST['entity_id'] != 0) {
                             <?php 
                             // Calculate average rating
                             $rating_query = "SELECT AVG(stars) as avg_rating, COUNT(*) as total_reviews 
-                                          FROM feedback WHERE entity_id = " . $doctor['entity_id'] . " AND status = 1";
+                                          FROM feedback WHERE user_id = " . (int)$doctor['user_id'] . " AND status = 1";
                             $rating_result = mysqli_query($con, $rating_query);
                             $rating_data = mysqli_fetch_assoc($rating_result);
                             $avg_rating = $rating_data['avg_rating'] ? round($rating_data['avg_rating'], 1) : 0;
@@ -775,7 +203,7 @@ if (isset($_REQUEST['entity_id']) && $_REQUEST['entity_id'] != 0) {
                             FROM clinical_info ci 
                             INNER JOIN doctor_in_hospital dih ON ci.doctor_in_hosp_id = dih.doctor_in_hosp_id 
                             LEFT JOIN hospitals ON dih.hospital_id = hospitals.hospital_id
-                            WHERE dih.doctor_id = " . $doctor['doctor_id'] . "
+                            WHERE dih.doctor_id = " . (int)$doctor['doctor_id'] . "
                             ORDER BY ci.season, ci.shift";
             $clinical_result = mysqli_query($con, $clinical_query);
             ?>
@@ -875,7 +303,7 @@ if (isset($_REQUEST['entity_id']) && $_REQUEST['entity_id'] != 0) {
                 <div class="review-form">
                     <h4><i class="fas fa-pen me-2"></i> Share Your Experience</h4>
                     <form method="POST">
-                        <input type="hidden" name="entity_id" value="<?php echo $doctor['entity_id']; ?>">
+                        <input type="hidden" name="user_id" value="<?php echo (int)$doctor['user_id']; ?>">
                         
                         <div class="row">
                             <div class="col-md-6 mb-3">
@@ -914,7 +342,7 @@ if (isset($_REQUEST['entity_id']) && $_REQUEST['entity_id'] != 0) {
 
                 <!-- Reviews List -->
                 <?php
-                $feedback_query = "SELECT * FROM feedback WHERE entity_id = " . $doctor['entity_id'] . " AND status = 1 
+                $feedback_query = "SELECT * FROM feedback WHERE user_id = " . (int)$doctor['user_id'] . " AND status = 1 
                                   ORDER BY created_at DESC LIMIT 10";
                 $feedback_result = mysqli_query($con, $feedback_query);
                 ?>

@@ -4,38 +4,47 @@
 // Get blood bank ID from URL
 $bb_id = isset($_GET['blood_bankid']) ? (int)$_GET['blood_bankid'] : 0;
 
-
 // submit review
-if (isset($_REQUEST['entity_id']) AND $_REQUEST['entity_id'] !=0) {
-        $entity_id = $_REQUEST['entity_id'];
+if (isset($_POST['user_id']) && (int)$_POST['user_id'] != 0) {
+        $user_id = (int)$_POST['user_id'];
         $commenter_name = isset($_POST['reviewer_name']) ? trim($_POST['reviewer_name']) : '';
         $commenter_gmail = isset($_POST['reviewer_email']) ? trim($_POST['reviewer_email']) : '';
         $comment = isset($_POST['review_comment']) ? trim($_POST['review_comment']) : '';
         $stars = isset($_POST['rating']) ? (int)$_POST['rating'] : 5;
 
-        $insert_query = "INSERT INTO feedback (entity_id, commenter_name, commenter_gmail, comment, stars, status, created_at, updated_at) 
-                        VALUES ($entity_id,
-                        '" . mysqli_real_escape_string($con, $commenter_name) . "', 
-                        '" . mysqli_real_escape_string($con, $commenter_gmail) . "', 
-                        '" . mysqli_real_escape_string($con, $comment) . "', 
+        $insert_query = "INSERT INTO feedback (user_id, commenter_name, commenter_gmail, comment, stars, status, created_at, updated_at)
+                        VALUES ($user_id,
+                        '" . mysqli_real_escape_string($con, $commenter_name) . "',
+                        '" . mysqli_real_escape_string($con, $commenter_gmail) . "',
+                        '" . mysqli_real_escape_string($con, $comment) . "',
                         $stars,1, NOW(), NOW())";
 
         $feedback_run = mysqli_query($con, $insert_query);
     }
 
-// Fetch blood bank details
-$bb_query = "SELECT bb.*, c.city_name 
-               FROM blood_bank bb 
+// Fetch blood bank details (status users table se)
+$bb_query = "SELECT bb.*, c.city_name
+               FROM blood_bank bb
                LEFT JOIN cities c ON bb.city_id = c.city_id
-               LEFT JOIN entities e ON e.entity_id = bb.entity_id 
-               WHERE bb.bb_id = $bb_id AND e.status = 1 AND bb.approve=1";
+               LEFT JOIN users u ON u.user_id = bb.user_id
+               WHERE bb.bb_id = $bb_id AND u.status = 1 AND bb.approve = 1";
 $bb_result = mysqli_query($con, $bb_query);
 $bb = mysqli_fetch_assoc($bb_result);
-$entity_id = $bb['entity_id'];
+
+// Blood bank na mile (ya inactive ho) to page yahin band
+if (!$bb) {
+    include BASE_PATH.'/includes/menu.php';
+    echo '<div class="container section-padding text-center"><h3>Blood Bank not found.</h3><a href="blood-banks" class="btn btn-primary mt-3">Back to Blood Banks</a></div>';
+    include BASE_PATH.'/includes/footer.php';
+    exit();
+}
+
+$user_id = (int)$bb['user_id'];
+
 // Calculate average rating from feedback table
-$rating_query = "SELECT AVG(stars) as avg_rating, COUNT(feedback_id) as total_reviews 
-                 FROM feedback 
-                 WHERE entity_id = $entity_id AND status = 1";
+$rating_query = "SELECT AVG(stars) as avg_rating, COUNT(feedback_id) as total_reviews
+                 FROM feedback
+                 WHERE user_id = $user_id AND status = 1";
 $rating_result = mysqli_query($con, $rating_query);
 $rating_data = mysqli_fetch_assoc($rating_result);
 $avg_rating = $rating_data['avg_rating'] ? round($rating_data['avg_rating'], 1) : 0;
@@ -45,26 +54,27 @@ $total_reviews = $rating_data['total_reviews'] ? $rating_data['total_reviews'] :
  <!-- Navbar -->
     <?php include BASE_PATH.'/includes/menu.php'; ?>
 <!-- Blood Bank Profile Section -->
+<link rel="stylesheet" href="<?= BASE_URL ?>style/blood-bank-detail.css">
 <section class="bb-profile-section">
     <div class="container">
         <div class="bb-profile-card">
             <div class="row align-items-center">
                 <div class="col-lg-4 col-md-5">
                     <div class="bb-image-wrapper">
-                        <?php if (!empty($bb['bb_pic']) && file_exists(BASE_URL.'admin/inc/uploads/blood-banks/' . $bb['bb_pic'])): ?>
-                            <img src="<?php echo BASE_URL; ?>admin/inc/uploads/blood-banks/<?php echo $bb['bb_pic']; ?>" alt="<?php echo $bb['blood_bank_name']; ?>" class="bb-image">
+                        <?php if (!empty($bb['bb_pic']) && file_exists(BASE_PATH.'/admin/inc/uploads/blood-banks/' . $bb['bb_pic'])): ?>
+                            <img src="<?php echo BASE_URL; ?>admin/inc/uploads/blood-banks/<?php echo htmlspecialchars($bb['bb_pic']); ?>" alt="<?php echo htmlspecialchars($bb['bb_name']); ?>" class="bb-image">
                         <?php else: ?>
-                            <img src="<?php echo BASE_URL; ?>admin/inc/uploads/default/bb.jpg" alt="<?php echo $bb['bb_name']; ?>" class="bb-image">
+                            <img src="<?php echo BASE_URL; ?>admin/inc/uploads/default/bb.jpg" alt="<?php echo htmlspecialchars($bb['bb_name']); ?>" class="bb-image">
                         <?php endif; ?>
                     </div>
                 </div>
                 <div class="col-lg-8 col-md-7">
                     <div class="bb-info">
                         <div class="bb-header">
-                            <h1 class="bb-name txt-color"><?php echo $bb['bb_name']; ?></h1>
+                            <h1 class="bb-name txt-color"><?php echo htmlspecialchars($bb['bb_name']); ?></h1>
                             <div class="bb-rating">
                                 <div class="stars">
-                                    <?php 
+                                    <?php
                                     for($i = 1; $i <= 5; $i++) {
                                         if($i <= $avg_rating) {
                                             echo '<i class="fas fa-star"></i>';
@@ -77,26 +87,26 @@ $total_reviews = $rating_data['total_reviews'] ? $rating_data['total_reviews'] :
                                 <span class="rating-text"><?php echo $avg_rating; ?> (<?php echo $total_reviews; ?> Reviews)</span>
                             </div>
                         </div>
-                        
+
                         <div class="bb-details">
                             <div class="detail-item">
                                 <i class="fas fa-map-marker-alt"></i>
                                 <div class="detail-content">
                                     <span class="detail-label">Address</span>
-                                    <span class="detail-value"><?php echo $bb['bb_address']; ?>, <?php echo $bb['city_name']; ?></span>
+                                    <span class="detail-value"><?php echo htmlspecialchars($bb['bb_address']); ?>, <?php echo htmlspecialchars($bb['city_name']); ?></span>
                                 </div>
                             </div>
-                            
+
                             <div class="detail-item">
                                 <i class="fas fa-phone"></i>
                                 <div class="detail-content">
                                     <span class="detail-label">Emergency Contact</span>
-                                    <span class="detail-value"><?php echo $bb['bb_contact']; ?></span>
+                                    <span class="detail-value"><?php echo htmlspecialchars($bb['bb_contact']); ?></span>
                                 </div>
                             </div>
-                            
-                           
-                            
+
+
+
                             <div class="detail-item">
                                 <i class="fas fa-clock"></i>
                                 <div class="detail-content">
@@ -105,7 +115,7 @@ $total_reviews = $rating_data['total_reviews'] ? $rating_data['total_reviews'] :
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div class="bb-actions">
                             <a href="tel:+923371320001" class="btn btn-outline-primary btn-call-large">
                                 <i class="fas fa-phone-alt"></i>
@@ -130,18 +140,18 @@ $total_reviews = $rating_data['total_reviews'] ? $rating_data['total_reviews'] :
     <div class="container">
         <div class="section-header">
             <h2 class="section-title txt-color">Donor & Patient Reviews</h2>
-            <p class="section-subtitle txt-color">What people are saying about <?php echo $bb['bb_name']; ?></p>
+            <p class="section-subtitle txt-color">What people are saying about <?php echo htmlspecialchars($bb['bb_name']); ?></p>
         </div>
-        
+
         <!-- Review Submission Form -->
         <div class="review-form-card" data-aos="fade-up">
             <div class="review-form-header">
                 <h3><i class="fas fa-pen me-2 txt-color"></i>Share Your Experience</h3>
                 <p class="txt-color">Help others by sharing your experience at this blood bank</p>
             </div>
-            
+
             <form class="review-form" method="POST">
-                <input type="hidden" name="entity_id" value="<?php echo $entity_id; ?>">
+                <input type="hidden" name="user_id" value="<?php echo $user_id; ?>">
                 <div class="row">
                     <div class="col-md-6">
                         <div class="form-group">
@@ -156,7 +166,7 @@ $total_reviews = $rating_data['total_reviews'] ? $rating_data['total_reviews'] :
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="form-group">
                     <label class="form-label">Rating *</label>
                     <div class="rating-input">
@@ -175,12 +185,12 @@ $total_reviews = $rating_data['total_reviews'] ? $rating_data['total_reviews'] :
                         <span class="rating-text">Click to rate</span>
                     </div>
                 </div>
-                
+
                 <div class="form-group">
                     <label class="form-label">Your Review *</label>
                     <textarea name="review_comment" class="form-control" rows="4" placeholder="Share your experience, mention quality of service, staff behavior, facilities, etc..." required></textarea>
                 </div>
-                
+
                 <div class="form-actions">
                     <button type="submit" class="btn btn-submit-review">
                         <i class="fas fa-paper-plane me-2"></i>Submit Review
@@ -188,17 +198,17 @@ $total_reviews = $rating_data['total_reviews'] ? $rating_data['total_reviews'] :
                 </div>
             </form>
         </div>
-        
+
         <!-- Reviews List -->
         <div class="reviews-list" data-aos="fade-up" data-aos-delay="100">
             <?php
             // Fetch blood bank reviews
-            $reviews_query = "SELECT * FROM feedback 
-                             WHERE entity_id = $entity_id AND status = 1 
+            $reviews_query = "SELECT * FROM feedback
+                             WHERE user_id = $user_id AND status = 1
                              ORDER BY feedback_id DESC LIMIT 10";
             $reviews_result = mysqli_query($con, $reviews_query);
             ?>
-            
+
             <?php if (mysqli_num_rows($reviews_result) > 0): ?>
                 <div class="reviews-grid">
                     <?php while ($review = mysqli_fetch_assoc($reviews_result)): ?>
@@ -218,9 +228,9 @@ $total_reviews = $rating_data['total_reviews'] ? $rating_data['total_reviews'] :
                                 </div>
                                 <div class="review-rating">
                                     <?php
-                                    $stars = $review['stars'];
+                                    $review_stars = $review['stars'];
                                     for ($i = 1; $i <= 5; $i++) {
-                                        if ($i <= $stars) {
+                                        if ($i <= $review_stars) {
                                             echo '<i class="fas fa-star"></i>';
                                         } else {
                                             echo '<i class="far fa-star"></i>';
@@ -245,7 +255,7 @@ $total_reviews = $rating_data['total_reviews'] ? $rating_data['total_reviews'] :
                         </div>
                     <?php endwhile; ?>
                 </div>
-                
+
                 <!-- Load More Button -->
                 <div class="load-more-container">
                     <button class="btn btn-load-more" id="loadMoreReviews">
@@ -256,7 +266,7 @@ $total_reviews = $rating_data['total_reviews'] ? $rating_data['total_reviews'] :
                 <div class="no-reviews">
                     <i class="fas fa-comments"></i>
                     <h3>No Reviews Yet</h3>
-                    <p>Be the first to share your experience at <?php echo $bb['bb_name']; ?></p>
+                    <p>Be the first to share your experience at <?php echo htmlspecialchars($bb['bb_name']); ?></p>
                 </div>
             <?php endif; ?>
         </div>
@@ -264,494 +274,7 @@ $total_reviews = $rating_data['total_reviews'] ? $rating_data['total_reviews'] :
 </section>
 
 <style>
-    .txt-color{
-        color: var(--dark-blue);
-    }
-.bb-profile-section {
-    padding: 80px 0;
-    background: linear-gradient(135deg, var(--accent) 0%, var(--primary) 100%);
-    position: relative;
-}
 
-.bb-profile-card {
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(20px);
-    border-radius: 24px;
-    padding: 40px;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.bb-image-wrapper {
-    position: relative;
-    overflow: hidden;
-    border-radius: 16px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-}
-
-.bb-image {
-    width: 100%;
-    height: 300px;
-    object-fit: cover;
-    transition: transform 0.3s ease;
-}
-
-.bb-image-wrapper:hover .bb-image {
-    transform: scale(1.05);
-}
-
-.bb-info {
-    padding-left: 30px;
-}
-
-.bb-header {
-    margin-bottom: 30px;
-}
-
-.bb-name {
-    font-size: 2.5rem;
-    font-weight: 800;
-    color: var(--dark);
-    margin-bottom: 10px;
-    background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-}
-
-.bb-rating {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.bb-details {
-    margin-bottom: 30px;
-}
-
-.bb-actions {
-    display: flex;
-    gap: 15px;
-    flex-wrap: wrap;
-}
-
-.detail-item {
-    display: flex;
-    align-items: flex-start;
-    gap: 15px;
-    margin-bottom: 20px;
-}
-
-.detail-item i {
-    color: var(--primary);
-    font-size: 1.2rem;
-    margin-top: 2px;
-    width: 24px;
-}
-
-.detail-content {
-    flex: 1;
-}
-
-.detail-label {
-    display: block;
-    font-weight: 600;
-    color: var(--dark);
-    margin-bottom: 4px;
-    font-size: 0.9rem;
-}
-
-.detail-value {
-    color: var(--dark-blue);
-    font-weight: 500;
-    line-height: 1.5;
-}
-
-.lab-actions {
-    display: flex;
-    gap: 15px;
-    flex-wrap: wrap;
-}
-
-.btn-appointment-large {
-    background: var(--gradient);
-    color: white;
-    border: none;
-    border-radius: 12px;
-    padding: 15px 30px;
-    font-weight: 600;
-    font-size: 1rem;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
-}
-
-.btn-appointment-large:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4);
-    color: white;
-}
-
-.btn-call-large {
-    border: 2px solid var(--primary);
-    color: var(--primary);
-    border-radius: 12px;
-    padding: 15px 30px;
-    font-weight: 600;
-    font-size: 1rem;
-    transition: all 0.3s ease;
-    background: transparent;
-}
-
-.btn-call-large:hover {
-    background: var(--primary);
-    color: white;
-    transform: translateY(-2px);
-}
-
-.doctors-list-section {
-    background: #f8fafc;
-}
-
-.section-header {
-    text-align: center;
-    margin-bottom: 50px;
-}
-
-.section-title {
-    font-size: 2.5rem;
-    font-weight: 800;
-    color: var(--dark);
-    margin-bottom: 10px;
-}
-
-.section-subtitle {
-    color: var(--dark-blue);
-    font-size: 1.1rem;
-    font-weight: 500;
-}
-
-.doctors-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 30px;
-    margin-bottom: 40px;
-}
-
-@media (max-width: 768px) {
-    .lab-profile-card {
-        padding: 20px;
-    }
-    
-    .lab-info {
-        padding-left: 0;
-        margin-top: 20px;
-    }
-    
-    .lab-name {
-        font-size: 2rem;
-    }
-    
-    .lab-actions {
-        justify-content: center;
-    }
-    
-    .btn-appointment-large,
-    .btn-call-large {
-        flex: 1;
-        text-align: center;
-    }
-}
-
-/* Blood Bank Reviews Section Styles */
-.bb-reviews-section {
-    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-}
-
-.review-form-card {
-    background: white;
-    border-radius: 20px;
-    padding: 40px;
-    margin-bottom: 50px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-    border: 1px solid rgba(0, 0, 0, 0.05);
-}
-
-.review-form-header {
-    text-align: center;
-    margin-bottom: 30px;
-}
-
-.review-form-header h3 {
-    color: var(--dark);
-    font-size: 1.8rem;
-    font-weight: 700;
-    margin-bottom: 10px;
-}
-
-.review-form-header p {
-    color: var(--dark-blue);
-    font-size: 1rem;
-}
-
-.review-form .form-group {
-    margin-bottom: 25px;
-}
-
-.review-form .form-label {
-    display: block;
-    margin-bottom: 8px;
-    font-weight: 600;
-    color: var(--dark);
-    font-size: 0.95rem;
-}
-
-.review-form .form-control {
-    width: 100%;
-    padding: 12px 15px;
-    border: 2px solid #e9ecef;
-    border-radius: 10px;
-    font-size: 1rem;
-    transition: all 0.3s ease;
-}
-
-.review-form .form-control:focus {
-    border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
-    outline: none;
-}
-
-.rating-input {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-}
-
-.star-rating {
-    display: flex;
-    gap: 5px;
-}
-
-.star-rating input[type="radio"] {
-    display: none;
-}
-
-.star-rating .star {
-    font-size: 1.5rem;
-    color: #ddd;
-    cursor: pointer;
-    transition: color 0.2s ease;
-}
-
-.star-rating .star:hover {
-    color: #ffc107;
-}
-
-.star-rating input[type="radio"]:checked ~ .star {
-    color: #ddd;
-}
-
-.star-rating input[type="radio"]:checked + .star,
-.star-rating input[type="radio"]:checked ~ .star {
-    color: #ffc107;
-}
-
-.rating-text {
-    color: var(--dark-blue);
-    font-size: 0.9rem;
-}
-
-.btn-submit-review {
-       background: linear-gradient(135deg, var(--primary) 0%, var(--medical-blue) 100%);
-    color: black;
-    /* border: none; */
-    padding: 15px 40px;
-    border-radius: 50px;
-    font-size: 1.1rem;
-    font-weight: 600;
-    cursor: pointer;
-    box-shadow: 0 5px 15px rgba(74, 144, 226, 0.3);
-}
-
-.reviews-grid {
-    display: grid;
-    gap: 25px;
-    margin-bottom: 40px;
-}
-
-.review-card {
-    background: white;
-    border-radius: 16px;
-    padding: 30px;
-    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
-    border: 1px solid rgba(0, 0, 0, 0.05);
-    transition: all 0.3s ease;
-}
-
-.review-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
-}
-
-.review-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 20px;
-}
-
-.reviewer-info {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-}
-
-.reviewer-avatar {
-    width: 50px;
-    height: 50px;
-    background: linear-gradient(135deg, var(--primary) 0%, var(--medical-blue) 100%);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 1.2rem;
-}
-
-.reviewer-name {
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: var(--dark);
-    margin-bottom: 5px;
-}
-
-.review-date {
-    color: var(--dark-blue);
-    font-size: 0.85rem;
-}
-
-.review-rating {
-    display: flex;
-    gap: 2px;
-}
-
-.review-rating i {
-    color: #ffc107;
-    font-size: 1rem;
-}
-
-.review-content {
-    margin-bottom: 20px;
-}
-
-.review-content p {
-    color: var(--dark);
-    line-height: 1.6;
-    font-size: 1rem;
-}
-
-.review-footer {
-    border-top: 1px solid #f1f3f4;
-    padding-top: 15px;
-}
-
-.review-actions {
-    display: flex;
-    gap: 15px;
-}
-
-.btn-helpful,
-.btn-report {
-    background: none;
-    border: 1px solid #e9ecef;
-    padding: 8px 15px;
-    border-radius: 20px;
-    font-size: 0.85rem;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    color: var(--dark-blue);
-}
-
-.btn-helpful:hover {
-    border-color: #28a745;
-    color: #28a745;
-    background: rgba(40, 167, 69, 0.1);
-}
-
-.btn-report:hover {
-    border-color: #dc3545;
-    color: #dc3545;
-    background: rgba(220, 53, 69, 0.1);
-}
-
-.load-more-container {
-    text-align: center;
-}
-
-.btn-load-more {
-    background: linear-gradient(135deg, var(--dark-blue) 0%, #4caf50 100%);
-    color: white;
-    border: none;
-    padding: 12px 30px;
-    border-radius: 50px;
-    font-size: 1rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.btn-load-more:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(80, 200, 120, 0.3);
-}
-
-.no-reviews {
-    text-align: center;
-    padding: 60px 20px;
-    color: var(--dark-blue);
-}
-
-.no-reviews i {
-    font-size: 4rem;
-    margin-bottom: 20px;
-    opacity: 0.5;
-}
-
-.no-reviews h3 {
-    font-size: 1.5rem;
-    margin-bottom: 10px;
-}
-
-.no-reviews p {
-    font-size: 1rem;
-}
-
-@media (max-width: 768px) {
-    .review-form-card {
-        padding: 25px;
-    }
-    
-    .review-header {
-        flex-direction: column;
-        gap: 15px;
-    }
-    
-    .reviewer-info {
-        width: 100%;
-    }
-    
-    .review-rating {
-        align-self: flex-start;
-    }
-    
-    .review-actions {
-        justify-content: center;
-    }
-    
-    .btn-helpful,
-    .btn-report {
-        flex: 1;
-        text-align: center;
-    }
-}
 </style>
 
 <!-- Footer -->
@@ -763,15 +286,15 @@ document.addEventListener('DOMContentLoaded', function() {
     const stars = document.querySelectorAll('.star-rating .star');
     const ratingText = document.querySelector('.rating-text');
     const ratingInputs = document.querySelectorAll('.star-rating input[type="radio"]');
-    
+
     const ratingTexts = {
         1: 'Poor',
-        2: 'Fair', 
+        2: 'Fair',
         3: 'Good',
         4: 'Very Good',
         5: 'Excellent'
     };
-    
+
     stars.forEach((star, index) => {
         star.addEventListener('click', function() {
             const rating = 5 - index;
@@ -779,14 +302,14 @@ document.addEventListener('DOMContentLoaded', function() {
             updateStarDisplay(rating);
             ratingText.textContent = ratingTexts[rating];
         });
-        
+
         star.addEventListener('mouseenter', function() {
             const rating = 5 - index;
             updateStarDisplay(rating);
             ratingText.textContent = ratingTexts[rating];
         });
     });
-    
+
     document.querySelector('.star-rating').addEventListener('mouseleave', function() {
         const checkedInput = document.querySelector('.star-rating input[type="radio"]:checked');
         if (checkedInput) {
@@ -797,7 +320,7 @@ document.addEventListener('DOMContentLoaded', function() {
             ratingText.textContent = 'Click to rate';
         }
     });
-    
+
     function updateStarDisplay(rating) {
         stars.forEach((star, index) => {
             if (5 - index <= rating) {
@@ -807,12 +330,12 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
-    
+
     // Handle success/error messages from URL parameters
     const urlParams = new URLSearchParams(window.location.search);
     const error = urlParams.get('error');
     const success = urlParams.get('success');
-    
+
     if (error) {
         let errorMessage = '';
         switch(error) {
@@ -833,11 +356,11 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         showAlert(errorMessage, 'error');
     }
-    
+
     if (success === 'review') {
         showAlert('Thank you! Your review has been submitted successfully.', 'success');
     }
-    
+
     function showAlert(message, type) {
         const alertDiv = document.createElement('div');
         alertDiv.className = `alert alert-${type === 'error' ? 'danger' : 'success'} alert-dismissible fade show position-fixed`;
@@ -847,9 +370,9 @@ document.addEventListener('DOMContentLoaded', function() {
             ${message}
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         `;
-        
+
         document.body.appendChild(alertDiv);
-        
+
         // Auto remove after 5 seconds
         setTimeout(() => {
             if (alertDiv.parentNode) {
@@ -857,14 +380,14 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }, 5000);
     }
-    
+
     // Load More Reviews functionality
     const loadMoreBtn = document.getElementById('loadMoreReviews');
     if (loadMoreBtn) {
         loadMoreBtn.addEventListener('click', function() {
             const bbId = <?php echo $bb_id; ?>;
             const currentReviews = document.querySelectorAll('.review-card').length;
-            
+
             fetch(`load-more-reviews.php?bloodb_id=${bbId}&offset=${currentReviews}`)
                 .then(response => response.json())
                 .then(data => {
@@ -874,7 +397,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             const reviewCard = createReviewCard(review);
                             reviewsGrid.appendChild(reviewCard);
                         });
-                        
+
                         if (data.reviews.length < 5) {
                             loadMoreBtn.style.display = 'none';
                         }
@@ -888,13 +411,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
         });
     }
-    
+
     // Helpful and Report buttons
     document.addEventListener('click', function(e) {
         if (e.target.classList.contains('btn-helpful')) {
             e.preventDefault();
             const reviewId = e.target.dataset.reviewId;
-            
+
             // Send AJAX request to mark as helpful
             fetch('mark-helpful.php', {
                 method: 'POST',
@@ -914,11 +437,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.error('Error marking as helpful:', error);
             });
         }
-        
+
         if (e.target.classList.contains('btn-report')) {
             e.preventDefault();
             const reviewId = e.target.dataset.reviewId;
-            
+
             if (confirm('Are you sure you want to report this review?')) {
                 // Send AJAX request to report review
                 fetch('report-review.php', {
@@ -941,12 +464,12 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     });
-    
+
     function createReviewCard(review) {
         const card = document.createElement('div');
         card.className = 'review-card';
         card.setAttribute('data-aos', 'fade-up');
-        
+
         // Generate star rating HTML
         let starsHTML = '';
         for (let i = 1; i <= 5; i++) {
@@ -956,7 +479,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 starsHTML += '<i class="far fa-star"></i>';
             }
         }
-        
+
         card.innerHTML = `
             <div class="review-header">
                 <div class="reviewer-info">
@@ -989,7 +512,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
             </div>
         `;
-        
+
         return card;
     }
 });
