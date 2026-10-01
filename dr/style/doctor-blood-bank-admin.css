@@ -1,0 +1,260 @@
+.content-wrapper {
+    background: #f8fafc;
+    min-height: 100vh;
+    padding: 24px 32px 60px;
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.page-header h4 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0;
+}
+
+.page-header h4 i {
+    color: #4facfe;
+}
+
+.badge-hospital {
+    background: linear-gradient(135deg, #4facfe, #0d6efd);
+    color: white;
+    padding: 6px 16px;
+    border-radius: 50px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+/* ===== FILTER SECTION ===== */
+.filter-section {
+    background: white;
+    border-radius: 16px;
+    padding: 20px 24px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    border: 1px solid #e2e8f0;
+    margin-bottom: 24px;
+}
+
+.filter-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: flex-end;
+}
+
+.filter-group {
+    flex: 1;
+    min-width: 180px;
+}
+
+.filter-group label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #64748b;
+    margin-bottom: 4px;
+    display: block;
+}
+
+.filter-group .form-control,
+.filter-group .form-select {
+    border-radius: 10px;
+    border: 2px solid #e2e8f0;
+    padding: 8px 14px;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+}
+
+.filter-group .form-control:focus,
+.filter-group .form-select:focus {
+    border-color: #4facfe;
+    box-shadow: 0 0 0 3px rgba(79,172,254,0.12);
+}
+
+.btn-filter {
+    background: linear-gradient(135deg, #4facfe, #0d6efd);
+    color: white;
+    border: none;
+    padding: 9px 24px;
+    border-radius: 10px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-filter:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(13,110,253,0.3);
+    color: white;
+}
+
+.btn-reset {
+    background: #f1f5f9;
+    color: #64748b;
+    border: 2px solid #e2e8f0;
+    padding: 9px 20px;
+    border-radius: 10px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-reset:hover {
+    background: #e2e8f0;
+    color: #1e293b;
+}
+
+/* ===== BLOOD BANK CARD ===== */
+.blood-bank-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.blood-bank-card {
+    background: white;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    border: 1px solid #e2e8f0;
+    transition: all 0.3s ease;
+}
+
+.blood-bank-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+    border-color: #4facfe;
+}
+
+.blood-bank-card .card-body {
+    padding: 20px;
+}
+
+.blood-bank-card .bb-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #fee2e2, #fecaca);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: #dc2626;
+    margin-bottom: 12px;
+}
+
+.blood-bank-card .bb-name {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 4px;
+}
+
+.blood-bank-card .bb-city {
+    font-size: 0.85rem;
+    color: #64748b;
+    margin-bottom: 8px;
+}
+
+.blood-bank-card .bb-contact {
+    font-size: 0.85rem;
+    color: #1e293b;
+}
+
+.blood-bank-card .bb-rating {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid #f1f5f9;
+}
+
+.blood-bank-card .bb-rating .stars {
+    color: #f59e0b;
+    font-size: 0.85rem;
+}
+
+.blood-bank-card .bb-rating .count {
+    color: #64748b;
+    font-size: 0.8rem;
+}
+
+.blood-bank-card .bb-status {
+    display: inline-block;
+    padding: 2px 12px;
+    border-radius: 50px;
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+
+.bb-status.active { background: #d1fae5; color: #065f46; }
+.bb-status.inactive { background: #fee2e2; color: #991b1b; }
+
+/* ===== PAGINATION ===== */
+.pagination-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-top: 24px;
+    padding: 16px 20px;
+    background: white;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+}
+
+.pagination {
+    margin: 0;
+    gap: 4px;
+}
+
+.pagination .page-link {
+    border: none;
+    border-radius: 8px;
+    color: #1e293b;
+    padding: 8px 14px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.pagination .page-link:hover {
+    background: #4facfe;
+    color: white;
+}
+
+.pagination .page-item.active .page-link {
+    background: linear-gradient(135deg, #4facfe, #0d6efd);
+    color: white;
+}
+
+.pagination-info {
+    color: #64748b;
+    font-size: 0.85rem;
+}
+
+.no-records {
+    text-align: center;
+    padding: 40px 20px;
+    color: #64748b;
+}
+
+.no-records i {
+    font-size: 3rem;
+    color: #cbd5e1;
+    margin-bottom: 12px;
+}
+
+@media (max-width: 768px) {
+    .content-wrapper { padding: 16px; }
+    .filter-row { flex-direction: column; }
+    .filter-group { min-width: 100%; }
+    .blood-bank-grid { grid-template-columns: 1fr; }
+}
