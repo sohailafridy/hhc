@@ -13,9 +13,8 @@ $created_at = date('Y-m-d');
 
 if (isset($_GET['id']) && is_numeric($_GET['id'])) {
     $hospital_id = (int)$_GET['id'];
-    $edit_query = "SELECT h.*, e.status as estatus, u.username, u.email as hospital_email
+    $edit_query = "SELECT h.*, u.status as estatus, u.username, u.email as hospital_email
                    FROM hospitals h
-                   LEFT JOIN entities e ON e.entity_id = h.entity_id
                    LEFT JOIN users u ON u.user_id = h.user_id
                    WHERE h.hospital_id = $hospital_id";
     $edit_result = mysqli_query($con, $edit_query);
@@ -67,7 +66,7 @@ $facility_list = [
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $city_id          = mysqli_real_escape_string($con, $_POST['city_id']);
-    $entity_id        = isset($_POST['entity_id']) ? mysqli_real_escape_string($con, $_POST['entity_id']) : '';
+    $user_id          = isset($_POST['user_id']) ? (int)$_POST['user_id'] : 0;
     $hospital_name    = mysqli_real_escape_string($con, $_POST['hospital_name']);
     $hospital_address = mysqli_real_escape_string($con, $_POST['hospital_address']);
     $hospital_phone   = mysqli_real_escape_string($con, $_POST['hospital_phone']);
@@ -120,9 +119,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $update_query .= ", updated_at = NOW() WHERE hospital_id = $hospital_id";
 
         if (mysqli_query($con, $update_query)) {
-            // Update entity status
-            if (!empty($entity_id)) {
-                mysqli_query($con, "UPDATE entities SET status = '$status' WHERE entity_id = '$entity_id'");
+            // Update user status (and password only if a new one was entered)
+            if (!empty($user_id)) {
+                $user_update = "UPDATE users SET status = '$status'";
+                if (!empty($password)) {
+                    $user_update .= ", password = '$password'";
+                }
+                $user_update .= " WHERE user_id = $user_id";
+                mysqli_query($con, $user_update);
             }
 
             // ===== UPDATE BEDS =====
@@ -167,9 +171,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $success_msg = "Hospital updated successfully!";
             
             // Refresh data
-            $edit_result = mysqli_query($con, "SELECT h.*, e.status as estatus, u.username, u.email as hospital_email
+            $edit_result = mysqli_query($con, "SELECT h.*, u.status as estatus, u.username, u.email as hospital_email
                                                FROM hospitals h
-                                               LEFT JOIN entities e ON e.entity_id = h.entity_id
                                                LEFT JOIN users u ON u.user_id = h.user_id
                                                WHERE h.hospital_id = $hospital_id");
             $hospital_data = mysqli_fetch_assoc($edit_result);
@@ -188,11 +191,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $error_msg = "Error: " . mysqli_error($con);
         }
     } else {
-        // Create new entity
-        $generate_ent = "INSERT INTO entities (entity_type, status, created_at) VALUES ('hospital', 1, NOW())";
-        mysqli_query($con, $generate_ent);
-        $entity_id = mysqli_insert_id($con);
-
         // Create user account for hospital
         $generate_user = "INSERT INTO users (username, email, password, user_type_id, status, created_at)
                           VALUES ('$username', '$hospital_email', '$password', 5, 1, '$created_at')";
@@ -201,9 +199,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         // Insert new hospital
         $insert_query = "INSERT INTO hospitals 
-                            (entity_id, city_id, user_id, hospital_name, hospital_address, hospital_phone, hospital_pic, approve, created_at) 
+                            (city_id, user_id, hospital_name, hospital_address, hospital_phone, hospital_pic, approve, created_at) 
                          VALUES 
-                            ($entity_id, '$city_id', '$userid', '$hospital_name', '$hospital_address', '$hospital_phone', '$hospital_pic', 1, NOW())";
+                            ('$city_id', '$userid', '$hospital_name', '$hospital_address', '$hospital_phone', '$hospital_pic', 1, NOW())";
 
         if (mysqli_query($con, $insert_query)) {
             $hospital_id = mysqli_insert_id($con);
@@ -236,463 +234,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 }
 ?>
 
-<style>
-:root {
-    --primary: #4facfe;
-    --primary-dark: #0d6efd;
-    --accent: #00f2fe;
-    --text: #1e293b;
-    --muted: #64748b;
-    --border: #e2e8f0;
-    --bg: #f8fafc;
-    --card: #ffffff;
-    --success: #10b981;
-    --danger: #ef4444;
-}
-
-.content-wrapper {
-    background: var(--bg);
-    min-height: 100vh;
-}
-
-.page-header-modern {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 16px;
-    margin-bottom: 28px;
-}
-
-.page-header-modern h4 {
-    font-size: 1.6rem;
-    font-weight: 700;
-    color: var(--text);
-    margin: 0;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.page-header-modern h4 i {
-    width: 42px;
-    height: 42px;
-    background: linear-gradient(135deg, var(--primary), var(--accent));
-    color: white;
-    border-radius: 12px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.1rem;
-}
-
-.form-card {
-    background: var(--card);
-    border-radius: 20px;
-    box-shadow: 0 10px 40px rgba(15, 23, 42, 0.06);
-    border: 1px solid rgba(255,255,255,0.8);
-    overflow: hidden;
-    margin-bottom: 30px;
-}
-
-.form-card-header {
-    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-    padding: 22px 28px;
-    border-bottom: 1px solid var(--border);
-}
-
-.form-card-header h5 {
-    margin: 0;
-    font-size: 1.15rem;
-    font-weight: 700;
-    color: var(--text);
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.form-card-header h5 i {
-    color: var(--primary-dark);
-}
-
-.form-card-body {
-    padding: 32px 28px;
-}
-
-.form-section-title {
-    font-size: 0.85rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.6px;
-    color: var(--muted);
-    margin-bottom: 18px;
-    margin-top: 8px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.form-section-title::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: var(--border);
-}
-
-.form-label {
-    font-weight: 600;
-    font-size: 0.9rem;
-    color: var(--text);
-    margin-bottom: 8px;
-}
-
-.form-label .required {
-    color: var(--danger);
-}
-
-.form-control, .form-select {
-    border: 1.5px solid var(--border);
-    border-radius: 12px;
-    padding: 12px 16px;
-    font-size: 0.95rem;
-    transition: all 0.25s ease;
-    background: #fff;
-    height: auto;
-}
-
-.form-control:focus, .form-select:focus {
-    border-color: var(--primary);
-    box-shadow: 0 0 0 4px rgba(79, 172, 254, 0.15);
-    outline: none;
-}
-
-textarea.form-control {
-    min-height: 100px;
-    resize: vertical;
-}
-
-/* Image Upload */
-.image-upload-box {
-    border: 2px dashed var(--border);
-    border-radius: 16px;
-    padding: 24px;
-    text-align: center;
-    background: #f8fafc;
-    transition: all 0.3s ease;
-    cursor: pointer;
-    position: relative;
-}
-
-.image-upload-box:hover {
-    border-color: var(--primary);
-    background: #f0f9ff;
-}
-
-.image-upload-box i {
-    font-size: 2.2rem;
-    color: var(--primary);
-    margin-bottom: 10px;
-}
-
-.image-upload-box p {
-    margin: 0;
-    color: var(--muted);
-    font-size: 0.9rem;
-}
-
-.image-upload-box input[type="file"] {
-    position: absolute;
-    inset: 0;
-    opacity: 0;
-    cursor: pointer;
-}
-
-.current-image-preview {
-    margin-top: 16px;
-    display: inline-block;
-    position: relative;
-}
-
-.current-image-preview img {
-    width: 120px;
-    height: 120px;
-    object-fit: cover;
-    border-radius: 14px;
-    border: 3px solid white;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.12);
-}
-
-/* Status Toggle */
-.status-toggle-wrap {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 16px 20px;
-    background: #f8fafc;
-    border-radius: 14px;
-    border: 1.5px solid var(--border);
-}
-
-.status-toggle-wrap .form-check-input {
-    width: 48px;
-    height: 26px;
-    cursor: pointer;
-}
-
-.status-toggle-wrap .form-check-input:checked {
-    background-color: var(--success);
-    border-color: var(--success);
-}
-
-.status-label {
-    font-weight: 600;
-    color: var(--text);
-}
-
-.status-label small {
-    display: block;
-    font-weight: 400;
-    color: var(--muted);
-    font-size: 0.8rem;
-}
-
-/* Bed Grid */
-.bed-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 16px;
-}
-
-.bed-card {
-    background: #f8fafc;
-    border-radius: 12px;
-    padding: 16px 20px;
-    border: 1px solid var(--border);
-}
-
-.bed-card .form-label {
-    font-size: 0.8rem;
-    margin-bottom: 4px;
-}
-
-.bed-card .form-control {
-    padding: 8px 12px;
-    font-size: 0.9rem;
-}
-
-/* ===== FACILITIES GRID ===== */
-.facilities-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    background: #f8fafc;
-    padding: 20px;
-    border-radius: 16px;
-    border: 1px solid var(--border);
-}
-
-.facility-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    background: white;
-    padding: 8px 14px;
-    border-radius: 10px;
-    border: 1px solid var(--border);
-    transition: all 0.3s ease;
-    min-height: 48px;
-}
-
-.facility-item:hover {
-    border-color: var(--primary);
-    box-shadow: 0 2px 8px rgba(79, 172, 254, 0.1);
-}
-
-.facility-item.active {
-    border-color: var(--success);
-    background: #f0fdf4;
-}
-
-.facility-checkbox-wrapper {
-    flex: 0 0 36px;
-}
-
-.facility-checkbox-wrapper input[type="checkbox"] {
-    width: 18px;
-    height: 18px;
-    accent-color: var(--primary);
-    cursor: pointer;
-}
-
-.facility-label-wrapper {
-    flex: 0 0 130px;
-}
-
-.facility-label {
-    font-weight: 600;
-    color: var(--text);
-    cursor: pointer;
-    font-size: 0.85rem;
-    margin: 0;
-}
-
-.facility-input-wrapper {
-    flex: 1;
-    min-width: 120px;
-}
-
-.facility-input-wrapper .form-control {
-    padding: 4px 10px;
-    font-size: 0.8rem;
-    border-radius: 8px;
-    height: 34px;
-    border: 1.5px solid var(--border);
-    background: #fff;
-}
-
-.facility-input-wrapper .form-control:disabled {
-    background: #f1f5f9;
-    cursor: not-allowed;
-    opacity: 0.6;
-}
-
-.facility-input-wrapper .form-control:focus {
-    border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.1);
-}
-
-/* Buttons */
-.btn-submit {
-    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-    color: white;
-    border: none;
-    border-radius: 12px;
-    padding: 13px 32px;
-    font-weight: 700;
-    font-size: 0.95rem;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    transition: all 0.3s ease;
-    box-shadow: 0 6px 18px rgba(13, 110, 253, 0.3);
-}
-
-.btn-submit:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 25px rgba(13, 110, 253, 0.4);
-    color: white;
-}
-
-.btn-cancel {
-    background: white;
-    color: var(--muted);
-    border: 1.5px solid var(--border);
-    border-radius: 12px;
-    padding: 13px 28px;
-    font-weight: 600;
-    font-size: 0.95rem;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    text-decoration: none;
-    transition: all 0.3s ease;
-}
-
-.btn-cancel:hover {
-    background: #f1f5f9;
-    color: var(--text);
-    border-color: #cbd5e1;
-}
-
-/* Alert */
-.alert-modern {
-    border-radius: 14px;
-    padding: 16px 20px;
-    margin-bottom: 24px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    font-weight: 500;
-    border: none;
-}
-
-.alert-modern.alert-success {
-    background: #ecfdf5;
-    color: #065f46;
-}
-
-.alert-modern.alert-danger {
-    background: #fef2f2;
-    color: #991b1b;
-}
-
-.alert-modern i {
-    font-size: 1.25rem;
-}
-
-/* Select2 override */
-.select2-container--bootstrap-5 .select2-selection {
-    border: 1.5px solid var(--border) !important;
-    border-radius: 12px !important;
-    min-height: 48px !important;
-    padding: 6px 12px !important;
-}
-
-.select2-container--bootstrap-5.select2-container--focus .select2-selection {
-    border-color: var(--primary) !important;
-    box-shadow: 0 0 0 4px rgba(79, 172, 254, 0.15) !important;
-}
-
-@media (max-width: 1200px) {
-    .facilities-grid {
-        grid-template-columns: 1fr 1fr;
-    }
-}
-
-@media (max-width: 992px) {
-    .facilities-grid {
-        grid-template-columns: 1fr;
-    }
-    .facility-label-wrapper {
-        flex: 0 0 110px;
-    }
-}
-
-@media (max-width: 768px) {
-    .form-card-body {
-        padding: 24px 18px;
-    }
-    .page-header-modern h4 {
-        font-size: 1.3rem;
-    }
-    .bed-grid {
-        grid-template-columns: 1fr 1fr;
-    }
-    .facility-item {
-        flex-wrap: wrap;
-        gap: 6px;
-        padding: 10px 12px;
-    }
-    .facility-checkbox-wrapper {
-        flex: 0 0 30px;
-    }
-    .facility-label-wrapper {
-        flex: 1;
-    }
-    .facility-input-wrapper {
-        flex: 1 1 100%;
-    }
-}
-
-@media (max-width: 576px) {
-    .bed-grid {
-        grid-template-columns: 1fr;
-    }
-    .facilities-grid {
-        padding: 12px;
-    }
-}
-</style>
+<link rel="stylesheet" href="<?= BASE_URL ?>style/hospital-add-admin.css">
 
 <div class="content-wrapper">
     <div class="container-fluid">
@@ -731,7 +273,7 @@ textarea.form-control {
             <div class="form-card-body">
                 <form method="POST" action="" enctype="multipart/form-data" id="hospitalForm">
 
-                    <input type="hidden" name="entity_id" value="<?php echo $edit_mode && isset($hospital_data['entity_id']) ? htmlspecialchars($hospital_data['entity_id']) : ''; ?>">
+                    <input type="hidden" name="user_id" value="<?php echo $edit_mode && isset($hospital_data['user_id']) ? htmlspecialchars($hospital_data['user_id']) : ''; ?>">
 
                     <!-- Account Section -->
                     <div class="form-section-title">

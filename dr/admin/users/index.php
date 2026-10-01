@@ -4,6 +4,7 @@
 <?php include BASE_PATH . '/admin/inc/nav.php'; ?>
 
 <?php
+
 // ============================================
 // DELETE USER
 // ============================================
@@ -104,8 +105,7 @@ $total_records = mysqli_fetch_assoc($count_result)['total'];
 $total_pages = ceil($total_records / $per_page);
 
 // Fetch users
-$query = "SELECT u.*, ut.type as user_type, 
-                 (SELECT COUNT(*) FROM entities WHERE user_id = u.user_id) as entity_count
+$query = "SELECT u.*, ut.type as user_type
           FROM users u
           LEFT JOIN usertypes ut ON u.user_type_id = ut.usertypes_id
           $where_clause
@@ -742,13 +742,6 @@ function viewUser(userId) {
                                 <label class="text-muted small text-uppercase fw-bold">Last Updated</label>
                                 <p>${user.updated_at ? new Date(user.updated_at).toLocaleString() : 'Never'}</p>
                             </div>
-                        </div>
-                    </div>
-                    <hr>
-                    <div class="row">
-                        <div class="col-12">
-                            <label class="text-muted small text-uppercase fw-bold">Associated Entities</label>
-                            <p>${user.entity_count || 0} entities linked to this user</p>
                         </div>
                     </div>
                 `;
