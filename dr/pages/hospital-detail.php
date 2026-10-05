@@ -56,11 +56,12 @@ foreach ($facilities as $fac) {
 }
 
 // Fetch doctors in this hospital
-$doctors_query = "SELECT d.*, dct.type as specialization 
-                  FROM doctors d
+$doctors_query = "SELECT d.*, dct.type as specialization, dih.doctor_in_hosp_id
+                  FROM doctor_in_hospital dih
+                  INNER JOIN doctors d ON d.doctor_id = dih.doctor_id
                   LEFT JOIN dr_cat_types dct ON d.cat_type_id = dct.dr_cat_type_id
                   LEFT JOIN users u ON d.user_id = u.user_id
-                  WHERE d.hospital_id = $hospital_id AND u.status = 1 AND d.approve = 1
+                  WHERE dih.hospital_id = $hospital_id AND u.status = 1 AND d.approve = 1 AND dih.inactive = 0
                   ORDER BY d.doctor_name ASC";
 $doctors_result = mysqli_query($con, $doctors_query);
 $total_doctors = mysqli_num_rows($doctors_result);
@@ -224,7 +225,7 @@ $total_reviews = $rating_data['total_reviews'] ? $rating_data['total_reviews'] :
                                             <?php echo strtoupper(substr($doctor['doctor_name'], 0, 1)); ?>
                                         </div>
                                     <?php endif; ?>
-                                    <div class="doctor-info">
+                                    <div>
                                         <h6>Dr. <?php echo htmlspecialchars($doctor['doctor_name']); ?></h6>
                                         <span class="doctor-spec"><?php echo htmlspecialchars($doctor['specialization'] ?? 'General'); ?></span>
                                     </div>

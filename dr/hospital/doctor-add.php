@@ -14,7 +14,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['type'] != 'hospital') {
     exit();
 }
 
-$user_id = $_SESSION['user_id'];
+$user_id = (int)$_SESSION['user_id'];
 
 // Get hospital data
 $hospital_query = "SELECT * FROM hospitals WHERE user_id = $user_id AND approve = 1";
@@ -41,10 +41,10 @@ $is_edit = isset($_GET['id']) && is_numeric($_GET['id']);
 if ($is_edit) {
     $doctor_id = (int)$_GET['id'];
     
-    $check_query = "SELECT d.*, dct.type as specialization_name, e.status as estatus, e.reference as ref, u.status as user_status
+    $check_query = "SELECT d.*, dct.type as specialization_name, u.status as estatus, 
+     u.status as user_status, u.username
                     FROM doctors d
                     LEFT JOIN dr_cat_types dct ON d.cat_type_id = dct.dr_cat_type_id
-                    LEFT JOIN entities e ON e.entity_id = d.entity_id
                     LEFT JOIN users u ON u.user_id = d.user_id
                     LEFT JOIN doctor_in_hospital dih ON dih.doctor_id = d.doctor_id
                     WHERE dih.doctor_id = $doctor_id AND dih.hospital_id = $hospital_id AND d.approve = 1";
@@ -224,22 +224,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $error_msg = "Email already exists. Please use a different email.";
         } else {
             
-            $entity_query = "INSERT INTO entities (entity_type, status, created_at) VALUES ('doctor', 1, NOW())";
-            mysqli_query($con, $entity_query);
-            $entity_id_new = mysqli_insert_id($con);
-            
             $user_query = "INSERT INTO users (username, email, password, user_type_id, status, created_at) 
                            VALUES ('$username', '$doctor_email', '$password', 2, 1, NOW())";
             mysqli_query($con, $user_query);
             $user_id_new = mysqli_insert_id($con);
             
             $insert_query = "INSERT INTO doctors (
-                                entity_id, user_id, city_id, hospital_id, doctor_name, 
+                                user_id, city_id, hospital_id, doctor_name, 
                                 cat_type_id, experience_years, doctor_phone, doctor_email, 
                                 doctor_type, gender, short_detail, other, static_clinical_info,
                                 mahre_amraz, notes, doctor_pic, approve, status, created_at
                             ) VALUES (
-                                '$entity_id_new', '$user_id_new', '$city_id', '$hospital_id', '$doctor_name',
+                                '$user_id_new', '$city_id', '$hospital_id', '$doctor_name',
                                 '$cat_type_id', '$experience_years', '$doctor_phone', '$doctor_email',
                                 '1', '$gender', '$short_detail', '$other', '$static_clinical_info',
                                 '$mahre_amraz', '$notes', '$doctor_pic', 1, 1, NOW()
@@ -307,7 +303,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         <!-- ===== FORM ===== -->
         <form method="POST" action="" enctype="multipart/form-data" class="animate-up delay-1" id="doctorForm">
             
-            <input type="hidden" name="entity_id" value="<?php if(isset($doctor_data['entity_id'])){ echo $doctor_data['entity_id']; } ?>">
+            <input type="hidden" name="user_id" value="<?php if(isset($doctor_data['user_id'])){ echo $doctor_data['user_id']; } ?>">
             
             <!-- ============================================ -->
             <!-- ===== EXISTING DOCTOR SELECTION ===== -->

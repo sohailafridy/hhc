@@ -153,7 +153,6 @@ $recent_doctors_result = mysqli_query($con, $recent_doctors_query);
                                 <tr>
                                     <th>Doctor</th>
                                     <th>Specialization</th>
-                                    <th>Hospital</th>
                                     <th>Status</th>
                                     <th>Date</th>
                                 </tr>
@@ -178,15 +177,7 @@ $recent_doctors_result = mysqli_query($con, $recent_doctors_query);
                                             </div>
                                         </td>
                                         <td><?php echo htmlspecialchars($doctor['specialization'] ?? 'General'); ?></td>
-                                        <td>
-                                            <?php if ($doctor['doctor_type'] == 1 && !empty($doctor['hospital_name'])): ?>
-                                                <span class="badge-type hospital"><?php echo htmlspecialchars($doctor['hospital_name']); ?></span>
-                                            <?php elseif ($doctor['doctor_type'] == 2): ?>
-                                                <span class="badge-type clinic">Clinic</span>
-                                            <?php else: ?>
-                                                <span class="text-muted">N/A</span>
-                                            <?php endif; ?>
-                                        </td>
+                                       
                                         <td>
                                             <span class="badge-status <?php echo $doctor['ustatus'] == 1 ? 'active' : 'inactive'; ?>">
                                                 <?php echo $doctor['ustatus'] == 1 ? 'Active' : 'Inactive'; ?>

@@ -13,7 +13,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['type'] != 'hospital') {
     exit();
 }
 
-$user_id = $_SESSION['user_id'];
+$user_id = (int)$_SESSION['user_id'];
 
 // Get hospital data
 $hospital_query = "SELECT * FROM hospitals WHERE user_id = $user_id AND approve = 1";
@@ -34,9 +34,13 @@ $hospital_name = $hospital_data['hospital_name'];
 // ============================================
 
 if (isset($_GET['restore_id']) && is_numeric($_GET['restore_id'])) {
-    $restore_id = $_GET['restore_id'];
-    $restore_query = "UPDATE users SET status = 1 WHERE user_id = $restore_id";
-    if (mysqli_query($con, $restore_query)) {
+    $restore_id = (int)$_GET['restore_id'];
+
+    // Only allow restoring doctors that belong to this hospital
+    $restore_query = "UPDATE users SET status = 1 
+                      WHERE user_id = $restore_id 
+                      AND user_id IN (SELECT user_id FROM doctors WHERE hospital_id = $hospital_id)";
+    if (mysqli_query($con, $restore_query) && mysqli_affected_rows($con) > 0) {
         $status_change_history = "INSERT INTO user_status_change_by
             SET 
             user_id = '". $restore_id ."',
@@ -45,7 +49,7 @@ if (isset($_GET['restore_id']) && is_numeric($_GET['restore_id'])) {
         ";
         mysqli_query($con, $status_change_history);
 
-        $_SESSION['success_msg'] = "Doctor removed successfully!";
+        $_SESSION['success_msg'] = "Doctor restored successfully!";
     } else {
         $_SESSION['error_msg'] = "Error: " . mysqli_error($con);
     }
@@ -58,22 +62,16 @@ if (isset($_GET['restore_id']) && is_numeric($_GET['restore_id'])) {
 // PERMANENTLY DELETE DOCTOR
 // ============================================
 if (isset($_GET['permanent_delete_id']) && is_numeric($_GET['permanent_delete_id'])) {
-    $delete_id = (int)$_GET['permanent_delete_id'];
+    // This id is the doctor's user_id (same value the Restore button uses)
+    $delete_user_id = (int)$_GET['permanent_delete_id'];
     
     // Verify doctor belongs to this hospital
-    $check_query = "SELECT doctor_id, doctor_pic FROM doctors WHERE doctor_id = $delete_id AND hospital_id = $hospital_id";
+    $check_query = "SELECT doctor_id, doctor_pic FROM doctors WHERE user_id = $delete_user_id AND hospital_id = $hospital_id";
     $check_result = mysqli_query($con, $check_query);
     $doctor_data = mysqli_fetch_assoc($check_result);
     
     if ($doctor_data) {
-        // Get entity_id
-        $entity_query = "SELECT entity_id FROM doctors WHERE doctor_id = $delete_id";
-        $entity_result = mysqli_query($con, $entity_query);
-        $entity_row = mysqli_fetch_assoc($entity_result);
-        $entity_id = $entity_row['entity_id'];
-        
-        // Delete from entities
-        mysqli_query($con, "DELETE FROM entities WHERE entity_id = $entity_id");
+        $delete_id = (int)$doctor_data['doctor_id'];
         
         // Delete from doctor_in_hospital
         mysqli_query($con, "DELETE FROM doctor_in_hospital WHERE doctor_id = $delete_id");
@@ -84,13 +82,12 @@ if (isset($_GET['permanent_delete_id']) && is_numeric($_GET['permanent_delete_id
                      WHERE dih.doctor_id = $delete_id";
         mysqli_query($con, $ci_query);
         
-        // Delete from users
-        $user_query = "DELETE FROM users WHERE user_id = (SELECT user_id FROM doctors WHERE doctor_id = $delete_id)";
-        mysqli_query($con, $user_query);
-        
         // Delete doctor
         $delete_query = "DELETE FROM doctors WHERE doctor_id = $delete_id";
         if (mysqli_query($con, $delete_query)) {
+            // Delete from users
+            mysqli_query($con, "DELETE FROM users WHERE user_id = $delete_user_id");
+
             // Delete picture
             if (!empty($doctor_data['doctor_pic'])) {
                 $pic_path = BASE_PATH . "/admin/inc/uploads/doctors/" . $doctor_data['doctor_pic'];
@@ -128,7 +125,6 @@ if (!empty($search)) {
 // Count total
 $count_query = "SELECT COUNT(*) as total 
                  FROM doctors d
-                 LEFT JOIN entities e ON d.entity_id = e.entity_id
                  LEFT JOIN users u ON u.user_id = d.user_id
                  WHERE $where";
 $count_result = mysqli_query($con, $count_query);
@@ -137,12 +133,10 @@ $total_pages = ceil($total_records / $per_page);
 
 // Fetch deleted doctors
 $query = "SELECT d.*, 
-                 e.status as estatus,
-                 e.reference as ref,
+                 u.status as estatus,
                  dct.type as specialization,
                  c.city_name
           FROM doctors d
-          LEFT JOIN entities e ON d.entity_id = e.entity_id
           LEFT JOIN dr_cat_types dct ON d.cat_type_id = dct.dr_cat_type_id
           LEFT JOIN cities c ON d.city_id = c.city_id
           LEFT JOIN users u ON u.user_id = d.user_id

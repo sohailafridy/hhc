@@ -13,7 +13,7 @@ if (!isset($_SESSION['user_id']) || $_SESSION['type'] != 'hospital') {
     exit();
 }
 
-$user_id = $_SESSION['user_id'];
+$user_id = (int)$_SESSION['user_id'];
 
 // Get hospital data
 $hospital_query = "SELECT * FROM hospitals WHERE user_id = $user_id AND approve = 1";
@@ -56,7 +56,7 @@ $offset = ($page - 1) * $per_page;
 // ============================================
 // BUILD WHERE CLAUSE - CORRECTED FOR LABORATORIES
 // ============================================
-$where = "l.approve = 1 AND e.status = 1";
+$where = "l.approve = 1 AND u.status = 1";
 if (!empty($search)) {
     $where .= " AND l.lab_name LIKE '%$search%'";
 }
@@ -69,7 +69,7 @@ if ($filter_city > 0) {
 // ============================================
 $count_query = "SELECT COUNT(*) as total 
                  FROM laboratories l
-                 LEFT JOIN entities e ON l.entity_id = e.entity_id
+                 LEFT JOIN users u ON u.user_id = l.user_id
                  WHERE $where";
 $count_result = mysqli_query($con, $count_query);
 $total_records = mysqli_fetch_assoc($count_result)['total'];
@@ -79,11 +79,10 @@ $total_pages = ceil($total_records / $per_page);
 // FETCH LABORATORIES - CORRECTED
 // ============================================
 $query = "SELECT l.*, c.city_name, u.status as ustatus,
-                 (SELECT AVG(stars) FROM feedback WHERE entity_id = l.entity_id AND status = 1) as avg_rating,
-                 (SELECT COUNT(*) FROM feedback WHERE entity_id = l.entity_id AND status = 1) as total_reviews
+                 (SELECT AVG(stars) FROM feedback WHERE user_id = l.user_id AND status = 1) as avg_rating,
+                 (SELECT COUNT(*) FROM feedback WHERE user_id = l.user_id AND status = 1) as total_reviews
           FROM laboratories l
           LEFT JOIN cities c ON l.city_id = c.city_id
-          LEFT JOIN entities e ON l.entity_id = e.entity_id
           LEFT JOIN users u ON u.user_id = l.user_id
           WHERE $where
           ORDER BY l.lab_name ASC

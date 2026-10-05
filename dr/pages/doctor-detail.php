@@ -6,7 +6,6 @@ $doctor_id = isset($_GET['doctor_id']) ? (int)$_GET['doctor_id'] : 0;
 $doctor = null;
 
 if ($doctor_id > 0) {
-    // Fetch doctor details - INCLUDING NEW FIELDS
     $query = "SELECT d.*, c.city_name, h.hospital_name 
              FROM doctors d 
              LEFT JOIN cities c ON d.city_id = c.city_id 
@@ -40,100 +39,118 @@ if (isset($_POST['user_id']) && (int)$_POST['user_id'] != 0) {
 <!-- Navbar -->
 <?php include BASE_PATH . '/includes/menu.php'; ?>
 
-<!-- ===== PAGE HEADER ===== -->
-<section class="page-header">
-    <div class="container text-center">
-        <h1 data-aos="fade-up">Doctor Profile</h1>
-        <p data-aos="fade-up" data-aos-delay="100">Complete doctor information and details</p>
-    </div>
-</section>
+<?php if ($doctor && !empty($doctor)): ?>
 
-<!-- ===== DOCTOR DETAIL ===== -->
-<section class="section-padding">
-    <div class="container">
+    <!-- ===== HERO SECTION ===== -->
+    <section class="profile-hero">
+        <div class="container">
+            <div class="text-center text-white" data-aos="fade-up">
+                <h1 style="font-size: 2.5rem; font-weight: 800; margin-bottom: 8px; text-shadow: 0 2px 15px rgba(0,0,0,0.2);">
+                    Doctor Profile
+                </h1>
+                <p style="font-size: 1.05rem; opacity: 0.9;">
+                    Complete doctor information and details
+                </p>
+            </div>
+        </div>
+    </section>
 
-        <?php if ($doctor && !empty($doctor)): ?>
-
+    <!-- ===== MAIN CONTENT ===== -->
+    <section style="padding-bottom: 60px;">
+        <div class="container">
+            
             <!-- ===== PROFILE CARD ===== -->
-            <div class="doctor-profile-card" data-aos="fade-up">
-                <div class="row g-0">
-                    <!-- Left Column -->
-                    <div class="col-lg-4">
-                        <div class="profile-left">
+            <div class="profile-card" data-aos="fade-up" data-aos-delay="100">
+                <div class="profile-card-inner">
+                    
+                    <!-- LEFT SIDEBAR -->
+                    <div class="profile-sidebar">
+                        
+                        <!-- Avatar -->
+                        <div class="avatar-wrapper">
                             <?php if (!empty($doctor['doctor_pic'])): ?>
                                 <img src="<?php echo BASE_URL; ?>admin/inc/uploads/doctors/<?php echo $doctor['doctor_pic']; ?>" 
-                                     alt="<?php echo htmlspecialchars($doctor['doctor_name']); ?>" class="profile-avatar">
+                                     alt="<?php echo htmlspecialchars($doctor['doctor_name']); ?>" 
+                                     class="profile-avatar">
                             <?php else: ?>
                                 <div class="profile-avatar-placeholder">
                                     <i class="fas fa-user-md"></i>
                                 </div>
                             <?php endif; ?>
-
-                            <h2>Dr. <?php echo htmlspecialchars($doctor['doctor_name']); ?></h2>
-                            
-                            <div class="specialty">
-                                <?php
-                                $spec_query = "SELECT `type` FROM dr_cat_types WHERE dr_cat_type_id = " . (int)$doctor['cat_type_id'];
-                                $spec_result = mysqli_query($con, $spec_query);
-                                $spec = mysqli_fetch_assoc($spec_result);
-                                echo $spec ? htmlspecialchars($spec['type']) : 'General Practitioner';
-                                ?>
-                            </div>
-                            
-                            <div class="qualification"><?php echo htmlspecialchars($doctor['short_detail']); ?></div>
-                            
-                            <!-- ===== NEW: MAHRE AMRAZ ===== -->
-                            <?php if (!empty($doctor['mahre_amraz'])): ?>
-                                <div class="mahre-amraz">
-                                    <i class="fas fa-star"></i>
-                                    ماہرِ امراض: <?php echo htmlspecialchars($doctor['mahre_amraz']); ?>
-                                </div>
-                            <?php endif; ?>
-                            
-                            <!-- ===== NEW: NOTES ===== -->
-                            <?php if (!empty($doctor['notes'])): ?>
-                                <div class="doctor-notes">
-                                    <i class="fas fa-sticky-note"></i>
-                                    <?php echo htmlspecialchars($doctor['notes']); ?>
-                                </div>
-                            <?php endif; ?>
-                            
-                            <?php if (!empty($doctor['experience_years']) && $doctor['experience_years'] != 0): ?>
-                                <div class="experience">
-                                    <i class="fas fa-briefcase me-1"></i> <?php echo $doctor['experience_years']; ?> Years Experience
-                                </div>
-                            <?php endif; ?>
-
-                            <?php 
-                            // Calculate average rating
-                            $rating_query = "SELECT AVG(stars) as avg_rating, COUNT(*) as total_reviews 
-                                          FROM feedback WHERE user_id = " . (int)$doctor['user_id'] . " AND status = 1";
-                            $rating_result = mysqli_query($con, $rating_query);
-                            $rating_data = mysqli_fetch_assoc($rating_result);
-                            $avg_rating = $rating_data['avg_rating'] ? round($rating_data['avg_rating'], 1) : 0;
-                            $total_reviews = $rating_data['total_reviews'] ? $rating_data['total_reviews'] : 0;
-                            
-                            if ($avg_rating > 0): ?>
-                                <div class="rating-badge">
-                                    <i class="fas fa-star"></i>
-                                    <?php echo $avg_rating; ?>/5.0
-                                    <span style="opacity:0.7;">(<?php echo $total_reviews; ?> reviews)</span>
-                                </div>
-                            <?php endif; ?>
+                            <div class="status-badge"></div>
                         </div>
+
+                        <!-- Name & Specialty -->
+                        <h2 class="profile-name">Dr. <?php echo htmlspecialchars($doctor['doctor_name']); ?></h2>
+                        
+                        <div class="profile-specialty">
+                            <?php
+                            $spec_query = "SELECT `type` FROM dr_cat_types WHERE dr_cat_type_id = " . (int)$doctor['cat_type_id'];
+                            $spec_result = mysqli_query($con, $spec_query);
+                            $spec = mysqli_fetch_assoc($spec_result);
+                            echo $spec ? htmlspecialchars($spec['type']) : 'General Practitioner';
+                            ?>
+                        </div>
+                        
+                        <div class="profile-qualification"><?php echo htmlspecialchars($doctor['short_detail']); ?></div>
+                        
+                        <!-- Mahre Amraz -->
+                        <?php if (!empty($doctor['mahre_amraz'])): ?>
+                            <div class="mahre-amraz-badge">
+                                <i class="fas fa-star"></i>
+                                ماہرِ امراض: <?php echo htmlspecialchars($doctor['mahre_amraz']); ?>
+                            </div>
+                        <?php endif; ?>
+                        
+                        <!-- Notes -->
+                        <?php if (!empty($doctor['notes'])): ?>
+                            <div class="doctor-notes-box">
+                                <i class="fas fa-sticky-note"></i>
+                                <?php echo htmlspecialchars($doctor['notes']); ?>
+                            </div>
+                        <?php endif; ?>
+                        
+                        <!-- Experience -->
+                        <?php if (!empty($doctor['experience_years']) && $doctor['experience_years'] != 0): ?>
+                            <div class="experience-badge">
+                                <i class="fas fa-briefcase"></i>
+                                <?php echo $doctor['experience_years']; ?> Years Experience
+                            </div>
+                        <?php endif; ?>
+
+                        <!-- Rating -->
+                        <?php 
+                        $rating_query = "SELECT AVG(stars) as avg_rating, COUNT(*) as total_reviews 
+                                      FROM feedback WHERE user_id = " . (int)$doctor['user_id'] . " AND status = 1";
+                        $rating_result = mysqli_query($con, $rating_query);
+                        $rating_data = mysqli_fetch_assoc($rating_result);
+                        $avg_rating = $rating_data['avg_rating'] ? round($rating_data['avg_rating'], 1) : 0;
+                        $total_reviews = $rating_data['total_reviews'] ? $rating_data['total_reviews'] : 0;
+                        
+                        if ($avg_rating > 0): ?>
+                            <div class="rating-display">
+                                <i class="fas fa-star"></i>
+                                <span class="rating-value"><?php echo $avg_rating; ?></span>
+                                <span style="opacity:0.7;">/5.0</span>
+                                <span style="opacity:0.5;">(<?php echo $total_reviews; ?> reviews)</span>
+                            </div>
+                        <?php endif; ?>
                     </div>
 
-                    <!-- Right Column -->
-                    <div class="col-lg-8">
-                        <div class="profile-right">
-                            <!-- Contact Information -->
+                    <!-- RIGHT CONTENT -->
+                    <div class="profile-content">
+                        
+                        <!-- Contact Information -->
+                        <div class="content-section">
                             <div class="section-title">
                                 <i class="fas fa-address-card"></i> Contact Information
                             </div>
                             <div class="contact-grid">
                                 <?php if (!empty($doctor['doctor_phone'])): ?>
                                     <div class="contact-item">
-                                        <i class="fas fa-phone"></i>
+                                        <div class="icon-box">
+                                            <i class="fas fa-phone"></i>
+                                        </div>
                                         <div>
                                             <div class="label">Phone</div>
                                             <div class="value"><?php echo htmlspecialchars($doctor['doctor_phone']); ?></div>
@@ -143,7 +160,9 @@ if (isset($_POST['user_id']) && (int)$_POST['user_id'] != 0) {
 
                                 <?php if (!empty($doctor['doctor_email'])): ?>
                                     <div class="contact-item">
-                                        <i class="fas fa-envelope"></i>
+                                        <div class="icon-box">
+                                            <i class="fas fa-envelope"></i>
+                                        </div>
                                         <div>
                                             <div class="label">Email</div>
                                             <div class="value"><?php echo htmlspecialchars($doctor['doctor_email']); ?></div>
@@ -151,48 +170,81 @@ if (isset($_POST['user_id']) && (int)$_POST['user_id'] != 0) {
                                     </div>
                                 <?php endif; ?>
 
-                                <div class="contact-item">
-                                    <i class="fas fa-map-marker-alt"></i>
-                                    <div>
-                                        <div class="label">City</div>
-                                        <div class="value"><?php echo htmlspecialchars($doctor['city_name']); ?></div>
-                                    </div>
-                                </div>
-
-                                <?php if (!empty($doctor['hospital_name'])): ?>
+                                <?php if (!empty($doctor['city_name'])): ?>
                                     <div class="contact-item">
-                                        <i class="fas fa-hospital"></i>
+                                        <div class="icon-box">
+                                            <i class="fas fa-map-marker-alt"></i>
+                                        </div>
                                         <div>
-                                            <div class="label">Hospital</div>
-                                            <div class="value"><?php echo htmlspecialchars($doctor['hospital_name']); ?></div>
+                                            <div class="label">City</div>
+                                            <div class="value"><?php echo htmlspecialchars($doctor['city_name']); ?></div>
                                         </div>
                                     </div>
                                 <?php endif; ?>
                             </div>
+                        </div>
 
-                            <!-- About -->
-                            <?php if (!empty($doctor['short_detail']) || !empty($doctor['other'])): ?>
-                                <div class="section-title" style="margin-top: 20px;">
+                        <!-- About Doctor -->
+                        <?php if (!empty($doctor['short_detail'])): ?>
+                            <div class="content-section">
+                                <div class="section-title">
                                     <i class="fas fa-info-circle"></i> About Doctor
                                 </div>
-                                <p class="about-text">
+                                <div class="about-text">
                                     <?php echo nl2br(htmlspecialchars($doctor['short_detail'])); ?>
-                                    <?php if (!empty($doctor['other'])): ?>
-                                        <br><br><?php echo nl2br(htmlspecialchars($doctor['other'])); ?>
-                                    <?php endif; ?>
-                                </p>
-                            <?php endif; ?>
-
-                            <!-- Clinical Notes -->
-                            <?php if (!empty($doctor['static_clinical_info'])): ?>
-                                <div class="section-title" style="margin-top: 20px;">
-                                    <i class="fas fa-notes-medical"></i> Clinical Notes
                                 </div>
-                                <div style="background: #f8fafc; padding: 16px; border-radius: 12px; border-left: 4px solid var(--primary);">
+                            </div>
+                        <?php endif; ?>
+
+                        <!-- Notes -->
+                        <?php if (!empty($doctor['notes'])): ?>
+                            <div class="content-section">
+                                <div class="section-title">
+                                    <i class="fas fa-notes-medical"></i> Notes
+                                </div>
+                                <div class="info-card">
+                                    <?php echo nl2br(htmlspecialchars($doctor['notes'])); ?>
+                                </div>
+                            </div>
+                        <?php endif; ?>
+
+                        <!-- Clinical Info -->
+                        <?php if (!empty($doctor['static_clinical_info'])): ?>
+                            <div class="content-section">
+                                <div class="section-title">
+                                    <i class="fas fa-clipboard-list"></i> Clinical Info
+                                </div>
+                                <div class="info-card">
                                     <?php echo nl2br(htmlspecialchars($doctor['static_clinical_info'])); ?>
                                 </div>
-                            <?php endif; ?>
-                        </div>
+                            </div>
+                        <?php endif; ?>
+
+                        <!-- Other -->
+                        <?php if (!empty($doctor['other'])): ?>
+                            <div class="content-section">
+                                <div class="section-title">
+                                    <i class="fas fa-ellipsis-h"></i> Other Information
+                                </div>
+                                <div class="info-card">
+                                    <?php echo nl2br(htmlspecialchars($doctor['other'])); ?>
+                                </div>
+                            </div>
+                        <?php endif; ?>
+
+                        <!-- If personal Clinic -->
+                        <?php if (!empty($doctor['clinic_name'])): ?>
+                            <div class="content-section">
+                                <div class="section-title">
+                                    <i class="fas fa-ellipsis-h"></i> Personal Clinic
+                                </div>
+                                <div class="info-card">
+                                    <?php echo nl2br(htmlspecialchars($doctor['clinic_name'])); ?>
+                                    <br>
+                                    <?php echo nl2br(htmlspecialchars($doctor['clinic_address'])); ?>
+                                </div>
+                            </div>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>
@@ -203,16 +255,16 @@ if (isset($_POST['user_id']) && (int)$_POST['user_id'] != 0) {
                             FROM clinical_info ci 
                             INNER JOIN doctor_in_hospital dih ON ci.doctor_in_hosp_id = dih.doctor_in_hosp_id 
                             LEFT JOIN hospitals ON dih.hospital_id = hospitals.hospital_id
-                            WHERE dih.doctor_id = " . (int)$doctor['doctor_id'] . "
+                            WHERE dih.doctor_id = " . (int)$doctor['doctor_id'] . " AND dih.inactive=0
                             ORDER BY ci.season, ci.shift";
             $clinical_result = mysqli_query($con, $clinical_query);
             ?>
 
             <?php if (mysqli_num_rows($clinical_result) > 0): ?>
-                <div class="clinical-section" data-aos="fade-up" data-aos-delay="100">
+                <div class="clinical-section" data-aos="fade-up" data-aos-delay="150">
                     <div class="section-header">
                         <h3><i class="fas fa-clock"></i> Clinical Information</h3>
-                        <span class="badge bg-primary"><?php echo mysqli_num_rows($clinical_result); ?> Records</span>
+                        <span class="records-badge"><?php echo mysqli_num_rows($clinical_result); ?> Records</span>
                     </div>
 
                     <div class="clinical-grid">
@@ -274,10 +326,10 @@ if (isset($_POST['user_id']) && (int)$_POST['user_id'] != 0) {
                                 <?php endif; ?>
 
                                 <?php if (!empty($clinical['detail'])): ?>
-                                    <div class="clinical-item" style="border-top: 1px dashed var(--border); padding-top: 8px; margin-top: 4px;">
+                                    <div class="clinical-item" style="border-top: 1px dashed var(--border); padding-top: 10px; margin-top: 6px;">
                                         <i class="fas fa-info-circle text-info"></i>
                                         <span class="label">Detail</span>
-                                        <span class="value" style="font-size:0.8rem;"><?php echo htmlspecialchars($clinical['detail']); ?></span>
+                                        <span class="value" style="font-size:0.82rem;"><?php echo htmlspecialchars($clinical['detail']); ?></span>
                                     </div>
                                 <?php endif; ?>
                             </div>
@@ -287,21 +339,21 @@ if (isset($_POST['user_id']) && (int)$_POST['user_id'] != 0) {
             <?php endif; ?>
 
             <!-- ===== REVIEWS SECTION ===== -->
-            <div class="reviews-section" data-aos="fade-up" data-aos-delay="150">
+            <div class="reviews-section" data-aos="fade-up" data-aos-delay="200">
                 <div class="section-header">
                     <h3><i class="fas fa-star"></i> Patient Reviews</h3>
                     <?php if ($total_reviews > 0): ?>
                         <div class="rating-summary">
                             <i class="fas fa-star"></i>
                             <span class="score"><?php echo $avg_rating; ?></span>
-                            <span style="opacity:0.7;">(<?php echo $total_reviews; ?> reviews)</span>
+                            <span class="count">(<?php echo $total_reviews; ?> reviews)</span>
                         </div>
                     <?php endif; ?>
                 </div>
 
                 <!-- Review Form -->
                 <div class="review-form">
-                    <h4><i class="fas fa-pen me-2"></i> Share Your Experience</h4>
+                    <h4><i class="fas fa-pen"></i> Share Your Experience</h4>
                     <form method="POST">
                         <input type="hidden" name="user_id" value="<?php echo (int)$doctor['user_id']; ?>">
                         
@@ -318,15 +370,15 @@ if (isset($_POST['user_id']) && (int)$_POST['user_id'] != 0) {
 
                         <div class="mb-3">
                             <label class="form-label">Rating *</label>
-                            <div class="rating-select">
+                            <div class="rating-select" id="ratingSelect">
                                 <?php for ($i = 5; $i >= 1; $i--): ?>
-                                    <span class="star" data-value="<?php echo $i; ?>" onclick="setRating(this)">
+                                    <span class="star" data-value="<?php echo $i; ?>" onclick="setRating(<?php echo $i; ?>)">
                                         <i class="fas fa-star"></i>
                                     </span>
                                 <?php endfor; ?>
                             </div>
                             <input type="hidden" name="stars" id="ratingValue" value="5">
-                            <span class="text-muted" id="ratingLabel">Excellent</span>
+                            <span class="text-muted" id="ratingLabel" style="font-size:0.85rem; font-weight:600;">Excellent</span>
                         </div>
 
                         <div class="mb-3">
@@ -335,7 +387,7 @@ if (isset($_POST['user_id']) && (int)$_POST['user_id'] != 0) {
                         </div>
 
                         <button type="submit" class="btn-submit-review">
-                            <i class="fas fa-paper-plane me-2"></i> Submit Review
+                            <i class="fas fa-paper-plane"></i> Submit Review
                         </button>
                     </form>
                 </div>
@@ -351,9 +403,14 @@ if (isset($_POST['user_id']) && (int)$_POST['user_id'] != 0) {
                     <?php while ($feedback = mysqli_fetch_assoc($feedback_result)): ?>
                         <div class="review-item">
                             <div class="review-header">
-                                <div>
-                                    <span class="reviewer-name"><?php echo htmlspecialchars($feedback['commenter_name']); ?></span>
-                                    <span class="reviewer-email"><?php echo htmlspecialchars($feedback['commenter_gmail']); ?></span>
+                                <div class="reviewer-info">
+                                    <div class="reviewer-avatar">
+                                        <?php echo strtoupper(substr($feedback['commenter_name'], 0, 1)); ?>
+                                    </div>
+                                    <div>
+                                        <span class="reviewer-name"><?php echo htmlspecialchars($feedback['commenter_name']); ?></span>
+                                        <span class="reviewer-email"><?php echo htmlspecialchars($feedback['commenter_gmail']); ?></span>
+                                    </div>
                                 </div>
                                 <div class="review-stars">
                                     <?php for ($i = 1; $i <= 5; $i++): ?>
@@ -365,7 +422,7 @@ if (isset($_POST['user_id']) && (int)$_POST['user_id'] != 0) {
                                 <p class="review-comment"><?php echo nl2br(htmlspecialchars($feedback['comment'])); ?></p>
                             <?php endif; ?>
                             <div class="review-date">
-                                <i class="fas fa-calendar me-1"></i> <?php echo date('d M Y', strtotime($feedback['created_at'])); ?>
+                                <i class="fas fa-calendar-alt"></i> <?php echo date('d M Y', strtotime($feedback['created_at'])); ?>
                             </div>
                         </div>
                     <?php endwhile; ?>
@@ -378,75 +435,85 @@ if (isset($_POST['user_id']) && (int)$_POST['user_id'] != 0) {
                 <?php endif; ?>
             </div>
 
-        <?php else: ?>
-            <!-- ===== NOT FOUND ===== -->
-            <div class="text-center py-5" data-aos="fade-up">
-                <i class="fas fa-user-md fa-4x text-muted mb-3"></i>
+        </div>
+    </section>
+
+<?php else: ?>
+
+    <!-- ===== NOT FOUND ===== -->
+    <section style="padding: 80px 0;">
+        <div class="container">
+            <div class="not-found" data-aos="fade-up">
+                <i class="fas fa-user-md"></i>
                 <h3>Doctor Not Found</h3>
-                <p class="text-muted">The doctor you're looking for doesn't exist or has been removed.</p>
-                <a href="<?php echo BASE_URL; ?>doctors" class="btn btn-primary mt-3">
-                    <i class="fas fa-arrow-left me-2"></i> Back to Doctors
+                <p>The doctor you're looking for doesn't exist or has been removed.</p>
+                <a href="<?php echo BASE_URL; ?>doctors" class="btn-submit-review" style="text-decoration: none;">
+                    <i class="fas fa-arrow-left"></i> Back to Doctors
                 </a>
             </div>
-        <?php endif; ?>
+        </div>
+    </section>
 
-    </div>
-</section>
+<?php endif; ?>
 
 <!-- ===== FOOTER ===== -->
 <?php include BASE_PATH . '/includes/footer.php'; ?>
 
 <script>
 // ============================================
-// STAR RATING
+// STAR RATING SYSTEM
 // ============================================
-function setRating(el) {
-    const stars = document.querySelectorAll('.star');
-    const value = el.dataset.value;
+function setRating(value) {
+    const stars = document.querySelectorAll('.rating-select .star');
+    const ratingValue = document.getElementById('ratingValue');
+    const ratingLabel = document.getElementById('ratingLabel');
+    
+    ratingValue.value = value;
     
     stars.forEach(star => {
         star.classList.remove('active');
-        if (star.dataset.value <= value) {
+        if (parseInt(star.dataset.value) <= value) {
             star.classList.add('active');
         }
     });
     
-    document.getElementById('ratingValue').value = value;
+    const labels = {
+        1: 'Poor',
+        2: 'Fair',
+        3: 'Good',
+        4: 'Very Good',
+        5: 'Excellent'
+    };
     
-    const labels = ['', 'Poor', 'Fair', 'Good', 'Very Good', 'Excellent'];
-    document.getElementById('ratingLabel').textContent = labels[value];
+    ratingLabel.textContent = labels[value];
 }
 
-// Initialize stars
+// Initialize rating on page load
 document.addEventListener('DOMContentLoaded', function() {
-    const stars = document.querySelectorAll('.star');
+    setRating(5);
+    
+    // Hover effect
+    const stars = document.querySelectorAll('.rating-select .star');
     stars.forEach(star => {
         star.addEventListener('mouseenter', function() {
-            const value = this.dataset.value;
+            const value = parseInt(this.dataset.value);
             stars.forEach(s => {
                 s.classList.remove('active');
-                if (s.dataset.value <= value) {
+                if (parseInt(s.dataset.value) <= value) {
                     s.classList.add('active');
                 }
             });
         });
     });
     
-    document.querySelector('.rating-select').addEventListener('mouseleave', function() {
-        const current = document.getElementById('ratingValue').value;
+    document.getElementById('ratingSelect').addEventListener('mouseleave', function() {
+        const current = parseInt(document.getElementById('ratingValue').value);
         stars.forEach(star => {
             star.classList.remove('active');
-            if (star.dataset.value <= current) {
+            if (parseInt(star.dataset.value) <= current) {
                 star.classList.add('active');
             }
         });
-    });
-    
-    // Set default rating (5 stars)
-    stars.forEach(star => {
-        if (star.dataset.value <= 5) {
-            star.classList.add('active');
-        }
     });
 });
 </script>

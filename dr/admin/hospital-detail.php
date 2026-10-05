@@ -21,6 +21,45 @@ if (isset($_GET['delete_id']) && is_numeric($_GET['delete_id'])) {
     header('Location: ' . BASE_URL . 'admin/hospitals/list');
     exit();
 }
+
+// Handle remove / re-add doctor (doctor_in_hospital.inactive)
+if ($_SERVER['REQUEST_METHOD'] === 'POST'
+    && isset($_POST['doctor_action'], $_POST['doctor_in_hosp_id'])
+    && isset($_GET['id']) && is_numeric($_GET['id'])) {
+
+    $post_hospital_id = (int)$_GET['id'];
+    $dih_id = (int)$_POST['doctor_in_hosp_id'];
+    $action = $_POST['doctor_action'];
+
+    if ($action === 'remove') {
+        $inactive_value = 1;
+        $msg = "Doctor removed from hospital successfully!";
+    } elseif ($action === 'readd') {
+        $inactive_value = 0;
+        $msg = "Doctor re-added to hospital successfully!";
+    } else {
+        $inactive_value = null;
+    }
+
+    if ($inactive_value !== null) {
+        $update_query = "UPDATE doctor_in_hospital 
+                         SET inactive = $inactive_value 
+                         WHERE doctor_in_hosp_id = $dih_id AND hospital_id = $post_hospital_id";
+        if (mysqli_query($con, $update_query)) {
+
+            if($new_inactive == 1){
+                mysqli_query($con, "DELETE FROM `clinical_info` WHERE `doctor_in_hosp_id` = '". $dih_id ."'");
+            }
+            $_SESSION['success_msg'] = $msg;
+        } else {
+            $_SESSION['error_msg'] = "Error: " . mysqli_error($con);
+        }
+    }
+
+    // Redirect back to same page (avoids form resubmission)
+    header('Location: ' . $_SERVER['REQUEST_URI']);
+    exit();
+}
 ?>
 
 <?php include BASE_PATH.'/admin/inc/header.php';?>
@@ -70,15 +109,27 @@ foreach ($facilities as $fac) {
     if ($fac['is_available'] == 1) $available_facilities++;
 }
 
-// Fetch doctors in this hospital
-$doctors_query = "SELECT d.*, dct.type as specialization 
-                  FROM doctors d
+// Current doctors (inactive = 0)
+$doctors_query = "SELECT d.*, dct.type as specialization, dih.doctor_in_hosp_id
+                  FROM doctor_in_hospital dih
+                  INNER JOIN doctors d ON d.doctor_id = dih.doctor_id
                   LEFT JOIN dr_cat_types dct ON d.cat_type_id = dct.dr_cat_type_id
                   LEFT JOIN users u ON d.user_id = u.user_id
-                  WHERE d.hospital_id = $hospital_id AND u.status = 1 AND d.approve = 1
+                  WHERE dih.hospital_id = $hospital_id AND u.status = 1 AND d.approve = 1 AND dih.inactive = 0
                   ORDER BY d.doctor_name ASC";
 $doctors_result = mysqli_query($con, $doctors_query);
-$total_doctors = mysqli_num_rows($doctors_result);
+$total_doctors = $doctors_result ? mysqli_num_rows($doctors_result) : 0;
+
+// Past doctors (inactive = 1)
+$past_doctors_query = "SELECT d.*, dct.type as specialization, dih.doctor_in_hosp_id
+                  FROM doctor_in_hospital dih
+                  INNER JOIN doctors d ON d.doctor_id = dih.doctor_id
+                  LEFT JOIN dr_cat_types dct ON d.cat_type_id = dct.dr_cat_type_id
+                  LEFT JOIN users u ON d.user_id = u.user_id
+                  WHERE dih.hospital_id = $hospital_id AND u.status = 1 AND d.approve = 1 AND dih.inactive = 1
+                  ORDER BY d.doctor_name ASC";
+$past_doctors_result = mysqli_query($con, $past_doctors_query);
+$total_past_doctors = $past_doctors_result ? mysqli_num_rows($past_doctors_result) : 0;
 
 // Fetch feedbacks
 $feedback_query = "SELECT f.* FROM feedback f WHERE f.user_id = $user_id AND f.status = 1 ORDER BY f.created_at DESC LIMIT 10";
@@ -141,6 +192,11 @@ $total_reviews = $rating_data['total_reviews'] ? $rating_data['total_reviews'] :
             <div class="stat-icon blue"><i class="fas fa-user-md"></i></div>
             <div class="stat-number"><?php echo $total_doctors; ?></div>
             <div class="stat-label">Total Doctors</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon blue"><i class="fas fa-user-md"></i></div>
+            <div class="stat-number"><?php echo $total_past_doctors; ?></div>
+            <div class="stat-label">Total Past Doctors</div>
         </div>
         <div class="stat-card">
             <div class="stat-icon green"><i class="fas fa-bed"></i></div>
@@ -239,7 +295,7 @@ $total_reviews = $rating_data['total_reviews'] ? $rating_data['total_reviews'] :
                 </div>
             </div>
 
-            <!-- Doctors -->
+            <!-- Doctors (current) -->
             <div class="info-card">
                 <div class="info-card-header">
                     <h5><i class="fas fa-user-md"></i> Doctors (<?php echo $total_doctors; ?>)</h5>
@@ -261,12 +317,64 @@ $total_reviews = $rating_data['total_reviews'] ? $rating_data['total_reviews'] :
                                     <span class="doctor-spec"><?php echo htmlspecialchars($doctor['specialization'] ?? 'General'); ?></span>
                                     <span class="doctor-phone"><i class="fas fa-phone me-1"></i> <?php echo htmlspecialchars($doctor['doctor_phone'] ?? 'N/A'); ?></span>
                                 </div>
-                                <a href="<?php echo BASE_URL; ?>admin/doctors/profile?id=<?php echo $doctor['doctor_id']; ?>" 
-                                   class="btn btn-sm btn-primary">View</a>
+                                <div class="d-flex gap-1">
+                                    <a href="<?php echo BASE_URL; ?>admin/doctors/profile?id=<?php echo $doctor['doctor_id']; ?>" 
+                                       class="btn btn-sm btn-primary">View</a>
+                                    <form method="POST" action="" class="d-inline"
+                                          onsubmit="return confirm('Are you sure you want to remove this doctor from the hospital?');">
+                                        <input type="hidden" name="doctor_action" value="remove">
+                                        <input type="hidden" name="doctor_in_hosp_id" value="<?php echo (int)$doctor['doctor_in_hosp_id']; ?>">
+                                        <button type="submit" class="btn btn-sm btn-danger">
+                                            <i class="fas fa-times me-1"></i> Remove
+                                        </button>
+                                    </form>
+                                </div>
                             </div>
                         <?php endwhile; ?>
                     <?php else: ?>
                         <p class="text-muted text-center py-2">No doctors registered at this hospital</p>
+                    <?php endif; ?>
+                </div>
+            </div>
+
+            <!-- Past Doctors -->
+            <div class="info-card">
+                <div class="info-card-header">
+                    <h5><i class="fas fa-user-md"></i> Past Registered Doctors (<?php echo $total_past_doctors; ?>)</h5>
+                </div>
+                <div class="info-card-body">
+                    <?php if ($total_past_doctors > 0): ?>
+                        <?php while ($past_doctor = mysqli_fetch_assoc($past_doctors_result)): ?>
+                            <div class="doctor-mini-card">
+                                <?php if (!empty($past_doctor['doctor_pic'])): ?>
+                                    <img src="<?php echo BASE_URL; ?>admin/inc/uploads/doctors/<?php echo $past_doctor['doctor_pic']; ?>" 
+                                         alt="<?php echo htmlspecialchars($past_doctor['doctor_name']); ?>" class="doctor-avatar">
+                                <?php else: ?>
+                                    <div class="doctor-avatar-placeholder">
+                                        <?php echo strtoupper(substr($past_doctor['doctor_name'], 0, 1)); ?>
+                                    </div>
+                                <?php endif; ?>
+                                <div class="doctor-info">
+                                    <h6>Dr. <?php echo htmlspecialchars($past_doctor['doctor_name']); ?></h6>
+                                    <span class="doctor-spec"><?php echo htmlspecialchars($past_doctor['specialization'] ?? 'General'); ?></span>
+                                    <span class="doctor-phone"><i class="fas fa-phone me-1"></i> <?php echo htmlspecialchars($past_doctor['doctor_phone'] ?? 'N/A'); ?></span>
+                                </div>
+                                <div class="d-flex gap-1">
+                                    <a href="<?php echo BASE_URL; ?>admin/doctors/profile?id=<?php echo $past_doctor['doctor_id']; ?>" 
+                                       class="btn btn-sm btn-primary">View</a>
+                                    <form method="POST" action="" class="d-inline"
+                                          onsubmit="return confirm('Are you sure you want to re-add this doctor to the hospital?');">
+                                        <input type="hidden" name="doctor_action" value="readd">
+                                        <input type="hidden" name="doctor_in_hosp_id" value="<?php echo (int)$past_doctor['doctor_in_hosp_id']; ?>">
+                                        <button type="submit" class="btn btn-sm btn-success">
+                                            <i class="fas fa-plus me-1"></i> Re-add
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        <?php endwhile; ?>
+                    <?php else: ?>
+                        <p class="text-muted text-center py-2">No past doctors found for this hospital</p>
                     <?php endif; ?>
                 </div>
             </div>

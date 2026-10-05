@@ -11,18 +11,22 @@ if (isset($_GET['user_id'])) {
 // ============================================
 if(isset($_REQUEST['del_clinic_id']) && $_REQUEST['del_clinic_id'] != 0){
     $del_clinic_id = (int)$_REQUEST['del_clinic_id'];
-    $doctor_in_hospital = "DELETE FROM doctor_in_hospital
-      WHERE doctor_in_hosp_id = (
-         SELECT doctor_in_hosp_id
-         FROM clinical_info
-         WHERE clinical_info_id = '" . $del_clinic_id . "'
-      )";
-    if(mysqli_query($con, $doctor_in_hospital)){
-        $clinic_info = "DELETE FROM clinical_info WHERE clinical_info_id = '" . $del_clinic_id . "'";
+    $clinic_info = "DELETE FROM clinical_info WHERE clinical_info_id = '" . $del_clinic_id . "'";
         if(mysqli_query($con, $clinic_info)){
             $_SESSION['success_msg'] = "Clinical information deleted successfully!";
         }
-    }
+    // $doctor_in_hospital = "DELETE FROM doctor_in_hospital
+    //   WHERE doctor_in_hosp_id = (
+    //      SELECT doctor_in_hosp_id
+    //      FROM clinical_info
+    //      WHERE clinical_info_id = '" . $del_clinic_id . "'
+    //   )";
+    // if(mysqli_query($con, $doctor_in_hospital)){
+    //     $clinic_info = "DELETE FROM clinical_info WHERE clinical_info_id = '" . $del_clinic_id . "'";
+    //     if(mysqli_query($con, $clinic_info)){
+    //         $_SESSION['success_msg'] = "Clinical information deleted successfully!";
+    //     }
+    // }
 }
 
 // ============================================
@@ -47,6 +51,46 @@ if (isset($_POST['toggle_emergency']) && is_numeric($_POST['toggle_emergency']) 
     } else {
         echo "error: " . mysqli_error($con);
     }
+    exit();
+}
+
+// ============================================
+// REMOVE / RE-ADD HOSPITAL (doctor_in_hospital.inactive)
+// ============================================
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['hospital_action'], $_POST['doctor_in_hosp_id'], $_POST['doctor_id'])
+    && is_numeric($_POST['doctor_in_hosp_id']) && is_numeric($_POST['doctor_id'])) {
+
+    $act_dih_id    = (int)$_POST['doctor_in_hosp_id'];
+    $act_doctor_id = (int)$_POST['doctor_id'];
+
+    if ($_POST['hospital_action'] === 'remove') {
+        $new_inactive = 1;
+        $ok_msg = "Hospital removed successfully!";
+    } elseif ($_POST['hospital_action'] === 'readd') {
+        $new_inactive = 0;
+        $ok_msg = "Hospital re-added successfully!";
+    } else {
+        $new_inactive = null;
+    }
+
+    if ($new_inactive !== null) {
+        // doctor_id bhi match hota hai taake kisi aur doctor ki row change na ho
+        $act_query = "UPDATE doctor_in_hospital 
+                      SET inactive = $new_inactive, updated_at = NOW() 
+                      WHERE doctor_in_hosp_id = $act_dih_id AND doctor_id = $act_doctor_id";
+        if (mysqli_query($con, $act_query)) {
+
+            if($new_inactive == 1){
+                mysqli_query($con, "DELETE FROM `clinical_info` WHERE `doctor_in_hosp_id` = '". $act_dih_id ."'");
+            }
+            $_SESSION['success_msg'] = $ok_msg;
+        } else {
+            $_SESSION['error_msg'] = "Error: " . mysqli_error($con);
+        }
+    }
+
+    // Redirect (refresh par form dobara submit na ho)
+    header('Location: ' . strtok($_SERVER['REQUEST_URI'], '?') . '?id=' . $act_doctor_id);
     exit();
 }
 
@@ -101,6 +145,7 @@ $query = "SELECT d.*,
                 dc.cat_name,
                 dct.type as cat_type,
                 u.status as estatus,
+                u.reference as ref,
                 u.username,
                 u.password
           FROM doctors d 
@@ -150,6 +195,32 @@ $clinical_result = mysqli_query($con, $clinical_query);
 $dih_query = "SELECT COUNT(*) as total FROM doctor_in_hospital WHERE doctor_id = $doctor_id";
 $dih_result = mysqli_query($con, $dih_query);
 $dih_count = mysqli_fetch_assoc($dih_result)['total'];
+
+// ============================================
+// FETCH ALL HOSPITALS WHERE DOCTOR IS REGISTERED
+// ============================================
+$reg_hospitals_query = "SELECT dih.doctor_in_hosp_id, dih.hospital_id, dih.if_clinic, dih.inactive,
+                               dih.comment, dih.created_at, dih.updated_at,
+                               h.hospital_name, c.city_name
+                        FROM doctor_in_hospital dih
+                        LEFT JOIN hospitals h ON h.hospital_id = dih.hospital_id
+                        LEFT JOIN cities c ON c.city_id = h.city_id
+                        WHERE dih.doctor_id = $doctor_id AND dih.inactive = 0
+                        ORDER BY dih.created_at DESC";
+$reg_hospitals_result = mysqli_query($con, $reg_hospitals_query);
+
+// ============================================
+// FETCH PAST (REMOVED) HOSPITALS - inactive = 1
+// ============================================
+$past_hospitals_query = "SELECT dih.doctor_in_hosp_id, dih.hospital_id, dih.if_clinic, dih.inactive,
+                                dih.comment, dih.created_at, dih.updated_at,
+                                h.hospital_name, c.city_name
+                         FROM doctor_in_hospital dih
+                         LEFT JOIN hospitals h ON h.hospital_id = dih.hospital_id
+                         LEFT JOIN cities c ON c.city_id = h.city_id
+                         WHERE dih.doctor_id = $doctor_id AND dih.inactive = 1
+                         ORDER BY dih.updated_at DESC";
+$past_hospitals_result = mysqli_query($con, $past_hospitals_query);
 ?>
 
 <link rel="stylesheet" href="<?= BASE_URL ?>style/doctor-profile-admin.css">
@@ -213,6 +284,9 @@ $dih_count = mysqli_fetch_assoc($dih_result)['total'];
             </div>
         </div>
         <div class="page-header-actions">
+            <a href="<?php echo BASE_URL; ?>admin/doctors/assign-hospitals?id=<?php echo $doctor['doctor_id']; ?>" class="btn-action-header">
+                <i class="fas fa-edit"></i> Assign Doctor
+            </a>
             <a href="<?php echo BASE_URL; ?>admin/doctors/add?id=<?php echo $doctor['doctor_id']; ?>" class="btn-action-header">
                 <i class="fas fa-edit"></i> Edit
             </a>
@@ -627,6 +701,144 @@ $dih_count = mysqli_fetch_assoc($dih_result)['total'];
                     </div>
                 </div>
             </div>
+
+            <!-- ===== Registered Hospitals (inactive = 0) ===== -->
+            <div class="info-card">
+                <div class="info-card-header">
+                    <h5><i class="fas fa-hospital-alt"></i> Registered Hospitals</h5>
+                    <span class="badge bg-primary"><?php echo mysqli_num_rows($reg_hospitals_result); ?> Records</span>
+                </div>
+                <div class="info-card-body">
+                    <?php if (mysqli_num_rows($reg_hospitals_result) > 0): ?>
+                        <div class="table-responsive">
+                            <table class="table table-sm align-middle mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Hospital / Clinic</th>
+                                        <th>City</th>
+                                        <th>Status</th>
+                                        <th>Comment</th>
+                                        <th>Added</th>
+                                        <th class="text-end">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php $sr = 1; while ($rh = mysqli_fetch_assoc($reg_hospitals_result)): ?>
+                                        <tr>
+                                            <td><?php echo $sr++; ?></td>
+                                            <td>
+                                                <?php if ($rh['if_clinic'] == 1): ?>
+                                                    <span class="badge bg-success">Personal Clinic</span>
+                                                <?php elseif (!empty($rh['hospital_name'])): ?>
+                                                    <i class="fas fa-hospital text-primary me-1"></i>
+                                                    <a href="<?=BASE_URL?>admin/hospitals/detail?id=<?=$rh['hospital_id']?>"><?php echo htmlspecialchars($rh['hospital_name']); ?></a>
+                                                <?php else: ?>
+                                                    <span class="text-muted">Hospital not found</span>
+                                                <?php endif; ?>
+                                            </td>
+                                            <td><?php echo htmlspecialchars($rh['city_name'] ?? '-'); ?></td>
+                                            <td><span class="badge bg-success">Active</span></td>
+                                            <td><?php echo !empty($rh['comment']) ? nl2br(htmlspecialchars($rh['comment'])) : '-'; ?></td>
+                                            <td>
+                                                <small class="text-muted">
+                                                    <?php echo !empty($rh['created_at']) ? date('d M Y', strtotime($rh['created_at'])) : '-'; ?>
+                                                </small>
+                                            </td>
+                                            <td class="text-end">
+                                                <form method="POST" action="" class="d-inline"
+                                                      onsubmit="return confirm('Are you sure you want to remove this hospital from the doctor?');">
+                                                    <input type="hidden" name="hospital_action" value="remove">
+                                                    <input type="hidden" name="doctor_in_hosp_id" value="<?php echo (int)$rh['doctor_in_hosp_id']; ?>">
+                                                    <input type="hidden" name="doctor_id" value="<?php echo $doctor_id; ?>">
+                                                    <button type="submit" class="btn btn-sm btn-danger">
+                                                        <i class="fas fa-times me-1"></i> Remove Hospital
+                                                    </button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                    <?php endwhile; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    <?php else: ?>
+                        <div class="text-center py-4">
+                            <i class="fas fa-hospital fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">This doctor is not registered in any hospital.</p>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+            <!-- ===== END Registered Hospitals ===== -->
+
+            <!-- ===== NEW: Past Registered Hospitals (inactive = 1) ===== -->
+            <div class="info-card">
+                <div class="info-card-header">
+                    <h5><i class="fas fa-history"></i> Past Registered Hospitals</h5>
+                    <span class="badge bg-secondary"><?php echo mysqli_num_rows($past_hospitals_result); ?> Records</span>
+                </div>
+                <div class="info-card-body">
+                    <?php if (mysqli_num_rows($past_hospitals_result) > 0): ?>
+                        <div class="table-responsive">
+                            <table class="table table-sm align-middle mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Hospital / Clinic</th>
+                                        <th>City</th>
+                                        <th>Status</th>
+                                        <th>Comment</th>
+                                        <th>Removed On</th>
+                                        <th class="text-end">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php $sr = 1; while ($ph = mysqli_fetch_assoc($past_hospitals_result)): ?>
+                                        <tr>
+                                            <td><?php echo $sr++; ?></td>
+                                            <td>
+                                                <?php if ($ph['if_clinic'] == 1): ?>
+                                                    <span class="badge bg-success">Personal Clinic</span>
+                                                <?php elseif (!empty($ph['hospital_name'])): ?>
+                                                    <i class="fas fa-hospital text-secondary me-1"></i>
+                                                    <a href="<?=BASE_URL?>admin/hospitals/detail?id=<?=$ph['hospital_id']?>"><?php echo htmlspecialchars($ph['hospital_name']); ?></a>
+                                                <?php else: ?>
+                                                    <span class="text-muted">Hospital not found</span>
+                                                <?php endif; ?>
+                                            </td>
+                                            <td><?php echo htmlspecialchars($ph['city_name'] ?? '-'); ?></td>
+                                            <td><span class="badge bg-danger">Inactive</span></td>
+                                            <td><?php echo !empty($ph['comment']) ? nl2br(htmlspecialchars($ph['comment'])) : '-'; ?></td>
+                                            <td>
+                                                <small class="text-muted">
+                                                    <?php echo !empty($ph['updated_at']) ? date('d M Y', strtotime($ph['updated_at'])) : '-'; ?>
+                                                </small>
+                                            </td>
+                                            <td class="text-end">
+                                                <form method="POST" action="" class="d-inline"
+                                                      onsubmit="return confirm('Are you sure you want to re-add this hospital to the doctor?');">
+                                                    <input type="hidden" name="hospital_action" value="readd">
+                                                    <input type="hidden" name="doctor_in_hosp_id" value="<?php echo (int)$ph['doctor_in_hosp_id']; ?>">
+                                                    <input type="hidden" name="doctor_id" value="<?php echo $doctor_id; ?>">
+                                                    <button type="submit" class="btn btn-sm btn-success">
+                                                        <i class="fas fa-undo me-1"></i> Readd
+                                                    </button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                    <?php endwhile; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    <?php else: ?>
+                        <div class="text-center py-4">
+                            <i class="fas fa-history fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">No past hospitals found.</p>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+            <!-- ===== END Past Registered Hospitals ===== -->
 
         </div>
     </div>

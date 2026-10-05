@@ -256,6 +256,10 @@ $result = mysqli_query($con, $query);
                                class="btn-icon" title="Delete" style="color:#ef4444;">
                                 <i class="fas fa-trash"></i>
                             </a>
+                            <a href="<?php echo BASE_URL; ?>admin/doctors/assign-hospitals?id=<?php echo $doctor['doctor_id']; ?>" 
+                               class="btn-icon" title="Assign Hospital">
+                                <i class="fas fa-hospital"></i>
+                            </a>
                         </div>
                     </div>
 

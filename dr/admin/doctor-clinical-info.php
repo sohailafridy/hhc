@@ -7,7 +7,7 @@
 
 <?php
 
-$get_doc_in_hosp_q = mysqli_query($con, "SELECT `doctor_in_hosp_id` FROM `doctor_in_hospital` WHERE `doctor_id`='".$_GET['id']."'");
+$get_doc_in_hosp_q = mysqli_query($con, "SELECT `doctor_in_hosp_id` FROM `doctor_in_hospital` WHERE `doctor_id`='".$_GET['id']."' AND inactive=0 ");
 $doctor_in_hosp_id = [];    
 while($row = mysqli_fetch_assoc($get_doc_in_hosp_q)){
         $doctor_in_hosp_id[] = $row['doctor_in_hosp_id'];
@@ -107,7 +107,7 @@ $doctor_id = (int)$_GET['id'];
 $get_doc_in_hosp = mysqli_query($con, "SELECT dih.doctor_in_hosp_id, h.hospital_name 
     FROM doctor_in_hospital dih 
     LEFT JOIN hospitals h ON dih.hospital_id = h.hospital_id 
-    WHERE dih.doctor_id = $doctor_id and dih.doctor_in_hosp_id NOT IN ($clinical_info_ids)");
+    WHERE  dih.inactive=0 AND dih.doctor_id = $doctor_id and dih.doctor_in_hosp_id NOT IN ($clinical_info_ids)");
 
 if (!$get_doc_in_hosp) {
     die("Error fetching hospital information: " . mysqli_error($con));
