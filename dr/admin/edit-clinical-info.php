@@ -1,7 +1,7 @@
 <?php 
 include '../config.php'; 
 include BASE_PATH.'/admin/inc/header.php';
-
+include '../check_auth.php';
 // Handle form submission
 $update_message = '';
 $show_post = false;

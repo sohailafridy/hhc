@@ -1,5 +1,5 @@
 <?php include '../config.php'; ?>
-
+<?php include '../check_auth.php'; ?>
 <?php
 $user_id = $_SESSION['user_id'];
 // ============================================

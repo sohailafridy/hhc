@@ -1,5 +1,5 @@
 <?php include '../config.php'; ?>
-
+<?php include '../check_auth.php'; ?>
 <?php
 
 // Handle delete operation - MUST be before any HTML output

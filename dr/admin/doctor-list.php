@@ -1,5 +1,5 @@
 <?php include '../config.php'; ?>
-
+<?php include '../check_auth.php'; ?>
 <?php
 // Handle emergency status toggle
 if (isset($_POST['toggle_emergency']) && is_numeric($_POST['toggle_emergency']) && isset($_POST['status'])) {
@@ -308,7 +308,13 @@ $result = mysqli_query($con, $query);
                             <?php if ($doctor['doctor_type'] == 1): ?>
                                 <span class="badge-sm hospital">Hospital</span>
                             <?php else: ?>
-                                <span class="badge-sm clinic">Clinic</span>
+                                <?php
+                                $text='text-dark';
+                                    if($doctor['clinic_status']==1){$text='text-danger';}
+                                ?>
+                                <span class="badge-sm clinic <?=$text?>">
+                                    Clinic
+                                </span>
                             <?php endif; ?>
                         </div>
                     </div>

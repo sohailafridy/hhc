@@ -233,7 +233,7 @@ if (isset($_POST['user_id']) && (int)$_POST['user_id'] != 0) {
                         <?php endif; ?>
 
                         <!-- If personal Clinic -->
-                        <?php if (!empty($doctor['clinic_name'])): ?>
+                        <?php if (!empty($doctor['clinic_name']) AND $doctor['clinic_status']==0): ?>
                             <div class="content-section">
                                 <div class="section-title">
                                     <i class="fas fa-ellipsis-h"></i> Personal Clinic

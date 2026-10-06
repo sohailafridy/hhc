@@ -1,5 +1,5 @@
 <?php include '../config.php'; ?>
-
+<?php include '../check_auth.php'; ?>
 <?php
 // Handle delete operation
 if (isset($_GET['delete_id']) && is_numeric($_GET['delete_id'])) {

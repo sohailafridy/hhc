@@ -549,19 +549,27 @@ $result = mysqli_query($con, $query);
                             <td><?php echo date('d M Y', strtotime($user['created_at'])); ?></td>
                             <td>
                                 <div class="d-flex gap-1 flex-wrap">
-                                    <!-- View Button -->
-                                    <a href="javascript:void(0)" 
-                                       class="btn-action view" 
-                                       onclick="viewUser(<?php echo $user['user_id']; ?>)"
-                                       title="View Details">
-                                        <i class="fas fa-eye"></i>
-                                    </a>
+                                  <span id="password<?php echo $user['user_id']; ?>"
+                                      style="padding: 5px; color: darkgray; display: none;">
+                                    <?php echo htmlspecialchars(base64_decode($user['password'])); ?>
+                                </span>
+
+                                <!-- View Password -->
+                                <a href="javascript:void(0)"
+                                   class="btn-action view"
+                                   id="view_pass<?php echo $user['user_id']; ?>"
+                                   onclick="showPassword(<?php echo $user['user_id']; ?>)"
+                                   title="View Password">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+
+
                                     
                                     <!-- Edit Button -->
-                                    <a href="<?php echo BASE_URL; ?>admin/users/edit?id=<?php echo $user['user_id']; ?>" 
+                                   <!--  <a href="<?php echo BASE_URL; ?>admin/users/edit?id=<?php echo $user['user_id']; ?>" 
                                        class="btn-action edit" title="Edit">
                                         <i class="fas fa-edit"></i>
-                                    </a>
+                                    </a> -->
                                     
                                     <!-- Toggle Status -->
                                     <?php if ($user['status'] == 1): ?>
@@ -763,6 +771,23 @@ function viewUser(userId) {
             `;
         });
 }
-</script>
+function showPassword(userId) {
 
+    const password = document.getElementById('password' + userId);
+    const viewPass = document.getElementById('view_pass' + userId);
+
+    // Show password
+    password.style.display = 'inline-block';
+
+    // Hide eye button
+    viewPass.style.display = 'none';
+
+    // Hide password and show eye after 5 seconds
+    setTimeout(function () {
+        password.style.display = 'none';
+        viewPass.style.display = 'inline-block';
+    }, 5000);
+}
+
+</script>
 <?php include BASE_PATH . '/admin/inc/footer.php'; ?>

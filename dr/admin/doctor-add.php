@@ -1,4 +1,5 @@
 <?php include '../config.php'; ?>
+<?php include '../check_auth.php'; ?>
 <?php
 // ============================================================
 // doctor_in_hospital sync

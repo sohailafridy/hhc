@@ -1,5 +1,5 @@
 <?php include '../config.php'; ?>
-
+<?php include '../check_auth.php'; ?>
 <?php
 $user_id = 0;
 if (isset($_GET['user_id'])) {
@@ -82,6 +82,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['hospital_action'], $_P
 
             if($new_inactive == 1){
                 mysqli_query($con, "DELETE FROM `clinical_info` WHERE `doctor_in_hosp_id` = '". $act_dih_id ."'");
+
+                if((int)$_POST['personal_clinic']==1){
+                    mysqli_query($con, "UPDATE `doctors` set `clinic_status`=1 WHERE `doctor_id` = '". $act_doctor_id ."'");
+                }
+            }else{
+                mysqli_query($con, "UPDATE `doctors` set `clinic_status`=0 WHERE `doctor_id` = '". $act_doctor_id ."'");
             }
             $_SESSION['success_msg'] = $ok_msg;
         } else {
@@ -200,7 +206,7 @@ $dih_count = mysqli_fetch_assoc($dih_result)['total'];
 // FETCH ALL HOSPITALS WHERE DOCTOR IS REGISTERED
 // ============================================
 $reg_hospitals_query = "SELECT dih.doctor_in_hosp_id, dih.hospital_id, dih.if_clinic, dih.inactive,
-                               dih.comment, dih.created_at, dih.updated_at,
+                               dih.comment, dih.created_at, dih.updated_at,dih.doctor_id,
                                h.hospital_name, c.city_name
                         FROM doctor_in_hospital dih
                         LEFT JOIN hospitals h ON h.hospital_id = dih.hospital_id
@@ -472,6 +478,17 @@ $past_hospitals_result = mysqli_query($con, $past_hospitals_query);
                     <h5><i class="fas fa-map-marker-alt"></i> Location & Workplace</h5>
                 </div>
                 <div class="info-card-body">
+                    <div class="info-row">
+                        
+                            <?php
+                                if ((int)$doctor['clinic_status']==0) { ?>
+                                    <span class="label bg-success">Active</span>
+                                <?php }else{ ?>
+                                    <span class="label bg-danger">Removed</span>
+                                <?php }
+                            ?>
+                        
+                    </div>
                     <div class="info-row">
                         <span class="label">City</span>
                         <span class="value"><?php echo htmlspecialchars($doctor['city_name'] ?? 'N/A'); ?></span>
@@ -749,6 +766,7 @@ $past_hospitals_result = mysqli_query($con, $past_hospitals_query);
                                                 <form method="POST" action="" class="d-inline"
                                                       onsubmit="return confirm('Are you sure you want to remove this hospital from the doctor?');">
                                                     <input type="hidden" name="hospital_action" value="remove">
+                                                    <input type="hidden" name="personal_clinic" value="<?php if((int)$rh['if_clinic']==1){echo 1;} ?>">
                                                     <input type="hidden" name="doctor_in_hosp_id" value="<?php echo (int)$rh['doctor_in_hosp_id']; ?>">
                                                     <input type="hidden" name="doctor_id" value="<?php echo $doctor_id; ?>">
                                                     <button type="submit" class="btn btn-sm btn-danger">

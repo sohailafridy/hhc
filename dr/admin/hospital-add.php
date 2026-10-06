@@ -1,4 +1,5 @@
 <?php include '../config.php'; ?>
+<?php include '../check_auth.php'; ?>
 <?php include BASE_PATH.'/admin/inc/header.php';?>
 <?php include BASE_PATH.'/admin/inc/top.php';?>
 <?php include BASE_PATH.'/admin/inc/nav.php';?>
