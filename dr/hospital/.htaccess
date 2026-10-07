@@ -11,6 +11,9 @@ RewriteRule ^blood-banks$ blood-banks.php [L]
 RewriteRule ^labs$ labs.php [L]
 RewriteRule ^doctor-detail$ doctor-detail.php [L]
 RewriteRule ^recycle$ recycle.php [L]
+RewriteRule ^past-registered-doctors$ past_registered_doctors.php [L]
+
+
 
 
 

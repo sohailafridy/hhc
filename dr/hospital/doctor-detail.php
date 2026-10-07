@@ -16,10 +16,10 @@ if (!isset($_SESSION['user_id']) || $_SESSION['type'] != 'hospital') {
     exit();
 }
 
-$user_id = $_SESSION['user_id'];
+$user_id = (int)$_SESSION['user_id'];   // logged-in HOSPITAL user
 
 // Get hospital data
- $hospital_query = "SELECT * FROM hospitals WHERE user_id = $user_id AND approve = 1";
+$hospital_query = "SELECT * FROM hospitals WHERE user_id = $user_id AND approve = 1";
 $hospital_result = mysqli_query($con, $hospital_query);
 $hospital_data = mysqli_fetch_assoc($hospital_result);
 
@@ -29,53 +29,47 @@ if (!$hospital_data) {
     exit();
 }
 
-$hospital_id = $hospital_data['hospital_id'];
+$hospital_id = (int)$hospital_data['hospital_id'];
 $hospital_name = $hospital_data['hospital_name'];
 
 // ============================================
 // GET DOCTOR ID
 // ============================================
 if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
-    $doctor_id = (int)$_GET['id'];
-    // header("Location: " . BASE_URL . "hospital/doctors/list");
-    // exit();
+    header("Location: " . BASE_URL . "hospital/doctors/list");
+    exit();
 }
 
 $doctor_id = (int)$_GET['id'];
 
 // ============================================
-// FETCH DOCTOR DETAILS
+// FETCH DOCTOR DETAILS  (status / reference ab users table se)
 // ============================================
- $query = "SELECT d.*, 
+$query = "SELECT d.*, 
                  c.city_name,
                  dct.type as specialization,
-                 e.status as estatus,
-                 e.reference as ref,
+                 u.status as estatus,
+                 u.reference as ref,
                  u.username,
                  u.email as user_email
           FROM doctors d
           LEFT JOIN cities c ON d.city_id = c.city_id
           LEFT JOIN dr_cat_types dct ON d.cat_type_id = dct.dr_cat_type_id
-          LEFT JOIN entities e ON d.entity_id = e.entity_id
-          LEFT JOIN doctor_in_hospital dih ON dih.doctor_id = d.doctor_id
           LEFT JOIN users u ON d.user_id = u.user_id
-          WHERE dih.doctor_id = $doctor_id AND dih.hospital_id = $hospital_id AND d.approve = 1";
-
-
-
-
-
+          INNER JOIN doctor_in_hospital dih ON dih.doctor_id = d.doctor_id
+          WHERE dih.doctor_id = $doctor_id AND dih.hospital_id = $hospital_id AND d.approve = 1
+          LIMIT 1";
 
 $result = mysqli_query($con, $query);
 
-if (mysqli_num_rows($result) == 0) {
+if (!$result || mysqli_num_rows($result) == 0) {
     $_SESSION['error_msg'] = "Doctor not found or you don't have permission.";
     header("Location: " . BASE_URL . "hospital/doctors/list");
     exit();
 }
 
 $doctor = mysqli_fetch_assoc($result);
-$entity_id = $doctor['entity_id'];
+$doctor_user_id = (int)$doctor['user_id'];   // doctor ka user_id (hospital ke $user_id se alag)
 
 // ============================================
 // FETCH CLINICAL INFO
@@ -89,17 +83,17 @@ $clinical_query = "SELECT ci.*, h.hospital_name, h.hospital_id
 $clinical_result = mysqli_query($con, $clinical_query);
 
 // ============================================
-// FETCH RATING & REVIEWS
+// FETCH RATING & REVIEWS  (feedback.user_id = doctor ka user_id)
 // ============================================
 $rating_query = "SELECT AVG(stars) as avg_rating, COUNT(feedback_id) as total_reviews 
-                 FROM feedback WHERE entity_id = $entity_id AND status = 1";
+                 FROM feedback WHERE user_id = $doctor_user_id AND status = 1";
 $rating_result = mysqli_query($con, $rating_query);
 $rating_data = mysqli_fetch_assoc($rating_result);
 $avg_rating = $rating_data['avg_rating'] ? round($rating_data['avg_rating'], 1) : 0;
 $total_reviews = $rating_data['total_reviews'] ? $rating_data['total_reviews'] : 0;
 
 $reviews_query = "SELECT * FROM feedback 
-                  WHERE entity_id = $entity_id AND status = 1 
+                  WHERE user_id = $doctor_user_id AND status = 1 
                   ORDER BY created_at DESC LIMIT 10";
 $reviews_result = mysqli_query($con, $reviews_query);
 $total_reviews_count = mysqli_num_rows($reviews_result);

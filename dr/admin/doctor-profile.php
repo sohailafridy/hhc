@@ -81,7 +81,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['hospital_action'], $_P
         if (mysqli_query($con, $act_query)) {
 
             if($new_inactive == 1){
-                mysqli_query($con, "DELETE FROM `clinical_info` WHERE `doctor_in_hosp_id` = '". $act_dih_id ."'");
+                // mysqli_query($con, "DELETE FROM `clinical_info` WHERE `doctor_in_hosp_id` = '". $act_dih_id ."'");
 
                 if((int)$_POST['personal_clinic']==1){
                     mysqli_query($con, "UPDATE `doctors` set `clinic_status`=1 WHERE `doctor_id` = '". $act_doctor_id ."'");

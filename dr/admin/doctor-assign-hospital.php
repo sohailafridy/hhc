@@ -9,21 +9,24 @@
 <?php
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $doctor_id = mysqli_real_escape_string($con, $_POST['doctor_id']);
+    $doctor_id = (int) $_POST['doctor_id'];
     $hospitals = isset($_POST['hospitals']) ? $_POST['hospitals'] : [];
-    $clinic=0;
+
     if (!empty($hospitals)) {
+        // Prepared statement for safety & performance
+        $stmt = mysqli_prepare($con, "INSERT INTO doctor_in_hospital (doctor_id, hospital_id, if_clinic) VALUES (?, ?, ?)");
+
         foreach ($hospitals as $hospital_id) {
-            $hospital_id = mysqli_real_escape_string($con, $hospital_id);
+            $hospital_id = (int) $hospital_id;
 
-            if($hospital_id==0){$clinic=1;}
+            // ✅ Har iteration mein reset — Personal Clinic (0) ke liye 1, warna 0
+            $clinic = ($hospital_id === 0) ? 1 : 0;
 
-
-
-            $insert_query = "INSERT INTO doctor_in_hospital (doctor_id, hospital_id, if_clinic) 
-                           VALUES ('$doctor_id', '$hospital_id', '$clinic')";
-            mysqli_query($con, $insert_query);
+            mysqli_stmt_bind_param($stmt, "iii", $doctor_id, $hospital_id, $clinic);
+            mysqli_stmt_execute($stmt);
         }
+        mysqli_stmt_close($stmt);
+
         $success_msg = "Hospitals assigned to doctor successfully!";
         // Refresh the page to show updated hospital list
         echo "<script>window.location.href = '?id=" . $doctor_id . "';</script>";
@@ -53,19 +56,19 @@ $city_id = mysqli_fetch_assoc($get_city_id)['city_id'];
 $get_already_assign_hosp = mysqli_query($con,"SELECT if_clinic,hospital_id FROM doctor_in_hospital where doctor_id = $doctor_id");
 $already_assign_hosp = [];
 
-$clinic_check =0;
-
+$clinic_check = 0;
 
 while($row = mysqli_fetch_assoc($get_already_assign_hosp)) {
     $already_assign_hosp[] = $row['hospital_id'];
     if ($row['if_clinic'] == 1) {
-        $clinic_check =1;
+        $clinic_check = 1;
     }
 }
+
 // Get available hospitals (not already assigned)
 if (!empty($already_assign_hosp)) {
     $hosp_ids = implode(',', $already_assign_hosp);
-     $get_hosp = mysqli_query($con,"SELECT * FROM hospitals where hospital_id not in ($hosp_ids) and city_id = $city_id order by hospital_name");
+    $get_hosp = mysqli_query($con,"SELECT * FROM hospitals where hospital_id not in ($hosp_ids) and city_id = $city_id order by hospital_name");
 } else {
     $get_hosp = mysqli_query($con,"SELECT * FROM hospitals where city_id = $city_id order by hospital_name");
 }
@@ -109,7 +112,7 @@ if (!empty($already_assign_hosp)) {
                   </div>
 
                   <?php
-                    if ($clinic_check==0) { ?>
+                    if ($clinic_check == 0) { ?>
                         <div class="hospital-item">
                             <div class="custom-checkbox">
                                <input class="form-check-input hospital-checkbox" name="hospitals[]" type="checkbox" value="0" id="personal_clinic">
@@ -129,8 +132,6 @@ if (!empty($already_assign_hosp)) {
                     <?php }
                   ?>
                   
-
-
                   <?php while($rs = mysqli_fetch_assoc($get_hosp)) { ?>
                      <div class="hospital-item">
                         <div class="custom-checkbox">
@@ -235,7 +236,5 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
-
-
 
 <?php include BASE_PATH.'/admin/inc/footer.php';?>

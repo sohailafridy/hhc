@@ -24,15 +24,17 @@ if (!$hospital_data) {
 $hospital_id = $hospital_data['hospital_id'];
 
 // ============================================
-// REMOVE DOCTOR (Soft Delete — inactive = 1)
+// RE-ADD DOCTOR (inactive = 0)
 // ============================================
-if (isset($_GET['delete_id']) && is_numeric($_GET['delete_id'])) {
-    $del_doctor_id = (int) $_GET['delete_id'];
+if (isset($_GET['readd_id']) && is_numeric($_GET['readd_id'])) {
+    $readd_doctor_id = (int) $_GET['readd_id'];
 
-    // Pehle check karein ke yeh doctor is hospital se assigned hai ya nahi
+    // Pehle check karein ke yeh doctor is hospital ka inactive row hai
     $check_query = "SELECT doctor_in_hosp_id, if_clinic 
                     FROM doctor_in_hospital 
-                    WHERE doctor_id = $del_doctor_id AND hospital_id = $hospital_id";
+                    WHERE doctor_id = $readd_doctor_id 
+                    AND hospital_id = $hospital_id 
+                    AND inactive = 1";
     $check_result = mysqli_query($con, $check_query);
 
     if ($check_result && mysqli_num_rows($check_result) > 0) {
@@ -40,43 +42,40 @@ if (isset($_GET['delete_id']) && is_numeric($_GET['delete_id'])) {
         $dih_id    = (int) $row['doctor_in_hosp_id'];
         $if_clinic = (int) $row['if_clinic'];
 
-        // Soft delete: inactive = 1
-        $delete_query = "UPDATE doctor_in_hospital 
-                         SET inactive = 1, updated_at = NOW() 
-                         WHERE doctor_in_hosp_id = $dih_id 
-                         AND doctor_id = $del_doctor_id 
-                         AND hospital_id = $hospital_id";
+        // Re-add: inactive = 0
+        $readd_query = "UPDATE doctor_in_hospital 
+                        SET inactive = 0, updated_at = NOW() 
+                        WHERE doctor_in_hosp_id = $dih_id 
+                        AND doctor_id = $readd_doctor_id 
+                        AND hospital_id = $hospital_id";
 
-        if (mysqli_query($con, $delete_query)) {
-            // Agar Personal Clinic thi to doctors.clinic_status = 1 (available) kar dein
+        if (mysqli_query($con, $readd_query)) {
+            // Agar Personal Clinic thi to doctors.clinic_status = 0 (assigned) kar dein
             if ($if_clinic == 1) {
-                mysqli_query($con, "UPDATE doctors SET clinic_status = 1 WHERE doctor_id = $del_doctor_id");
+                mysqli_query($con, "UPDATE doctors SET clinic_status = 0 WHERE doctor_id = $readd_doctor_id");
             }
 
-            $_SESSION['success_msg'] = "Doctor removed from your hospital successfully!";
+            $_SESSION['success_msg'] = "Doctor re-added to your hospital successfully!";
         } else {
             $_SESSION['error_msg'] = "Error: " . mysqli_error($con);
         }
     } else {
-        $_SESSION['error_msg'] = "Doctor not found in your hospital.";
+        $_SESSION['error_msg'] = "Doctor not found in removed list.";
     }
 
-    header('Location: ' . BASE_URL . 'hospital/doctors.php');
+    header('Location: ' . BASE_URL . 'hospital/past_registered_doctors.php');
     exit();
 }
 
 // ============================================
-// GET DOCTORS - JOIN WITH doctor_in_hospital
+// GET INACTIVE DOCTORS (Removed)
 // ============================================
 $search = isset($_GET['search']) ? mysqli_real_escape_string($con, $_GET['search']) : '';
 $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 $per_page = 10;
 $offset = ($page - 1) * $per_page;
 
-// ============================================
-// FIX: JOIN doctor_in_hospital to get doctors for this hospital
-// ============================================
-$where = "dih.hospital_id = $hospital_id AND d.approve = 1 AND u.status = 1 AND dih.inactive = 0";
+$where = "dih.hospital_id = $hospital_id AND dih.inactive = 1";
 
 if (!empty($search)) {
     $where .= " AND (d.doctor_name LIKE '%$search%' OR dct.type LIKE '%$search%')";
@@ -87,20 +86,18 @@ $count_query = "SELECT COUNT(DISTINCT d.doctor_id) as total
                 FROM doctor_in_hospital dih
                 LEFT JOIN doctors d ON dih.doctor_id = d.doctor_id
                 LEFT JOIN dr_cat_types dct ON d.cat_type_id = dct.dr_cat_type_id
-                LEFT JOIN users u ON u.user_id = d.user_id
                 WHERE $where";
 $count_result = mysqli_query($con, $count_query);
 $total_records = mysqli_fetch_assoc($count_result)['total'];
 $total_pages = ceil($total_records / $per_page);
 
-// Fetch doctors
-$query = "SELECT DISTINCT d.*, dct.type as specialization, u.status as ustatus
+// Fetch inactive doctors
+$query = "SELECT DISTINCT d.*, dct.type as specialization, dih.updated_at as removed_at
           FROM doctor_in_hospital dih
           LEFT JOIN doctors d ON dih.doctor_id = d.doctor_id
           LEFT JOIN dr_cat_types dct ON d.cat_type_id = dct.dr_cat_type_id
-          LEFT JOIN users u ON u.user_id = d.user_id
           WHERE $where
-          ORDER BY d.created_at DESC
+          ORDER BY dih.updated_at DESC
           LIMIT $offset, $per_page";
 $result = mysqli_query($con, $query);
 ?>
@@ -114,10 +111,10 @@ $result = mysqli_query($con, $query);
 <div class="content-wrapper">
 
     <div class="page-header">
-        <h4><i class="fas fa-user-md me-2"></i> My Doctors</h4>
+        <h4><i class="fas fa-history me-2"></i> Past Registered Doctors</h4>
         <div>
-            <a href="<?php echo BASE_URL; ?>hospital/doctor-add" class="btn-add">
-                <i class="fas fa-plus me-2"></i> Add Doctor
+            <a href="<?php echo BASE_URL; ?>hospital/doctors.php" class="btn-add">
+                <i class="fas fa-arrow-left me-2"></i> Back to Active Doctors
             </a>
         </div>
     </div>
@@ -160,7 +157,7 @@ $result = mysqli_query($con, $query);
                     <th>Specialization</th>
                     <th>Phone</th>
                     <th>Experience</th>
-                    <th>Status</th>
+                    <th>Removed On</th>
                     <th style="width:150px;">Actions</th>
                 </tr>
             </thead>
@@ -191,9 +188,13 @@ $result = mysqli_query($con, $query);
                             <td><?php echo htmlspecialchars($doctor['doctor_phone']); ?></td>
                             <td><?php echo $doctor['experience_years']; ?> yrs</td>
                             <td>
-                                <span class="badge-status <?php echo $doctor['ustatus'] == 1 ? 'active' : 'inactive'; ?>">
-                                    <?php echo $doctor['ustatus'] == 1 ? 'Active' : 'Inactive'; ?>
-                                </span>
+                                <?php if (!empty($doctor['removed_at'])): ?>
+                                    <?php echo date('d M, Y', strtotime($doctor['removed_at'])); ?>
+                                    <br>
+                                    <small class="text-muted"><?php echo date('h:i A', strtotime($doctor['removed_at'])); ?></small>
+                                <?php else: ?>
+                                    <span class="text-muted">—</span>
+                                <?php endif; ?>
                             </td>
                             <td>
                                 <div class="d-flex gap-1">
@@ -201,14 +202,10 @@ $result = mysqli_query($con, $query);
                                        class="btn-action view" title="View Details">
                                         <i class="fas fa-eye"></i>
                                     </a>
-                                    <a href="<?php echo BASE_URL; ?>hospital/doctor-add?id=<?php echo $doctor['doctor_id']; ?>" 
-                                       class="btn-action edit" title="Edit">
-                                        <i class="fas fa-edit"></i>
-                                    </a>
-                                    <a href="?delete_id=<?php echo $doctor['doctor_id']; ?>" 
-                                       class="btn-action delete" title="Remove from this hospital"
-                                       onclick="return confirm('Are you sure you want to remove Dr. <?php echo htmlspecialchars(addslashes($doctor['doctor_name'])); ?> from your hospital?')">
-                                        <i class="fas fa-trash"></i>
+                                    <a href="?readd_id=<?php echo $doctor['doctor_id']; ?>" 
+                                       class="btn-action edit" title="Re-add to my hospital"
+                                       onclick="return confirm('Re-add Dr. <?php echo htmlspecialchars(addslashes($doctor['doctor_name'])); ?> to your hospital?')">
+                                        <i class="fas fa-undo"></i>
                                     </a>
                                 </div>
                             </td>
@@ -217,8 +214,8 @@ $result = mysqli_query($con, $query);
                 <?php else: ?>
                     <tr>
                         <td colspan="7" class="text-center py-4 text-muted">
-                            <i class="fas fa-user-md fa-2x mb-2 d-block" style="color:#cbd5e1;"></i>
-                            No doctors found for your hospital.
+                            <i class="fas fa-history fa-2x mb-2 d-block" style="color:#cbd5e1;"></i>
+                            No past registered doctors found.
                         </td>
                     </tr>
                 <?php endif; ?>
