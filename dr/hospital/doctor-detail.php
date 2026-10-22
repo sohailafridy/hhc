@@ -308,7 +308,7 @@ $total_reviews_count = mysqli_num_rows($reviews_result);
                                         <div class="clinical-card">
                                             <div class="clinical-card-header">
                                                 <i class="fas fa-hospital"></i>
-                                                <h6>
+                                                <h6s style='color: white;'>
                                                     <?php 
                                                     if (!empty($clinical['hospital_name'])) {
                                                         echo htmlspecialchars($clinical['hospital_name']);

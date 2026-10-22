@@ -136,6 +136,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         // Common fields (add + edit)
         // ============================================
         $doctor_name = mysqli_real_escape_string($con, $_POST['doctor_name']);
+        $pmdc_no     = mysqli_real_escape_string($con, strtoupper(trim($_POST['pmdc_no'] ?? '')));
         $cat_type_id = (int)$_POST['specialization'];
 
         if (isset($_POST['if_not_available']) && $_POST['if_not_available'] == 1) {
@@ -159,7 +160,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         if ($edit_mode) {
             // ============================================
-            // EDIT MODE - username / email / cnic update nahi hote (readonly)
+            // EDIT MODE - username / email / cnic / pmdc update nahi hote (readonly)
             // ============================================
             $edit_user_id = (int)$doctor_data['user_id'];   // POST se nahi, DB se
 
@@ -244,7 +245,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         } else {
             // ============================================
-            // NEW DOCTOR - duplicate check (Username / Email / CNIC)
+            // NEW DOCTOR - duplicate check (Username / Email / CNIC / PMDC)
             // ============================================
             $doctor_email = mysqli_real_escape_string($con, $_POST['doctor_email']);
             $username     = mysqli_real_escape_string($con, $_POST['username']);
@@ -253,6 +254,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $password     = !empty($pass) ? base64_encode($pass) : base64_encode('123456');
 
             $dup_errors = [];
+            if ($pmdc_no !== '' && mysqli_num_rows(mysqli_query($con,
+                "SELECT 1 FROM doctors WHERE UPPER(pmdc_no)='$pmdc_no' LIMIT 1")) > 0) {
+                $dup_errors[] = "This PMDC No '" . htmlspecialchars($pmdc_no) . "' already exists.";
+            }
             if ($cnic_digits !== '' && mysqli_num_rows(mysqli_query($con,
                 "SELECT 1 FROM doctors WHERE REPLACE(cnic,'-','')='$cnic_digits' LIMIT 1")) > 0) {
                 $dup_errors[] = "This CNIC '" . htmlspecialchars($_POST['cnic']) . "' already exists.";
@@ -295,11 +300,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     $insert_query = "INSERT INTO doctors (
                                         user_id, city_id, hospital_id, doctor_name, 
                                         cat_type_id, experience_years, doctor_phone, doctor_email, cnic,
+                                        pmdc_no,
                                         doctor_type, gender, short_detail, other, static_clinical_info,
                                         mahre_amraz, notes, doctor_pic, approve, status, created_at
                                     ) VALUES (
                                         '$user_id_new', '$city_id', '$hospital_id', '$doctor_name',
                                         '$cat_type_id', '$experience_years', '$doctor_phone', '$doctor_email', '$cnic',
+                                        '$pmdc_no',
                                         '1', '$gender', '$short_detail', '$other', '$static_clinical_info',
                                         '$mahre_amraz', '$notes', '$doctor_pic', 1, 1, NOW()
                                     )";
@@ -326,7 +333,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 // ============================================
 $existing_doctors = [];
 if (!$edit_mode) {
-    $existing_doctors_query = "SELECT d.doctor_id, d.doctor_name, dct.type as specialization 
+    $existing_doctors_query = "SELECT d.doctor_id, d.doctor_name, d.pmdc_no, dct.type as specialization 
                                FROM doctors d
                                LEFT JOIN dr_cat_types dct ON d.cat_type_id = dct.dr_cat_type_id
                                LEFT JOIN users u ON u.user_id = d.user_id
@@ -466,6 +473,9 @@ function ci_options(array $options, $selected) {
                                 <option value="">-- Select Existing Doctor --</option>
                                 <?php foreach ($existing_doctors as $doc): ?>
                                     <option value="<?php echo $doc['doctor_id']; ?>">
+                                        <?php if(!empty($doc['pmdc_no'])): ?>
+                                            [<?php echo htmlspecialchars($doc['pmdc_no']); ?>] - 
+                                        <?php endif; ?>
                                         <?php echo htmlspecialchars($doc['doctor_name']); ?> 
                                         (<?php echo htmlspecialchars($doc['specialization'] ?? 'General'); ?>)
                                     </option>
@@ -555,11 +565,13 @@ function ci_options(array $options, $selected) {
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label class="form-label">Email <span class="required">*</span></label>
-                                <input type="email" class="form-control-modern" id="doctorEmail" name="doctor_email" required
-                                       placeholder="doctor@example.com" value="<?php echo fv('doctor_email'); ?>"
+                                <label class="form-label">PMDC No <span class="required">*</span></label>
+                                <input type="text" class="form-control-modern" id="pmdcNo" name="pmdc_no" required
+                                       placeholder="1001-N, 1002-P etc." pattern="\d{1,6}-[NP]"
+                                       title="Format: numbers + dash + N ya P (e.g. 1001-N, 1002-P)"
+                                       value="<?php echo fv('pmdc_no'); ?>"
                                        <?php echo $edit_mode ? 'readonly' : ''; ?>>
-                                <small class="field-msg" id="doctorEmail_msg"></small>
+                                <small class="field-msg" id="pmdcNo_msg"></small>
                             </div>
                         </div>
                     </div>
@@ -567,11 +579,23 @@ function ci_options(array $options, $selected) {
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
+                                <label class="form-label">Email <span class="required">*</span></label>
+                                <input type="email" class="form-control-modern" id="doctorEmail" name="doctor_email" required
+                                       placeholder="doctor@example.com" value="<?php echo fv('doctor_email'); ?>"
+                                       <?php echo $edit_mode ? 'readonly' : ''; ?>>
+                                <small class="field-msg" id="doctorEmail_msg"></small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
                                 <label class="form-label">Phone <span class="required">*</span></label>
                                 <input type="tel" class="form-control-modern" id="doctorPhone" name="doctor_phone" required
                                        placeholder="+92 300 1234567" value="<?php echo fv('doctor_phone'); ?>">
                             </div>
                         </div>
+                    </div>
+
+                    <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label class="form-label">CNIC</label>
@@ -582,9 +606,6 @@ function ci_options(array $options, $selected) {
                                 <small class="field-msg" id="cnic_msg"></small>
                             </div>
                         </div>
-                    </div>
-
-                    <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label class="form-label">Gender <span class="required">*</span></label>
@@ -597,11 +618,21 @@ function ci_options(array $options, $selected) {
                                 </select>
                             </div>
                         </div>
+                    </div>
+
+                    <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label class="form-label">Experience (Years) <span class="optional">(Optional)</span></label>
                                 <input type="number" class="form-control-modern" id="experienceYears" name="experience_years" min="0" max="60"
                                        placeholder="e.g. 5" value="<?php echo fv('experience_years'); ?>">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">Short Detail (Qualifications) <span class="optional">(Optional)</span></label>
+                                <input type="text" class="form-control-modern" id="shortDetail" name="short_detail" 
+                                       placeholder="MBBS/FCPS/LONDON/CHINA" value="<?php echo fv('short_detail'); ?>">
                             </div>
                         </div>
                     </div>
@@ -631,16 +662,6 @@ function ci_options(array $options, $selected) {
                                 </div>
                                 <input type="text" class="form-control-modern" name="specialization_txt"
                                        placeholder="Enter Specialization" id="specialization_txt" style="display:none; margin-top:6px;">
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-12">
-                            <div class="form-group">
-                                <label class="form-label">Short Detail (Qualifications) <span class="optional">(Optional)</span></label>
-                                <input type="text" class="form-control-modern" id="shortDetail" name="short_detail" 
-                                       placeholder="MBBS/FCPS/LONDON/CHINA" value="<?php echo fv('short_detail'); ?>">
                             </div>
                         </div>
                     </div>
@@ -893,7 +914,7 @@ function ci_options(array $options, $selected) {
 <?php include BASE_PATH . '/admin/inc/footer.php'; ?>
 <script>
 // ============================================
-// DUPLICATE CHECK (Username / Email / CNIC) - sirf ADD mode
+// DUPLICATE CHECK (Username / Email / CNIC / PMDC) - sirf ADD mode
 // ============================================
 var dupFields = {};
 function refreshSaveBtn() {
@@ -935,30 +956,45 @@ $(document).ready(function() {
     // ----- Duplicate check setup -----
     var checkUrl = '<?php echo BASE_URL; ?>hospital/ajax/check_unique.php';
     dupFields = {
+        pmdc_no:  { $el: $('#pmdcNo'),      $msg: $('#pmdcNo_msg'),      label: 'PMDC No',  bad: false, timer: null, req: 0 },
         cnic:     { $el: $('#cnic'),        $msg: $('#cnic_msg'),        label: 'CNIC',     bad: false, timer: null, req: 0 },
         email:    { $el: $('#doctorEmail'), $msg: $('#doctorEmail_msg'), label: 'Email',    bad: false, timer: null, req: 0 },
         username: { $el: $('#username'),    $msg: $('#username_msg'),    label: 'Username', bad: false, timer: null, req: 0 }
     };
 
-    function check(key) {
+        function check(key) {
         var f = dupFields[key];
         var value = $.trim(f.$el.val());
+        
+        // Agar khali hai, readonly hai ya disabled hai
         if (value === '' || f.$el.prop('readonly') || f.$el.prop('disabled')) {
-            f.bad = false; f.$msg.text('').removeClass('error'); refreshSaveBtn(); return;
+            f.bad = false; 
+            f.$msg.text('').removeClass('error ok'); 
+            refreshSaveBtn(); 
+            return;
         }
+        
         var myReq = ++f.req;
+        
+        // Request bhejne se pehle "Checking..." dikhayein
+        f.$msg.text('Checking...').removeClass('error').addClass('ok');
+
         $.post(checkUrl, { field: key, value: value }, function (res) {
-            if (myReq !== f.req) return;
+            if (myReq !== f.req) return; // Agar user ne tez type kiya aur naya response aya, to purana ignore karein
+            
             if (res.exists) {
+                // Agar exist karta hai
                 f.bad = true;
-                f.$msg.text(f.label + ' pehle se maujood hai.').addClass('error');
+                f.$msg.text(f.label + ' pehle se maujood hai.').removeClass('ok').addClass('error');
             } else {
-                f.bad = false; f.$msg.text('').removeClass('error');
+                // Agar unique hai (NEW UPDATE)
+                f.bad = false; 
+                f.$msg.text(f.label + ' available hai.').removeClass('error').addClass('ok');
             }
             refreshSaveBtn();
         }, 'json').fail(function () {
             f.bad = false;
-            f.$msg.text('Check nahi ho saka, dobara koshish karein.').addClass('error');
+            f.$msg.text('Check nahi ho saka, dobara koshish karein.').removeClass('ok').addClass('error');
             refreshSaveBtn();
         });
     }
@@ -968,6 +1004,11 @@ $(document).ready(function() {
             clearTimeout(f.timer);
             f.timer = setTimeout(function () { check(key); }, 400);
         });
+    });
+
+    // PMDC No: auto-uppercase (1001-n => 1001-N)
+    $('#pmdcNo').on('input', function () {
+        this.value = this.value.toUpperCase();
     });
 
     // CNIC auto-dash: 12345-1234567-1
@@ -996,6 +1037,7 @@ $(document).ready(function() {
                         var doc = data.data;
                         $('#username').val(doc.username || '');
                         $('#doctorName').val(doc.doctor_name || '');
+                        $('#pmdcNo').val(doc.pmdc_no || ''); // PMDC added
                         $('#doctorEmail').val(doc.doctor_email || '');
                         $('#doctorPhone').val(doc.doctor_phone || '');
                         $('#cnic').val(doc.cnic || '');
@@ -1013,7 +1055,7 @@ $(document).ready(function() {
             });
         } else {
             $('#personalDetailsCard input, #personalDetailsCard select, #personalDetailsCard textarea').prop('disabled', false);
-            $('#username, #doctorName, #doctorEmail, #doctorPhone, #cnic, #experienceYears, #shortDetail, #other, #mahreAmraz, #notes, #staticClinicalInfo').val('');
+            $('#username, #doctorName, #pmdcNo, #doctorEmail, #doctorPhone, #cnic, #experienceYears, #shortDetail, #other, #mahreAmraz, #notes, #staticClinicalInfo').val('');
             $('#gender, #specializationSelect').val('').trigger('change');
             resetDupChecks();
         }

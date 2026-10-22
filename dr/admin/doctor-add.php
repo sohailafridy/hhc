@@ -3,16 +3,12 @@
 <?php
 // ============================================================
 // doctor_in_hospital sync
-//   Clinic mode   => hospital_id = 0, if_clinic = 1
-//   Hospital mode => hospital_id = X, if_clinic = 0
-// Row pehle se ho to duplicate nahi banti (sirf inactive = 0 hoti hai)
 // ============================================================
 function sync_doctor_workplace($con, $doctor_id, $hospital_id, $is_clinic) {
     $doctor_id   = (int)$doctor_id;
     $hospital_id = $is_clinic ? 0 : (int)$hospital_id;
     $clinic_flag = $is_clinic ? 1 : 0;
 
-    // Hospital mode me hospital select na ho to kuch na karo
     if (!$is_clinic && $hospital_id === 0) return;
 
     $check = mysqli_query($con, "SELECT doctor_in_hosp_id FROM doctor_in_hospital
@@ -22,7 +18,6 @@ function sync_doctor_workplace($con, $doctor_id, $hospital_id, $is_clinic) {
                                  LIMIT 1");
 
     if ($check && mysqli_num_rows($check) > 0) {
-        // Row pehle se hai: sirf active kar do (agar pehle remove hui thi)
         $row = mysqli_fetch_assoc($check);
         mysqli_query($con, "UPDATE doctor_in_hospital SET inactive = 0
                             WHERE doctor_in_hosp_id = " . (int)$row['doctor_in_hosp_id']);
@@ -33,10 +28,8 @@ function sync_doctor_workplace($con, $doctor_id, $hospital_id, $is_clinic) {
 }
 ?>
 <?php include BASE_PATH.'/admin/inc/header.php';?>
-<!-- Navbar top-->
 <?php include BASE_PATH.'/admin/inc/top.php';?>
-<!-- Side-Nav-->
- <?php include BASE_PATH.'/admin/inc/nav.php';?> 
+<?php include BASE_PATH.'/admin/inc/nav.php';?> 
 
 <?php
 
@@ -92,7 +85,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
     }
 
-  
     $city_id = mysqli_real_escape_string($con, $_POST['city_id']);
     $user_id = (int)$_POST['user_id'];
     $user_name = mysqli_real_escape_string($con, $_POST['username']);
@@ -107,18 +99,28 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $doctor_type = mysqli_real_escape_string($con, $_POST['doctor_type']);
     $gender = mysqli_real_escape_string($con, $_POST['gender']);
     $other = mysqli_real_escape_string($con, $_POST['other']);
-    $cnic = mysqli_real_escape_string($con, trim($_POST['cnic']));   // ===== NEW: CNIC =====
+    $cnic = mysqli_real_escape_string($con, trim($_POST['cnic']));
+    $pmdc_no = mysqli_real_escape_string($con, strtoupper(trim($_POST['pmdc_no'])));
     $static_clinical_info = mysqli_real_escape_string($con, $_POST['static_clinical_info']);
     $status = isset($_POST['status']) ? 1 : 0;
-    
-    // ===== NEW FIELDS =====
+
     $mahre_amraz = mysqli_real_escape_string($con, $_POST['mahre_amraz']);
     $notes = mysqli_real_escape_string($con, $_POST['notes']);
 
-    // ===== Server-side duplicate check (CNIC / Email / Username) - saare errors ek saath =====
+    // ===== Server-side validation =====
     $dup_errors   = [];
     $ex_doctor_id = $edit_mode ? $doctor_id : 0;
-    $cnic_digits  = preg_replace('/\D/', '', $cnic);   // dashes hata kar sirf digits
+    $cnic_digits  = preg_replace('/\D/', '', $cnic);
+
+    // PMDC required + format check
+    if ($pmdc_no === '') {
+        $dup_errors[] = "PMDC No zaroori hai.";
+    } elseif (!preg_match('/^\d{1,6}-[NP]$/', $pmdc_no)) {
+        $dup_errors[] = "PMDC No format galat hai. Sahi format: 1001-N ya 1002-P";
+    } elseif (mysqli_num_rows(mysqli_query($con,
+        "SELECT 1 FROM doctors WHERE UPPER(pmdc_no)='$pmdc_no' AND doctor_id<>$ex_doctor_id LIMIT 1")) > 0) {
+        $dup_errors[] = "This PMDC No '" . htmlspecialchars($pmdc_no) . "' already exists.";
+    }
 
     if ($cnic_digits !== '' && mysqli_num_rows(mysqli_query($con,
         "SELECT 1 FROM doctors WHERE REPLACE(cnic,'-','')='$cnic_digits' AND doctor_id<>$ex_doctor_id LIMIT 1")) > 0) {
@@ -143,10 +145,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $clinic_address = '';
     
     if ($doctor_type == 1) {
-        // Hospital doctor
         $hospital_id = mysqli_real_escape_string($con, $_POST['hospital_id']);
     } else {
-        // Personal clinic
         $clinic_name = mysqli_real_escape_string($con, $_POST['clinic_name']);
         $clinic_address = mysqli_real_escape_string($con, $_POST['clinic_address']);
     }
@@ -162,7 +162,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $target_file = $target_dir . $file_name;
         $imageFileType = strtolower(pathinfo($target_file, PATHINFO_EXTENSION));
         
-        // Allow certain file formats
         $allowed_types = array('jpg', 'jpeg', 'png', 'gif', 'webp');
         if (in_array($imageFileType, $allowed_types)) {
             if (move_uploaded_file($_FILES["doctor_pic"]["tmp_name"], $target_file)) {
@@ -174,7 +173,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if ($dup_error !== '') {
         $error_msg = $dup_error;
     } elseif ($edit_mode) {
-        // Update existing doctor - ADDED NEW FIELDS
         $update_query = "UPDATE doctors SET 
                             city_id = '$city_id', 
                             doctor_name = '$doctor_name', 
@@ -186,20 +184,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                             gender = '$gender', 
                             other = '$other', 
                             cnic = '$cnic',
+                            pmdc_no = '$pmdc_no',
                             static_clinical_info = '$static_clinical_info',
                             mahre_amraz = '$mahre_amraz',
                             notes = '$notes'";
         
-        // Update type-specific fields
         if ($doctor_type == 1) {
-            // Hospital doctor: ensure valid hospital_id and clear clinic fields
             $update_query .= ", hospital_id = '" . $hospital_id . "', clinic_name = '', clinic_address = ''";
         } else {
-            // Personal clinic: set hospital_id to NULL and save clinic details
             $update_query .= ", hospital_id = NULL, clinic_name = '$clinic_name', clinic_address = '$clinic_address'";
         }
         
-        // Update picture only if new one is uploaded
         if (!empty($doctor_pic)) {
             $update_query .= ", doctor_pic = '$doctor_pic'";
         }
@@ -212,7 +207,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $ref = mysqli_real_escape_string($con, $_POST['ref']);
             }
 
-            // Update users table (status, reference, and password only if a new one was entered)
             $user_update = "UPDATE users SET status='". $status ."', reference='". $ref ."'";
             if ($pass !== '') {
                 $user_update .= ", password='". $password ."'";
@@ -221,13 +215,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             mysqli_query($con, $user_update);
 
             $success_msg = "Doctor updated successfully!";
-            // Refresh data (with users join so username/status/ref stay available)
             $edit_result = mysqli_query($con, "SELECT doctors.*, u.user_id as u_id, u.status as estatus, u.reference as ref, u.username
                 FROM doctors LEFT JOIN users u ON u.user_id = doctors.user_id
                 WHERE doctor_id = $doctor_id");
             $doctor_data = mysqli_fetch_assoc($edit_result);
 
-            // doctor_in_hospital sync (clinic => hospital_id=0, if_clinic=1)
             sync_doctor_workplace($con, $doctor_id, $hospital_id, $doctor_type == 2);
 
         } else {
@@ -235,7 +227,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
 
     } else {
-        // Insert new doctor - ADDED NEW FIELDS
         $hospital_id_value = ($doctor_type == 1 && !empty($hospital_id)) ? "'" . $hospital_id . "'" : "NULL";
 
         $created_at = date('Y-m-d');
@@ -250,12 +241,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                             short_detail, cat_type_id, experience_years, doctor_phone, 
                             doctor_email, doctor_type, clinic_name, clinic_address, 
                             doctor_pic, static_clinical_info, approve, gender, other, cnic,
+                            pmdc_no,
                             mahre_amraz, notes, created_at
                         ) VALUES (
                             $userid, '$city_id', $hospital_id_value, '$doctor_name', 
                             '$short_detail', '$specialization', '$experience_years', '$doctor_phone', 
                             '$doctor_email', '$doctor_type', '$clinic_name', '$clinic_address', 
                             '$doctor_pic', '$static_clinical_info', 1, '$gender', '$other', '$cnic',
+                            '$pmdc_no',
                             '$mahre_amraz', '$notes', NOW()
                         )";
         
@@ -263,7 +256,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $last_insert_id = mysqli_insert_id($con);
             $success_msg = "Doctor added successfully!";
 
-            // doctor_in_hospital entry (clinic => hospital_id=0, if_clinic=1)
             sync_doctor_workplace($con, $last_insert_id, $hospital_id, $doctor_type == 2);
 
         } else {
@@ -282,14 +274,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 </style>
 
 <?php
-// Fetch doctor categories and types for specialization dropdown
 $categories_query = "SELECT dc.dr_cat_id, dc.cat_name, dct.dr_cat_type_id, dct.type 
                    FROM dr_categories dc 
                    LEFT JOIN dr_cat_types dct ON dc.dr_cat_id = dct.dr_cat_id 
                    ORDER BY dc.cat_name, dct.type";
 $categories_result = mysqli_query($con, $categories_query);
 
-// Group categories and types
 $categories_data = [];
 if ($categories_result) {
     while ($row = mysqli_fetch_assoc($categories_result)) {
@@ -345,7 +335,7 @@ if ($categories_result) {
         <?php endif; ?>
 
         <form method="POST" action="" enctype="multipart/form-data" class="animate-up delay-1">
-            <input type="hidden" name="doctor_type" id="doctor_type" value="<?php echo $edit_mode ? $doctor_data['doctor_type'] : '1'; ?>">
+            <input type="hidden" name="doctor_type" id="doctor_type" value="<?php echo $edit_mode ? $doctor_data['doctor_type'] : '2'; ?>">
             <input type="hidden" name="user_id" value="<?php if(isset($doctor_data['user_id'])){ echo $doctor_data['user_id']; } ?>">
             
             <!-- Mode Selection -->
@@ -353,7 +343,9 @@ if ($categories_result) {
                 <div class="card-body-custom">
                     <div class="toggle-container">
                         <label class="custom-switch">
-                            <input type="checkbox" id="personal_clinic_toggle" <?php echo ($edit_mode && $doctor_data['doctor_type'] == 2) ? 'checked' : ''; ?>>
+                            <input type="checkbox" id="personal_clinic_toggle" 
+                                <?php echo ($edit_mode && $doctor_data['doctor_type'] == 2) ? 'checked' : ''; ?>
+                                <?php echo (!$edit_mode) ? 'checked' : ''; ?>>
                             <span class="slider"></span>
                         </label>
                         <div>
@@ -361,8 +353,12 @@ if ($categories_result) {
                             <span class="toggle-description">Switch ON if this doctor runs a private clinic. Switch OFF for hospital doctors.</span>
                         </div>
                         <div class="ms-auto">
-                            <span id="mode_badge" class="badge-status hospital">
-                                <i class="icofont icofont-hospital"></i> Hospital Mode
+                            <span id="mode_badge" class="badge-status <?php echo ($edit_mode && $doctor_data['doctor_type'] == 1) ? 'hospital' : 'clinic'; ?>">
+                                <?php if ($edit_mode && $doctor_data['doctor_type'] == 1): ?>
+                                    <i class="icofont icofont-hospital"></i> Hospital Mode
+                                <?php else: ?>
+                                    <i class="icofont icofont-building"></i> Clinic Mode
+                                <?php endif; ?>
                             </span>
                         </div>
                     </div>
@@ -447,6 +443,27 @@ if ($categories_result) {
                             <h5><i class="icofont icofont-user-alt-3"></i> Personal Details</h5>
                         </div>
                         <div class="card-body-custom">
+
+                            <!-- ===== PMDC NO (Required, top) ===== -->
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="form-group">
+                                        <label class="form-label">
+                                            PMDC No
+                                            <span class="required">*</span>
+                                        </label>
+                                        <input type="text" class="form-control-modern" name="pmdc_no" id="pmdc_no"
+                                               placeholder="1001-N, 1002-P etc."
+                                               required
+                                               pattern="\d{1,6}-[NP]"
+                                               title="Format: numbers + dash + N ya P (e.g. 1001-N, 1002-P)"
+                                               value="<?php echo $edit_mode ? htmlspecialchars($doctor_data['pmdc_no'] ?? '') : ''; ?>">
+                                        <small class="field-msg" id="pmdc_no_msg"></small>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- ===== END PMDC NO ===== -->
+
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="form-group">
@@ -496,7 +513,6 @@ if ($categories_result) {
                                             Specialization
                                             <span class="required">*</span>
                                         </label>
-                                        <!-- ===== SELECT2 SEARCHABLE DROPDOWN ===== -->
                                         <select class="form-control-modern" name="specialization" id="specializationSelect" required>
                                             <option value="">Search Specialization...</option>
                                             <?php foreach ($categories_data as $category_id => $category): ?>
@@ -575,8 +591,7 @@ if ($categories_result) {
                                         </label>
                                         <input type="email" class="form-control-modern" name="doctor_email" id="doctor_email"
                                             placeholder="doctor@example.com"
-                                            value="<?php echo $edit_mode ? htmlspecialchars($doctor_data['doctor_email']) : ''; ?>"
-                                            >
+                                            value="<?php echo $edit_mode ? htmlspecialchars($doctor_data['doctor_email']) : ''; ?>">
                                         <small class="field-msg" id="doctor_email_msg"></small>
                                     </div>
                                 </div>
@@ -595,7 +610,7 @@ if ($categories_result) {
                                 </div>
                             </div>
 
-                            <!-- ===== NEW FIELD: CNIC ===== -->
+                            <!-- ===== CNIC ===== -->
                             <div class="row">
                                 <div class="col-md-12">
                                     <div class="form-group">
@@ -605,15 +620,14 @@ if ($categories_result) {
                                         <input type="text" class="form-control-modern" name="cnic" id="cnic"
                                                placeholder="1234512345671" maxlength="15"
                                                title="Format: 1234512345671"
-                                               value="<?php echo $edit_mode ? htmlspecialchars($doctor_data['cnic'] ?? '') : ''; ?>"
-                                               >
+                                               value="<?php echo $edit_mode ? htmlspecialchars($doctor_data['cnic'] ?? '') : ''; ?>">
                                         <small class="field-msg" id="cnic_msg"></small>
                                     </div>
                                 </div>
                             </div>
                             <!-- ===== END CNIC ===== -->
 
-                            <!-- ===== NEW FIELDS: MAHRE AMRAZ & NOTES ===== -->
+                            <!-- ===== MAHRE AMRAZ & NOTES ===== -->
                             <div class="row">
                                 <div class="col-md-12">
                                     <div class="form-group field-mahre">
@@ -643,7 +657,7 @@ if ($categories_result) {
                                     </div>
                                 </div>
                             </div>
-                            <!-- ===== END NEW FIELDS ===== -->
+                            <!-- ===== END ===== -->
 
                             <div class="row">
                                 <div class="col-md-12">
@@ -730,20 +744,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function toggleRef() {
         if (estatus.checked) {
-            // Active => Hide textarea
             refDiv.style.display = 'none';
             ref.required = false;
         } else {
-            // Inactive => Show textarea
             refDiv.style.display = 'block';
             ref.required = true;
         }
     }
 
-    // Initial state
     toggleRef();
-
-    // On checkbox change
     estatus.addEventListener('change', toggleRef);
 });
 </script>
@@ -763,7 +772,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 <script>
     $(document).ready(function() {
-        // ===== SELECT2 FOR CITY =====
+        // ===== SELECT2 =====
         $('#cityId').select2({
             theme: 'bootstrap-5',
             placeholder: 'Search city...',
@@ -771,7 +780,6 @@ document.addEventListener('DOMContentLoaded', function () {
             width: '100%'
         });
 
-        // ===== SELECT2 FOR HOSPITAL =====
         $('#hospitalId').select2({
             theme: 'bootstrap-5',
             placeholder: 'Search hospital...',
@@ -779,7 +787,6 @@ document.addEventListener('DOMContentLoaded', function () {
             width: '100%'
         });
 
-        // ===== SELECT2 FOR SPECIALIZATION - WITH SEARCH =====
         $('#specializationSelect').select2({
             theme: 'bootstrap-5',
             placeholder: 'Search Specialization...',
@@ -790,7 +797,6 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     // ===== CITY -> HOSPITAL FILTER + CLINIC/HOSPITAL MODE =====
-    // (Select2 init upar wale ready block me hota hai, ye block uske baad chalta hai)
     $(document).ready(function () {
         const $toggle          = $('#personal_clinic_toggle');
         const $hospitalSection = $('#hospital_section');
@@ -802,7 +808,6 @@ document.addEventListener('DOMContentLoaded', function () {
         const $doctorType      = $('#doctor_type');
         const $badge           = $('#mode_badge');
 
-        // Page load par saare hospitals memory me save kar lo
         const allHospitals = [];
         $hospital.find('option').each(function () {
             if (this.value !== '') {
@@ -815,7 +820,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
         const initialHospital = $hospital.val();
 
-        // Sirf selected city ke hospitals dropdown me daalo
         function buildHospitals(selectedId) {
             const city = String($city.val() || '');
             $hospital.empty().append('<option value="">Select Hospital</option>');
@@ -831,12 +835,11 @@ document.addEventListener('DOMContentLoaded', function () {
             } else {
                 $hospital.val('');
             }
-            $hospital.trigger('change.select2');   // Select2 ka UI refresh
+            $hospital.trigger('change.select2');
         }
 
         function updateView() {
             if ($toggle.is(':checked')) {
-                // Clinic Mode
                 $hospitalSection.hide();
                 $clinicSection.show();
 
@@ -848,7 +851,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 $badge.attr('class', 'badge-status clinic')
                       .html('<i class="icofont icofont-building"></i> Clinic Mode');
             } else {
-                // Hospital Mode
                 $clinicSection.hide();
                 $clinicName.prop('required', false);
                 $clinicAddress.prop('required', false);
@@ -857,7 +859,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     $hospitalSection.show();
                     $hospital.prop('required', true);
                 } else {
-                    $hospitalSection.hide();          // city select nahi to hospital nahi
+                    $hospitalSection.hide();
                     $hospital.prop('required', false);
                 }
 
@@ -867,14 +869,12 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
 
-        // City change -> hospitals dobara banao
         $city.on('change', function () {
             buildHospitals('');
             updateView();
         });
         $toggle.on('change', updateView);
 
-        // Initial state (edit mode me purana hospital selected rahega)
         buildHospitals(initialHospital);
         updateView();
     });
@@ -890,20 +890,16 @@ document.addEventListener('DOMContentLoaded', function () {
                 selectWrapper.style.display = 'none';
                 textWrapper.style.display = 'block';
                 document.getElementById('specializationSelect').value = '';
-                // Make text field required when checkbox is checked
                 textWrapper.setAttribute('required', 'required');
                 selectWrapper.removeAttribute('required');
-                // Destroy and recreate Select2 when hidden/shown
                 $('#specializationSelect').select2('destroy');
                 $('#specializationSelect').hide();
             } else {
                 selectWrapper.style.display = 'block';
                 textWrapper.style.display = 'none';
                 document.getElementById('specialization_txt').value = '';
-                // Make select field required when checkbox is unchecked
                 selectWrapper.setAttribute('required', 'required');
                 textWrapper.removeAttribute('required');
-                // Reinitialize Select2
                 $('#specializationSelect').show();
                 $('#specializationSelect').select2({
                     theme: 'bootstrap-5',
@@ -919,17 +915,19 @@ document.addEventListener('DOMContentLoaded', function () {
         checkbox.addEventListener('change', toggleFields);
     });
 
-    // ===== DUPLICATE CHECK (CNIC / Email / Username) =====
+    // ===== DUPLICATE CHECK (PMDC / CNIC / Email / Username) =====
+        // ===== DUPLICATE CHECK (PMDC / CNIC / Email / Username) — INSTANT on keyup =====
     $(document).ready(function () {
-        const checkUrl = '<?= BASE_URL ?>admin/doctors/check_unique.php';
+        const checkUrl = '<?= BASE_URL ?>admin/check_unique.php';
         const doctorId = <?php echo $edit_mode ? (int)$doctor_id : 0; ?>;
         const userId   = <?php echo ($edit_mode && isset($doctor_data['user_id'])) ? (int)$doctor_data['user_id'] : 0; ?>;
         const $saveBtn = $('#saveBtn');
 
         const fields = {
-            cnic:     { $el: $('#cnic'),         $msg: $('#cnic_msg'),         label: 'CNIC',     bad: false, timer: null, req: 0 },
-            email:    { $el: $('#doctor_email'), $msg: $('#doctor_email_msg'), label: 'Email',    bad: false, timer: null, req: 0 },
-            username: { $el: $('#username'),     $msg: $('#username_msg'),     label: 'Username', bad: false, timer: null, req: 0 }
+            pmdc_no:  { $el: $('#pmdc_no'),      $msg: $('#pmdc_no_msg'),      label: 'PMDC No',  bad: false, req: 0 },
+            cnic:     { $el: $('#cnic'),         $msg: $('#cnic_msg'),         label: 'CNIC',     bad: false, req: 0 },
+            email:    { $el: $('#doctor_email'), $msg: $('#doctor_email_msg'), label: 'Email',    bad: false, req: 0 },
+            username: { $el: $('#username'),     $msg: $('#username_msg'),     label: 'Username', bad: false, req: 0 }
         };
 
         function refreshButton() {
@@ -937,10 +935,12 @@ document.addEventListener('DOMContentLoaded', function () {
             $saveBtn.prop('disabled', anyBad);
         }
 
+        // value => "checking..." dikhao, phir AJAX
         function check(key) {
             const f = fields[key];
             const value = $.trim(f.$el.val());
 
+            // Khali ya readonly => clear
             if (value === '' || f.$el.prop('readonly')) {
                 f.bad = false;
                 f.$msg.text('').removeClass('error ok');
@@ -948,33 +948,67 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
 
-            const myReq = ++f.req; // purane responses ignore karne ke liye
-            $.post(checkUrl, { field: key, value: value, doctor_id: doctorId, user_id: userId }, function (res) {
-                if (myReq !== f.req) return;
-                if (res.exists) {
-                    f.bad = true;
-                    f.$msg.text(f.label + ' pehle se maujood hai.').removeClass('ok').addClass('error');
-                } else {
+            // Foran "checking..." feedback
+            f.$msg.text('Checking...').removeClass('error ok').addClass('ok');
+
+            // Purane response ko ignore karne ke liye request counter
+            const myReq = ++f.req;
+
+            $.ajax({
+                url: checkUrl,
+                type: 'POST',
+                dataType: 'json',
+                data: { field: key, value: value, doctor_id: doctorId, user_id: userId },
+                success: function (res) {
+                    if (myReq !== f.req) return; // stale response ignore
+
+                    if (res && res.exists) {
+                        f.bad = true;
+                        f.$msg.text(f.label + ' pehle se maujood hai.').removeClass('ok').addClass('error');
+                    } else {
+                        f.bad = false;
+                        f.$msg.text(f.label + ' available hai.').removeClass('error').addClass('ok');
+                    }
+                    refreshButton();
+                },
+                error: function () {
+                    if (myReq !== f.req) return;
                     f.bad = false;
                     f.$msg.text('').removeClass('error ok');
+                    refreshButton();
                 }
-                refreshButton();
-            }, 'json');
+            });
         }
 
+        // ===== INSTANT CHECK ON KEYUP =====
         $.each(fields, function (key, f) {
-            f.$el.on('keyup input', function () {
-                clearTimeout(f.timer);
-                f.timer = setTimeout(function () { check(key); }, 400);
+            f.$el.on('keyup input paste change', function () {
+                check(key);
+            });
+
+            // Field blur par bhi ek dafa confirm
+            f.$el.on('blur', function () {
+                check(key);
             });
         });
 
-        // ===== CNIC auto-dash format: 12345-1234567-1 =====
+        // PMDC No: auto-uppercase (1001-n => 1001-N) — check se PEHLE
+        $('#pmdc_no').on('input', function () {
+            this.value = this.value.toUpperCase();
+            check('pmdc_no');
+        });
+
+        // CNIC auto-dash format
         $('#cnic').on('input', function () {
             let v = this.value.replace(/\D/g, '').substring(0, 13);
             if (v.length > 12)      v = v.replace(/^(\d{5})(\d{7})(\d{1}).*/, '$1-$2-$3');
             else if (v.length > 5)  v = v.replace(/^(\d{5})(\d{0,7}).*/, '$1-$2');
             this.value = v;
+            check('cnic');
         });
+
+        // Page load par (edit mode mein purani value bhi verify ho jaye)
+        check('pmdc_no');
+        if (userId === 0) check('username');
     });
 </script>

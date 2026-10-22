@@ -77,11 +77,11 @@ position: relative;
                             <i class="fas fa-sign-in-alt me-2"></i>Login
                         </a>
                     </li> -->
-                    <li class="nav-item ms-lg-3">
+                   <!--  <li class="nav-item ms-lg-3">
                         <a class="nav-link btn-login fixit-btn" href="<?php echo clean_url('fixit/'); ?>">
                             Fixit
                         </a>
-                    </li>
+                    </li> -->
                 </ul>
             </div>
         </div>

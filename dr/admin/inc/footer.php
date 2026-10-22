@@ -56,6 +56,133 @@ $window.scroll(function(){
 });
 </script>
 
+<?php if (!empty($dashboard_chart_data) && isset($dashboard_chart_data['totals'])): ?>
+<script>
+(function () {
+    var stats = window.adminDashboardStats || {};
+    var totals = stats.totals || {};
+    var monthly = stats.monthly || {};
+    var months = stats.months || [];
+
+    if (typeof Highcharts === 'undefined') {
+        return;
+    }
+
+    if (document.getElementById('barchart')) {
+        Highcharts.chart('barchart', {
+            chart: {
+                type: 'column',
+                backgroundColor: 'transparent',
+                style: {
+                    fontFamily: "'Inter', -apple-system, sans-serif"
+                }
+            },
+            title: {
+                text: '',
+                style: { display: 'none' }
+            },
+            xAxis: {
+                categories: months,
+                labels: {
+                    style: { color: '#64748b', fontWeight: '600' }
+                },
+                gridLineWidth: 0,
+                lineColor: '#e2e8f0'
+            },
+            yAxis: {
+                min: 0,
+                allowDecimals: false,
+                title: {
+                    text: 'New Records',
+                    style: { color: '#64748b', fontWeight: '600' }
+                },
+                gridLineColor: '#f1f5f9',
+                labels: {
+                    style: { color: '#64748b' }
+                }
+            },
+            legend: {
+                enabled: true,
+                itemStyle: { color: '#475569', fontWeight: '600', fontSize: '0.75rem' }
+            },
+            tooltip: {
+                shared: true,
+                backgroundColor: 'rgba(255,255,255,0.95)',
+                borderColor: '#e2e8f0',
+                borderRadius: 12,
+                borderWidth: 1,
+                shadow: true,
+                padding: 12
+            },
+            colors: ['#6366f1', '#22c55e', '#f59e0b', '#ef4444'],
+            series: [
+                { name: 'Doctors', data: monthly.doctors || [], borderRadius: 6 },
+                { name: 'Hospitals', data: monthly.hospitals || [], borderRadius: 6 },
+                { name: 'Labs', data: monthly.labs || [], borderRadius: 6 },
+                { name: 'Blood Banks', data: monthly.bloodBanks || [], borderRadius: 6 }
+            ],
+            credits: { enabled: false }
+        });
+    }
+
+    if (document.getElementById('piechart')) {
+        Highcharts.chart('piechart', {
+            chart: {
+                type: 'pie',
+                backgroundColor: 'transparent',
+                style: {
+                    fontFamily: "'Inter', -apple-system, sans-serif"
+                }
+            },
+            title: {
+                text: '',
+                style: { display: 'none' }
+            },
+            tooltip: {
+                backgroundColor: 'rgba(255,255,255,0.95)',
+                borderColor: '#e2e8f0',
+                borderRadius: 12,
+                borderWidth: 1,
+                shadow: true,
+                padding: 12,
+                pointFormat: '<span style="font-size:0.9rem; font-weight:600;">{point.y} ({point.percentage:.1f}%)</span>'
+            },
+            plotOptions: {
+                pie: {
+                    allowPointSelect: true,
+                    cursor: 'pointer',
+                    dataLabels: {
+                        enabled: true,
+                        format: '<b>{point.name}</b><br/>{point.y}',
+                        style: {
+                            color: '#0f172a',
+                            fontWeight: '600',
+                            fontSize: '0.7rem'
+                        },
+                        connectorColor: '#e2e8f0'
+                    },
+                    showInLegend: false,
+                    size: '85%'
+                }
+            },
+            colors: ['#6366f1', '#22c55e', '#f59e0b', '#ef4444'],
+            series: [{
+                name: 'Distribution',
+                colorByPoint: true,
+                data: [
+                    { name: 'Doctors', y: totals.doctors || 0 },
+                    { name: 'Hospitals', y: totals.hospitals || 0 },
+                    { name: 'Labs', y: totals.labs || 0 },
+                    { name: 'Blood Banks', y: totals.bloodBanks || 0 }
+                ]
+            }],
+            credits: { enabled: false }
+        });
+    }
+})();
+</script>
+<?php endif; ?>
+
 </body>
 
 </html>

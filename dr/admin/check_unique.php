@@ -1,42 +1,44 @@
 <?php
 include '../config.php';
-header('Content-Type: application/json');
 
 $field     = $_POST['field'] ?? '';
 $value     = trim($_POST['value'] ?? '');
-$doctor_id = (int)($_POST['doctor_id'] ?? 0);   // edit mode me apna record exclude karne ke liye
+$doctor_id = (int)($_POST['doctor_id'] ?? 0);
 $user_id   = (int)($_POST['user_id'] ?? 0);
 
 $exists = false;
 
-if ($field === 'cnic') {
-    // dashes hata kar sirf digits compare hon
-    $value = preg_replace('/\D/', '', $value);
-}
-
 if ($value !== '') {
-    $sql = '';
-    $exclude = 0;
-
     if ($field === 'cnic') {
-        $sql = "SELECT 1 FROM doctors WHERE REPLACE(cnic,'-','') = ? AND doctor_id <> ? LIMIT 1";
-        $exclude = $doctor_id;
-    } elseif ($field === 'email') {
-        $sql = "SELECT 1 FROM doctors WHERE doctor_email = ? AND doctor_id <> ? LIMIT 1";
-        $exclude = $doctor_id;
-    } elseif ($field === 'username') {
-        $sql = "SELECT 1 FROM users WHERE username = ? AND user_id <> ? LIMIT 1";
-        $exclude = $user_id;
+        $cnic_digits = preg_replace('/\D/', '', $value);
+        $q = mysqli_query($con, "SELECT 1 FROM doctors 
+                                 WHERE REPLACE(cnic,'-','')='$cnic_digits' 
+                                   AND doctor_id<>$doctor_id LIMIT 1");
+        $exists = $q && mysqli_num_rows($q) > 0;
     }
-
-    if ($sql !== '') {
-        $stmt = mysqli_prepare($con, $sql);
-        mysqli_stmt_bind_param($stmt, 'si', $value, $exclude);
-        mysqli_stmt_execute($stmt);
-        mysqli_stmt_store_result($stmt);
-        $exists = mysqli_stmt_num_rows($stmt) > 0;
-        mysqli_stmt_close($stmt);
+    elseif ($field === 'email') {
+        $v = mysqli_real_escape_string($con, $value);
+        $q = mysqli_query($con, "SELECT 1 FROM doctors 
+                                 WHERE doctor_email='$v' 
+                                   AND doctor_id<>$doctor_id LIMIT 1");
+        $exists = $q && mysqli_num_rows($q) > 0;
+    }
+    elseif ($field === 'username') {
+        $v = mysqli_real_escape_string($con, $value);
+        $q = mysqli_query($con, "SELECT 1 FROM users 
+                                 WHERE username='$v' 
+                                   AND user_id<>$user_id LIMIT 1");
+        $exists = $q && mysqli_num_rows($q) > 0;
+    }
+    elseif ($field === 'pmdc_no') {
+        // Case-insensitive: 1001-n == 1001-N
+        $v = mysqli_real_escape_string($con, strtoupper($value));
+        $q = mysqli_query($con, "SELECT 1 FROM doctors 
+                                 WHERE UPPER(pmdc_no)='$v' 
+                                   AND doctor_id<>$doctor_id LIMIT 1");
+        $exists = $q && mysqli_num_rows($q) > 0;
     }
 }
 
+header('Content-Type: application/json');
 echo json_encode(['exists' => $exists]);

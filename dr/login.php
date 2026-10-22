@@ -62,7 +62,7 @@
                     <label class="form-label">Username/Email</label>
                     <div class="input-group">
                         <i class="fas fa-envelope input-icon"></i>
-                        <input type="text" class="form-control" name="email" placeholder="doctor@example.com" required>
+                        <input type="text" class="form-control" name="email" placeholder="Username or Email" required>
                     </div>
                 </div>
 
@@ -116,64 +116,35 @@
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
-    <script>
+        <script>
         // Password Toggle
         const togglePassword = document.getElementById('togglePassword');
         const password = document.getElementById('password');
         
-        togglePassword.addEventListener('click', function() {
-            const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
-            password.setAttribute('type', type);
-            this.classList.toggle('fa-eye');
-            this.classList.toggle('fa-eye-slash');
-        });
+        if (togglePassword) {
+            togglePassword.addEventListener('click', function() {
+                const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+                password.setAttribute('type', type);
+                this.classList.toggle('fa-eye');
+                this.classList.toggle('fa-eye-slash');
+            });
+        }
 
-        // Form Validation
+        // Form Validation (Username ya Email dono allow hain)
         document.querySelector('form').addEventListener('submit', function(e) {
-            const email = document.querySelector('input[name="email"]').value;
+            const emailOrUsername = document.querySelector('input[name="email"]').value.trim();
             const password = document.querySelector('input[name="password"]').value;
             
-            if (!email || !password) {
+            // Sirf check karein ke khali na ho
+            if (!emailOrUsername || !password) {
                 e.preventDefault();
                 alert('Please fill in all fields.');
                 return;
             }
-            
-            // Email validation
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(email)) {
-                e.preventDefault();
-                alert('Please enter a valid email address.');
-                return;
-            }
         });
 
-        // Social Login Handlers
-        document.querySelector('.social-btn.google').addEventListener('click', function(e) {
-            e.preventDefault();
-            // Implement Google OAuth here
-            alert('Google login coming soon!');
-        });
-
-        document.querySelector('.social-btn.facebook').addEventListener('click', function(e) {
-            e.preventDefault();
-            // Implement Facebook OAuth here
-            alert('Facebook login coming soon!');
-        });
-
-        // Forgot Password Handler
-        document.querySelector('.forgot-password').addEventListener('click', function(e) {
-            e.preventDefault();
-            // Implement forgot password functionality
-            alert('Password reset coming soon!');
-        });
-
-        // Register Handler
-        document.querySelector('.register-link a').addEventListener('click', function(e) {
-            e.preventDefault();
-            // Implement registration redirect
-            alert('Registration coming soon!');
-        });
+        // (Baqi Social login / forgot password ke event listeners hata diye hain 
+        // kyunke wo HTML me commented hain, unse JS me error aata hai)
     </script>
 </body>
 </html>

@@ -23,7 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $query = "SELECT u.*, ut.type as user_type_name 
               FROM users u 
               LEFT JOIN usertypes ut ON u.user_type_id = ut.usertypes_id  
-              WHERE u.email = '$email' AND u.status = 1";
+              WHERE u.email = '$email' || u.username = '$email' AND u.status = 1";
     
     $result = mysqli_query($con, $query);
     

@@ -36,7 +36,7 @@ $entity_id = $hospital_data['entity_id'];
 // ============================================
 // STATISTICS
 // ============================================
-$doctors_query = "SELECT COUNT(*) as total FROM doctors WHERE hospital_id = $hospital_id AND approve = 1";
+$doctors_query = "SELECT COUNT(*) as total FROM doctor_in_hospital WHERE hospital_id = $hospital_id AND inactive = 0";
 $doctors_result = mysqli_query($con, $doctors_query);
 $total_doctors = mysqli_fetch_assoc($doctors_result)['total'];
 

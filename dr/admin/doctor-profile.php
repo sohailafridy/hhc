@@ -191,7 +191,7 @@ $clinical_query = "SELECT clinical_info.*, hospitals.hospital_name, hospitals.ho
                    FROM clinical_info 
                    LEFT JOIN doctor_in_hospital dih ON clinical_info.doctor_in_hosp_id = dih.doctor_in_hosp_id
                    LEFT JOIN hospitals ON dih.hospital_id = hospitals.hospital_id
-                   WHERE dih.doctor_id = $doctor_id 
+                   WHERE dih.doctor_id = $doctor_id and dih.inactive=0
                    ORDER BY clinical_info.season, clinical_info.shift";
 $clinical_result = mysqli_query($con, $clinical_query);
 
@@ -573,7 +573,7 @@ $past_hospitals_result = mysqli_query($con, $past_hospitals_query);
                                         <div class="clinical-card-modern">
                                             <div class="clinical-card-header">
                                                 <i class="fas fa-hospital"></i>
-                                                <h6>
+                                                <h6 style="color: white;">
                                                     <?php 
                                                     if (!empty($clinical['hospital_name'])) {
                                                         echo htmlspecialchars($clinical['hospital_name']);

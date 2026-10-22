@@ -5,40 +5,40 @@
 // Fetch counts for dashboard
 $cities_count_query = "SELECT COUNT(*) as total FROM cities WHERE status = 1";
 $cities_count_result = mysqli_query($con, $cities_count_query);
-$cities_count = mysqli_fetch_assoc($cities_count_result)['total'];
+$cities_count = (int) mysqli_fetch_assoc($cities_count_result)['total'];
 
 $doctors_count_query = "SELECT COUNT(*) as total FROM doctors LEFT JOIN users u ON u.user_id = doctors.user_id WHERE u.status = 1 AND doctors.approve = 1";
 $doctors_count_result = mysqli_query($con, $doctors_count_query);
-$doctors_count = mysqli_fetch_assoc($doctors_count_result)['total'];
+$doctors_count = (int) mysqli_fetch_assoc($doctors_count_result)['total'];
 
 $hospitals_count_query = "SELECT COUNT(*) as total FROM hospitals LEFT JOIN users u ON u.user_id = hospitals.user_id WHERE u.status = 1 AND hospitals.approve = 1";
 $hospitals_count_result = mysqli_query($con, $hospitals_count_query);
-$hospitals_count = mysqli_fetch_assoc($hospitals_count_result)['total'];
+$hospitals_count = (int) mysqli_fetch_assoc($hospitals_count_result)['total'];
 
 $labs_count_query = "SELECT COUNT(*) as total FROM laboratories LEFT JOIN users u ON u.user_id = laboratories.user_id WHERE u.status = 1 AND laboratories.approve = 1";
 $labs_count_result = mysqli_query($con, $labs_count_query);
-$labs_count = mysqli_fetch_assoc($labs_count_result)['total'];
+$labs_count = (int) mysqli_fetch_assoc($labs_count_result)['total'];
 
 $blood_banks_count_query = "SELECT COUNT(*) as total FROM blood_bank LEFT JOIN users u ON u.user_id = blood_bank.user_id WHERE u.status = 1 AND blood_bank.approve = 1";
 $blood_banks_count_result = mysqli_query($con, $blood_banks_count_query);
-$blood_banks_count = mysqli_fetch_assoc($blood_banks_count_result)['total'];
+$blood_banks_count = (int) mysqli_fetch_assoc($blood_banks_count_result)['total'];
 
 // Users count
 $users_count_query = "SELECT COUNT(*) as total FROM users WHERE status = 1";
 $users_count_result = mysqli_query($con, $users_count_query);
-$users_count = mysqli_fetch_assoc($users_count_result)['total'];
+$users_count = (int) mysqli_fetch_assoc($users_count_result)['total'];
 
 
 
 // cities count
 $city_count_query = "SELECT COUNT(*) as total FROM cities WHERE status = 1 AND approve=1";
 $city_count_result = mysqli_query($con, $city_count_query);
-$city_count = mysqli_fetch_assoc($city_count_result)['total'];
+$city_count = (int) mysqli_fetch_assoc($city_count_result)['total'];
 
 // Feedbacks count
 $feedbacks_count_query = "SELECT COUNT(*) as total FROM feedback WHERE status = 1";
 $feedbacks_count_result = mysqli_query($con, $feedbacks_count_query);
-$feedbacks_count = mysqli_fetch_assoc($feedbacks_count_result)['total'];
+$feedbacks_count = (int) mysqli_fetch_assoc($feedbacks_count_result)['total'];
 
 // Recent doctors
 $recent_doctors_query = "SELECT d.*, c.city_name, h.hospital_name, dct.type as specialization ,u.status as ustatus
@@ -51,6 +51,84 @@ $recent_doctors_query = "SELECT d.*, c.city_name, h.hospital_name, dct.type as s
                          ORDER BY d.created_at DESC 
                          LIMIT 5";
 $recent_doctors_result = mysqli_query($con, $recent_doctors_query);
+
+$chart_month_labels = [];
+$chart_month_keys = [];
+for ($i = 5; $i >= 0; $i--) {
+    $month_ts = strtotime("-$i months");
+    $chart_month_keys[] = date('Y-m', $month_ts);
+    $chart_month_labels[] = date('M Y', $month_ts);
+}
+$chart_start = $chart_month_keys[0] . '-01';
+
+$chart_month_doctors = array_fill_keys($chart_month_keys, 0);
+$chart_month_hospitals = array_fill_keys($chart_month_keys, 0);
+$chart_month_labs = array_fill_keys($chart_month_keys, 0);
+$chart_month_blood_banks = array_fill_keys($chart_month_keys, 0);
+
+$monthly_fill = function ($sql, &$bucket) use ($con) {
+    $result = mysqli_query($con, $sql);
+    if (!$result) {
+        return;
+    }
+    while ($row = mysqli_fetch_assoc($result)) {
+        if (isset($bucket[$row['ym']])) {
+            $bucket[$row['ym']] = (int) $row['total'];
+        }
+    }
+};
+
+$monthly_fill(
+    "SELECT DATE_FORMAT(d.created_at, '%Y-%m') AS ym, COUNT(*) AS total
+     FROM doctors d
+     LEFT JOIN users u ON u.user_id = d.user_id
+     WHERE u.status = 1 AND d.approve = 1 AND d.created_at >= '$chart_start'
+     GROUP BY ym",
+    $chart_month_doctors
+);
+$monthly_fill(
+    "SELECT DATE_FORMAT(h.created_at, '%Y-%m') AS ym, COUNT(*) AS total
+     FROM hospitals h
+     LEFT JOIN users u ON u.user_id = h.user_id
+     WHERE u.status = 1 AND h.approve = 1 AND h.created_at >= '$chart_start'
+     GROUP BY ym",
+    $chart_month_hospitals
+);
+$monthly_fill(
+    "SELECT DATE_FORMAT(l.created_at, '%Y-%m') AS ym, COUNT(*) AS total
+     FROM laboratories l
+     LEFT JOIN users u ON u.user_id = l.user_id
+     WHERE u.status = 1 AND l.approve = 1 AND l.created_at >= '$chart_start'
+     GROUP BY ym",
+    $chart_month_labs
+);
+$monthly_fill(
+    "SELECT DATE_FORMAT(b.created_at, '%Y-%m') AS ym, COUNT(*) AS total
+     FROM blood_bank b
+     LEFT JOIN users u ON u.user_id = b.user_id
+     WHERE u.status = 1 AND b.approve = 1 AND b.created_at >= '$chart_start'
+     GROUP BY ym",
+    $chart_month_blood_banks
+);
+
+$dashboard_chart_data = [
+    'months' => $chart_month_labels,
+    'monthly' => [
+        'doctors' => array_values($chart_month_doctors),
+        'hospitals' => array_values($chart_month_hospitals),
+        'labs' => array_values($chart_month_labs),
+        'bloodBanks' => array_values($chart_month_blood_banks),
+    ],
+    'totals' => [
+        'doctors' => $doctors_count,
+        'hospitals' => $hospitals_count,
+        'labs' => $labs_count,
+        'bloodBanks' => $blood_banks_count,
+        'cities' => $city_count,
+        'users' => $users_count,
+        'feedbacks' => $feedbacks_count,
+    ],
+];
 ?>
 
 <?php include BASE_PATH.'/admin/inc/header.php'; ?>
@@ -202,7 +280,7 @@ $recent_doctors_result = mysqli_query($con, $recent_doctors_query);
             <!-- Chart -->
             <div class="glass-card">
                 <div class="card-header">
-                    <h5><i class="fas fa-chart-bar"></i> Overview</h5>
+                    <h5><i class="fas fa-chart-bar"></i> Last 6 Months</h5>
                 </div>
                 <div class="card-body">
                     <div id="barchart" class="chart-container"></div>
@@ -283,125 +361,7 @@ $recent_doctors_result = mysqli_query($con, $recent_doctors_query);
 </div>
 
 <script>
-// ============================================
-// BAR CHART - Overview
-// ============================================
-Highcharts.chart('barchart', {
-    chart: {
-        type: 'column',
-        backgroundColor: 'transparent',
-        style: {
-            fontFamily: "'Inter', -apple-system, sans-serif"
-        }
-    },
-    title: {
-        text: '',
-        style: { display: 'none' }
-    },
-    xAxis: {
-        categories: ['Doctors', 'Hospitals', 'Labs', 'Blood Banks'],
-        labels: {
-            style: { color: '#64748b', fontWeight: '600' }
-        },
-        gridLineWidth: 0,
-        lineColor: '#e2e8f0'
-    },
-    yAxis: {
-        min: 0,
-        title: {
-            text: 'Count',
-            style: { color: '#64748b', fontWeight: '600' }
-        },
-        gridLineColor: '#f1f5f9',
-        labels: {
-            style: { color: '#64748b' }
-        }
-    },
-    legend: {
-        enabled: false
-    },
-    tooltip: {
-        backgroundColor: 'rgba(255,255,255,0.95)',
-        borderColor: '#e2e8f0',
-        borderRadius: 12,
-        borderWidth: 1,
-        shadow: true,
-        padding: 12,
-        pointFormat: '<span style="font-size:0.9rem; font-weight:600;">Total: <b>{point.y}</b></span>'
-    },
-    colors: ['#6366f1', '#22c55e', '#f59e0b', '#ef4444'],
-    series: [{
-        name: 'Total',
-        data: [<?php echo $doctors_count; ?>, <?php echo $hospitals_count; ?>, <?php echo $labs_count; ?>, <?php echo $blood_banks_count; ?>],
-        borderRadius: 6,
-        colorByPoint: true,
-        dataLabels: {
-            enabled: true,
-            style: {
-                fontWeight: '700',
-                color: '#0f172a',
-                fontSize: '0.8rem'
-            }
-        }
-    }],
-    credits: { enabled: false }
-});
-
-// ============================================
-// PIE CHART - Distribution
-// ============================================
-Highcharts.chart('piechart', {
-    chart: {
-        type: 'pie',
-        backgroundColor: 'transparent',
-        style: {
-            fontFamily: "'Inter', -apple-system, sans-serif"
-        }
-    },
-    title: {
-        text: '',
-        style: { display: 'none' }
-    },
-    tooltip: {
-        backgroundColor: 'rgba(255,255,255,0.95)',
-        borderColor: '#e2e8f0',
-        borderRadius: 12,
-        borderWidth: 1,
-        shadow: true,
-        padding: 12,
-        pointFormat: '<span style="font-size:0.9rem; font-weight:600;">{point.percentage:.1f}%</span><br/><span style="color:#64748b;">{point.name}</span>'
-    },
-    plotOptions: {
-        pie: {
-            allowPointSelect: true,
-            cursor: 'pointer',
-            dataLabels: {
-                enabled: true,
-                format: '<b>{point.name}</b><br/>{point.percentage:.1f}%',
-                style: {
-                    color: '#0f172a',
-                    fontWeight: '600',
-                    fontSize: '0.7rem'
-                },
-                connectorColor: '#e2e8f0'
-            },
-            showInLegend: false,
-            size: '85%'
-        }
-    },
-    colors: ['#6366f1', '#22c55e', '#f59e0b', '#ef4444'],
-    series: [{
-        name: 'Distribution',
-        colorByPoint: true,
-        data: [
-            { name: 'Doctors', y: <?php echo $doctors_count; ?> },
-            { name: 'Hospitals', y: <?php echo $hospitals_count; ?> },
-            { name: 'Labs', y: <?php echo $labs_count; ?> },
-            { name: 'Blood Banks', y: <?php echo $blood_banks_count; ?> }
-        ]
-    }],
-    credits: { enabled: false }
-});
+window.adminDashboardStats = <?php echo json_encode($dashboard_chart_data, JSON_UNESCAPED_UNICODE); ?>;
 </script>
 
 <?php include BASE_PATH.'/admin/inc/footer.php'; ?>

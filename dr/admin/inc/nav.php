@@ -568,6 +568,13 @@ if (($current_page == 'admin' || $current_page == 'index' || $current_page == ''
                 </a>
             </li>
 
+            <li class="treeview recycle-item">
+                <a class="waves-effect waves-dark" href="https://pmdc.pk/" target="_blank">
+                    <i class="icon-trash"></i>
+                    <span>PMDC Doctor Check</span>
+                </a>
+            </li>
+
             <!-- ========================================== -->
             <!-- ===== MORE / LOGOUT ===== -->
             <!-- ========================================== -->
