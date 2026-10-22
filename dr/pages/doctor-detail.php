@@ -251,10 +251,11 @@ if (isset($_POST['user_id']) && (int)$_POST['user_id'] != 0) {
 
             <!-- ===== CLINICAL INFORMATION ===== -->
             <?php
-            $clinical_query = "SELECT ci.*, hospitals.hospital_name, hospitals.hospital_id
+            $clinical_query = "SELECT ci.*, hospitals.hospital_name, hospitals.hospital_id,hospitals.hospital_address,cities.city_name
                             FROM clinical_info ci 
                             INNER JOIN doctor_in_hospital dih ON ci.doctor_in_hosp_id = dih.doctor_in_hosp_id 
                             LEFT JOIN hospitals ON dih.hospital_id = hospitals.hospital_id
+                            LEFT JOIN cities ON cities.city_id = hospitals.city_id
                             WHERE dih.doctor_id = " . (int)$doctor['doctor_id'] . " AND dih.inactive=0
                             ORDER BY ci.season, ci.shift";
             $clinical_result = mysqli_query($con, $clinical_query);
@@ -272,13 +273,21 @@ if (isset($_POST['user_id']) && (int)$_POST['user_id'] != 0) {
                             <div class="clinical-card">
                                 <div class="hospital-name">
                                     <i class="fas fa-hospital"></i>
-                                    <?php
-                                    if (!empty($clinical['hospital_name'])) {
-                                        echo htmlspecialchars($clinical['hospital_name']);
-                                    } else {
-                                        echo 'Personal Clinic';
-                                    }
+                                   <?php
+                                        if (!empty($clinical['hospital_name'])) {
+                                            ?>
+                                                <a href="<?=BASE_URL?>hospital-detail?hospital_id=<?=$clinical['hospital_id']?>"><?=htmlspecialchars($clinical['hospital_name'])?></a>
+                                            <?php
+                                            echo "<br><i class='fas fa-map-marker-alt text-info me-1'></i><small class='text-muted'>( " . $clinical['city_name'] . " )</small>";
+                                        } else {
+                                            echo 'Personal Clinic';
+                                            // Agar clinic address mojood hai to usko nayi line par show karein
+                                            if (!empty($doctor['clinic_address'])) {
+                                                echo "<br><i class='fas fa-map-marker-alt text-info me-1'></i><small class='text-muted'>( " . nl2br(htmlspecialchars($doctor['clinic_address'])) . " )</small>";
+                                            }
+                                        }
                                     ?>
+                                     
                                 </div>
 
                                 <?php if (!empty($clinical['morning_opening_time']) || !empty($clinical['morning_closing_time'])): ?>
@@ -330,6 +339,13 @@ if (isset($_POST['user_id']) && (int)$_POST['user_id'] != 0) {
                                         <i class="fas fa-info-circle text-info"></i>
                                         <span class="label">Detail</span>
                                         <span class="value" style="font-size:0.82rem;"><?php echo htmlspecialchars($clinical['detail']); ?></span>
+                                    </div>
+                                <?php endif; ?>
+                                <?php if (!empty($clinical['hospital_address'])): ?>
+                                    <div class="clinical-item" style="border-top: 1px dashed var(--border); padding-top: 10px; margin-top: 6px;">
+                                        <i class="fas fa-map-marker-alt text-info me-1"></i>
+                                        <span class="label">Hospital Address</span>
+                                        <span class="value" style="font-size:0.82rem;"><?php echo htmlspecialchars($clinical['hospital_address']); ?></span>
                                     </div>
                                 <?php endif; ?>
                             </div>

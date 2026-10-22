@@ -1,58 +1,195 @@
 <?php include '../config.php'; ?>
 <?php include '../check_auth.php'; ?>
 <?php
+// ============================================
+// DOCTORS TABLE COLUMN NAMES
+// Agar aapke DB mein naam alag hon to sirf yahan change karein
+// ============================================
+$DOC_COL_PMDC  = 'pmdc_no';
+$DOC_COL_CNIC  = 'cnic';
+$DOC_COL_NAME  = 'doctor_name';
+$DOC_COL_EMAIL = 'doctor_email';
+
+// ============================================
+// AJAX: SEARCH DOCTOR (JSON) - includes se PEHLE
+// ============================================
+if (isset($_GET['ajax']) && $_GET['ajax'] === 'search_doctor' && isset($_GET['id']) && is_numeric($_GET['id'])) {
+    header('Content-Type: application/json; charset=utf-8');
+
+    $ajax_hospital_id = (int)$_GET['id'];
+    $by = $_GET['by'] ?? 'name';
+    $q  = trim($_GET['q'] ?? '');
+
+    if (mb_strlen($q) < 2) {
+        echo json_encode(['ok' => false, 'error' => 'Please enter at least 2 characters.']);
+        exit();
+    }
+
+    try {
+        $q_sql = mysqli_real_escape_string($con, $q);
+
+        switch ($by) {
+            case 'pmdc':
+                $cond = "d.`$DOC_COL_PMDC` LIKE '%$q_sql%'";
+                break;
+            case 'cnic':
+                // dashes ignore karke digits se match
+                $digits = preg_replace('/\D/', '', $q);
+                if ($digits === '') {
+                    echo json_encode(['ok' => false, 'error' => 'Please enter CNIC digits.']);
+                    exit();
+                }
+                $cond = "REPLACE(d.`$DOC_COL_CNIC`, '-', '') LIKE '%$digits%'";
+                break;
+            case 'email':
+                $cond = "d.`$DOC_COL_EMAIL` LIKE '%$q_sql%'";
+                break;
+            default:
+                $cond = "d.`$DOC_COL_NAME` LIKE '%$q_sql%'";
+                break;
+        }
+
+        $sql = "SELECT d.*, dct.type AS specialization,
+                       dih.doctor_in_hosp_id AS dih_id, dih.inactive AS dih_inactive
+                FROM doctors d
+                INNER JOIN users u ON u.user_id = d.user_id
+                LEFT JOIN dr_cat_types dct ON d.cat_type_id = dct.dr_cat_type_id
+                LEFT JOIN doctor_in_hospital dih ON dih.doctor_id = d.doctor_id AND dih.hospital_id = $ajax_hospital_id
+                WHERE d.approve = 1 AND u.status = 1 AND $cond
+                ORDER BY d.`$DOC_COL_NAME` ASC
+                LIMIT 20";
+        $res = mysqli_query($con, $sql);
+
+        $out = [];
+        $seen = [];
+        while ($row = mysqli_fetch_assoc($res)) {
+            if (isset($seen[$row['doctor_id']])) { continue; }
+            $seen[$row['doctor_id']] = true;
+
+            if ($row['dih_id'] === null) {
+                $status = 'available';
+            } elseif ((int)$row['dih_inactive'] === 1) {
+                $status = 'removed';
+            } else {
+                $status = 'active';
+            }
+
+            $out[] = [
+                'doctor_id'      => (int)$row['doctor_id'],
+                'name'           => $row[$DOC_COL_NAME] ?? '',
+                'specialization' => $row['specialization'] ?? 'General',
+                'phone'          => $row['doctor_phone'] ?? '',
+                'email'          => $row[$DOC_COL_EMAIL] ?? '',
+                'pmdc'           => $row[$DOC_COL_PMDC] ?? '',
+                'cnic'           => $row[$DOC_COL_CNIC] ?? '',
+                'pic'            => $row['doctor_pic'] ?? '',
+                'status'         => $status,
+            ];
+        }
+        echo json_encode(['ok' => true, 'doctors' => $out]);
+    } catch (Throwable $e) {
+        echo json_encode(['ok' => false, 'error' => 'Search failed: ' . $e->getMessage()]);
+    }
+    exit();
+}
+
+// ============================================
 // Handle delete operation
+// ============================================
 if (isset($_GET['delete_id']) && is_numeric($_GET['delete_id'])) {
     $delete_id = (int)$_GET['delete_id'];
-    
-    $pic_query = "SELECT hospital_pic FROM hospitals WHERE user_id = $delete_id";
-    $pic_result = mysqli_query($con, $pic_query);
-    $hospital_pic_data = mysqli_fetch_assoc($pic_result);
-    $hospital_pic = $hospital_pic_data ? $hospital_pic_data['hospital_pic'] : '';
-    
+
     $delete_query = "UPDATE users set status=0 WHERE user_id = $delete_id";
-    
+
     if (mysqli_query($con, $delete_query)) {
         $_SESSION['success_msg'] = "Hospital deleted successfully!";
     } else {
         $_SESSION['error_msg'] = "Error: " . mysqli_error($con);
     }
-    
+
     header('Location: ' . BASE_URL . 'admin/hospitals/list');
     exit();
 }
 
-// Handle remove / re-add doctor (doctor_in_hospital.inactive)
+// ============================================
+// Handle ADD / remove / re-add doctor (doctor_in_hospital)
+// ============================================
 if ($_SERVER['REQUEST_METHOD'] === 'POST'
-    && isset($_POST['doctor_action'], $_POST['doctor_in_hosp_id'])
+    && isset($_POST['doctor_action'])
     && isset($_GET['id']) && is_numeric($_GET['id'])) {
 
     $post_hospital_id = (int)$_GET['id'];
-    $dih_id = (int)$_POST['doctor_in_hosp_id'];
     $action = $_POST['doctor_action'];
 
-    if ($action === 'remove') {
-        $inactive_value = 1;
-        $msg = "Doctor removed from hospital successfully!";
-    } elseif ($action === 'readd') {
-        $inactive_value = 0;
-        $msg = "Doctor re-added to hospital successfully!";
-    } else {
-        $inactive_value = null;
-    }
+    // ---------- ADD DOCTOR to this hospital ----------
+    if ($action === 'add') {
+        $add_doctor_id = (int)($_POST['doctor_id'] ?? 0);
 
-    if ($inactive_value !== null) {
-        $update_query = "UPDATE doctor_in_hospital 
-                         SET inactive = $inactive_value 
-                         WHERE doctor_in_hosp_id = $dih_id AND hospital_id = $post_hospital_id";
-        if (mysqli_query($con, $update_query)) {
+        $doc_check = mysqli_query($con, "SELECT d.doctor_id
+                                         FROM doctors d
+                                         INNER JOIN users u ON u.user_id = d.user_id
+                                         WHERE d.doctor_id = $add_doctor_id AND d.approve = 1 AND u.status = 1");
 
-            if($new_inactive == 1){
-                mysqli_query($con, "DELETE FROM `clinical_info` WHERE `doctor_in_hosp_id` = '". $dih_id ."'");
-            }
-            $_SESSION['success_msg'] = $msg;
+        if ($add_doctor_id <= 0 || !$doc_check || mysqli_num_rows($doc_check) == 0) {
+            $_SESSION['error_msg'] = "Doctor not found or not approved.";
         } else {
-            $_SESSION['error_msg'] = "Error: " . mysqli_error($con);
+            $exist_q = mysqli_query($con, "SELECT doctor_in_hosp_id, inactive
+                                           FROM doctor_in_hospital
+                                           WHERE doctor_id = $add_doctor_id AND hospital_id = $post_hospital_id
+                                           LIMIT 1");
+            if ($exist_q && mysqli_num_rows($exist_q) > 0) {
+                $exist = mysqli_fetch_assoc($exist_q);
+                if ((int)$exist['inactive'] === 0) {
+                    $_SESSION['error_msg'] = "This doctor is already added to this hospital.";
+                } else {
+                    // Pehle remove hua tha: dobara active kar dein
+                    $ex_id = (int)$exist['doctor_in_hosp_id'];
+                    if (mysqli_query($con, "UPDATE doctor_in_hospital SET inactive = 0 WHERE doctor_in_hosp_id = $ex_id")) {
+                        $_SESSION['success_msg'] = "Doctor re-added to hospital successfully!";
+                    } else {
+                        $_SESSION['error_msg'] = "Error: " . mysqli_error($con);
+                    }
+                }
+            } else {
+                $if_clinic = 0;
+                $stmt = mysqli_prepare($con, "INSERT INTO doctor_in_hospital (doctor_id, hospital_id, if_clinic) VALUES (?, ?, ?)");
+                mysqli_stmt_bind_param($stmt, "iii", $add_doctor_id, $post_hospital_id, $if_clinic);
+                if (mysqli_stmt_execute($stmt)) {
+                    $_SESSION['success_msg'] = "Doctor added to hospital successfully!";
+                } else {
+                    $_SESSION['error_msg'] = "Error: " . mysqli_error($con);
+                }
+                mysqli_stmt_close($stmt);
+            }
+        }
+
+    // ---------- REMOVE / RE-ADD (existing doctor_in_hospital row) ----------
+    } elseif (isset($_POST['doctor_in_hosp_id'])) {
+        $dih_id = (int)$_POST['doctor_in_hosp_id'];
+
+        if ($action === 'remove') {
+            $inactive_value = 1;
+            $msg = "Doctor removed from hospital successfully!";
+        } elseif ($action === 'readd') {
+            $inactive_value = 0;
+            $msg = "Doctor re-added to hospital successfully!";
+        } else {
+            $inactive_value = null;
+        }
+
+        if ($inactive_value !== null) {
+            $update_query = "UPDATE doctor_in_hospital
+                             SET inactive = $inactive_value
+                             WHERE doctor_in_hosp_id = $dih_id AND hospital_id = $post_hospital_id";
+            if (mysqli_query($con, $update_query)) {
+                // FIX: pehle $new_inactive use ho raha tha jo defined hi nahi tha
+                if ($inactive_value === 1) {
+                    mysqli_query($con, "DELETE FROM `clinical_info` WHERE `doctor_in_hosp_id` = $dih_id");
+                }
+                $_SESSION['success_msg'] = $msg;
+            } else {
+                $_SESSION['error_msg'] = "Error: " . mysqli_error($con);
+            }
         }
     }
 
@@ -146,7 +283,137 @@ $total_reviews = $rating_data['total_reviews'] ? $rating_data['total_reviews'] :
 
 <link rel="stylesheet" href="<?= BASE_URL ?>style/hospital-detail-admin.css">
 
+<style>
+    /* ===== Add Doctor panel ===== */
+    .add-doctor-panel {
+        display: none;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 16px;
+    }
+    .add-doctor-panel.open { display: block; }
+
+    .ad-grid {
+        display: grid;
+        grid-template-columns: 150px minmax(160px, 1fr) auto;
+        gap: 12px;
+        align-items: end;
+    }
+    .ad-field { display: flex; flex-direction: column; min-width: 0; }
+    .ad-label {
+        display: block;
+        margin: 0 0 6px;
+        font-size: 12px;
+        font-weight: 600;
+        color: #64748b;
+    }
+    .ad-control {
+        width: 100%;
+        height: 40px;
+        padding: 0 12px;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        background-color: #fff;
+        font-size: 14px;
+        color: #1e293b;
+        box-sizing: border-box;
+        outline: none;
+    }
+    .ad-control:focus {
+        border-color: #4facfe;
+        box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.18);
+    }
+    .ad-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        height: 40px;
+        padding: 0 18px;
+        border: 1px solid #4facfe;
+        border-radius: 8px;
+        background: #4facfe;
+        color: #fff;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        white-space: nowrap;
+    }
+    .ad-btn:hover { background: #2f9bf5; }
+
+    .ad-results { margin-top: 14px; }
+    .ad-message {
+        font-size: 13px;
+        color: #64748b;
+        text-align: center;
+        padding: 10px 0;
+    }
+    .ad-message.error { color: #dc2626; }
+
+    .ad-result-card {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 12px;
+        margin-bottom: 10px;
+    }
+    .ad-result-card .ad-avatar,
+    .ad-result-card .ad-avatar-ph {
+        width: 46px;
+        height: 46px;
+        border-radius: 50%;
+        flex-shrink: 0;
+        object-fit: cover;
+    }
+    .ad-result-card .ad-avatar-ph {
+        background: #e2e8f0;
+        color: #475569;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .ad-info { flex: 1; min-width: 0; }
+    .ad-info h6 { margin: 0 0 2px; font-size: 14px; font-weight: 700; color: #1e293b; }
+    .ad-info .ad-spec { display: block; font-size: 12px; color: #4facfe; font-weight: 600; }
+    .ad-info .ad-meta { display: block; font-size: 12px; color: #64748b; word-break: break-word; }
+    .ad-badge {
+        display: inline-block;
+        padding: 6px 10px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        background: #dcfce7;
+        color: #166534;
+        white-space: nowrap;
+    }
+
+    @media (max-width: 768px) {
+        .ad-grid { grid-template-columns: 1fr; }
+        .ad-result-card { flex-wrap: wrap; }
+    }
+</style>
+
 <div class="content-wrapper">
+
+    <?php if (isset($_SESSION['success_msg'])): ?>
+        <div class="alert alert-success alert-dismissible fade show">
+            <i class="fas fa-check-circle me-2"></i> <?php echo htmlspecialchars($_SESSION['success_msg']); unset($_SESSION['success_msg']); ?>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    <?php endif; ?>
+
+    <?php if (isset($_SESSION['error_msg'])): ?>
+        <div class="alert alert-danger alert-dismissible fade show">
+            <i class="fas fa-exclamation-circle me-2"></i> <?php echo htmlspecialchars($_SESSION['error_msg']); unset($_SESSION['error_msg']); ?>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    <?php endif; ?>
 
     <!-- ===== PAGE HEADER ===== -->
     <div class="page-header-modern">
@@ -299,8 +566,37 @@ $total_reviews = $rating_data['total_reviews'] ? $rating_data['total_reviews'] :
             <div class="info-card">
                 <div class="info-card-header">
                     <h5><i class="fas fa-user-md"></i> Doctors (<?php echo $total_doctors; ?>)</h5>
+                    <button type="button" class="btn btn-sm btn-primary" id="toggleAddDoctor">
+                        <i class="fas fa-plus me-1"></i> Add Doctor
+                    </button>
                 </div>
                 <div class="info-card-body">
+
+                    <!-- ===== ADD DOCTOR PANEL ===== -->
+                    <div class="add-doctor-panel" id="addDoctorPanel">
+                        <form id="doctorSearchForm" autocomplete="off">
+                            <div class="ad-grid">
+                                <div class="ad-field">
+                                    <label class="ad-label" for="ad_by">Search By</label>
+                                    <select id="ad_by" class="ad-control">
+                                        <option value="pmdc">PMDC No</option>
+                                        <option value="name">Name</option>
+                                        <option value="cnic">CNIC</option>
+                                        <option value="email">Email</option>
+                                    </select>
+                                </div>
+                                <div class="ad-field">
+                                    <label class="ad-label" for="ad_q">Search</label>
+                                    <input type="text" id="ad_q" class="ad-control" placeholder="Enter PMDC number...">
+                                </div>
+                                <button type="submit" class="ad-btn">
+                                    <i class="fas fa-search"></i> Search
+                                </button>
+                            </div>
+                        </form>
+                        <div class="ad-results" id="adResults"></div>
+                    </div>
+
                     <?php if ($total_doctors > 0): ?>
                         <?php while ($doctor = mysqli_fetch_assoc($doctors_result)): ?>
                             <div class="doctor-mini-card">
@@ -455,6 +751,141 @@ function deleteHospital(user_id) {
         window.location.href = '?delete_id=' + user_id;
     }
 }
+
+// ============================================
+// ADD DOCTOR: toggle + search + add
+// ============================================
+(function () {
+    const HOSPITAL_ID = <?php echo (int)$hospital_id; ?>;
+    const DOC_PIC_URL = <?php echo json_encode(BASE_URL . 'admin/inc/uploads/doctors/'); ?>;
+    const PROFILE_URL = <?php echo json_encode(BASE_URL . 'admin/doctors/profile?id='); ?>;
+
+    const toggleBtn = document.getElementById('toggleAddDoctor');
+    const panel     = document.getElementById('addDoctorPanel');
+    const form      = document.getElementById('doctorSearchForm');
+    const bySelect  = document.getElementById('ad_by');
+    const qInput    = document.getElementById('ad_q');
+    const results   = document.getElementById('adResults');
+
+    if (!toggleBtn || !panel) { return; }
+
+    const placeholders = {
+        pmdc:  'Enter PMDC number...',
+        name:  'Enter doctor name...',
+        cnic:  'Enter CNIC (e.g. 35202-1234567-1)...',
+        email: 'Enter email address...'
+    };
+
+    function esc(s) {
+        return String(s == null ? '' : s)
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    function showMessage(text, isError) {
+        results.innerHTML = '<div class="ad-message' + (isError ? ' error' : '') + '">' + esc(text) + '</div>';
+    }
+
+    toggleBtn.addEventListener('click', function () {
+        panel.classList.toggle('open');
+        if (panel.classList.contains('open')) { qInput.focus(); }
+    });
+
+    bySelect.addEventListener('change', function () {
+        qInput.placeholder = placeholders[this.value] || 'Search...';
+        qInput.focus();
+    });
+
+    form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        const q = qInput.value.trim();
+        if (q.length < 2) {
+            showMessage('Please enter at least 2 characters.', true);
+            return;
+        }
+
+        showMessage('Searching...', false);
+
+        const params = new URLSearchParams({
+            id: HOSPITAL_ID,
+            ajax: 'search_doctor',
+            by: bySelect.value,
+            q: q
+        });
+
+        fetch('?' + params.toString(), { headers: { 'Accept': 'application/json' } })
+            .then(r => r.json())
+            .then(data => {
+                if (!data.ok) { showMessage(data.error || 'Search failed.', true); return; }
+                renderResults(data.doctors);
+            })
+            .catch(() => showMessage('Something went wrong. Please try again.', true));
+    });
+
+    function renderResults(doctors) {
+        if (!doctors.length) {
+            showMessage('No doctor found.', false);
+            return;
+        }
+
+        results.innerHTML = '';
+        doctors.forEach(function (d) {
+            const card = document.createElement('div');
+            card.className = 'ad-result-card';
+
+            let avatar;
+            if (d.pic) {
+                avatar = '<img class="ad-avatar" src="' + esc(DOC_PIC_URL + encodeURIComponent(d.pic)) + '" alt="">';
+            } else {
+                avatar = '<div class="ad-avatar-ph">' + esc((d.name || '?').charAt(0).toUpperCase()) + '</div>';
+            }
+
+            const meta = [];
+            if (d.pmdc)  meta.push('<span class="ad-meta"><i class="fas fa-id-badge me-1"></i> PMDC: ' + esc(d.pmdc) + '</span>');
+            if (d.cnic)  meta.push('<span class="ad-meta"><i class="fas fa-id-card me-1"></i> CNIC: ' + esc(d.cnic) + '</span>');
+            if (d.email) meta.push('<span class="ad-meta"><i class="fas fa-envelope me-1"></i> ' + esc(d.email) + '</span>');
+            if (d.phone) meta.push('<span class="ad-meta"><i class="fas fa-phone me-1"></i> ' + esc(d.phone) + '</span>');
+
+            let action;
+            if (d.status === 'active') {
+                action = '<span class="ad-badge"><i class="fas fa-check me-1"></i> Already added</span>';
+            } else {
+                const label = d.status === 'removed' ? 'Re-add' : 'Add';
+                action = '<button type="button" class="btn btn-sm btn-success ad-add-btn" data-id="' + d.doctor_id + '" data-name="' + esc(d.name) + '">' +
+                         '<i class="fas fa-plus me-1"></i> ' + label + '</button>';
+            }
+
+            card.innerHTML =
+                avatar +
+                '<div class="ad-info">' +
+                    '<h6>Dr. ' + esc(d.name) + '</h6>' +
+                    '<span class="ad-spec">' + esc(d.specialization) + '</span>' +
+                    meta.join('') +
+                '</div>' +
+                '<div class="d-flex gap-1">' +
+                    '<a href="' + esc(PROFILE_URL + d.doctor_id) + '" class="btn btn-sm btn-primary">View</a>' +
+                    action +
+                '</div>';
+
+            results.appendChild(card);
+        });
+
+        results.querySelectorAll('.ad-add-btn').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                if (!confirm('Add Dr. ' + this.dataset.name + ' to this hospital?')) { return; }
+
+                const f = document.createElement('form');
+                f.method = 'POST';
+                f.action = '';
+                f.innerHTML =
+                    '<input type="hidden" name="doctor_action" value="add">' +
+                    '<input type="hidden" name="doctor_id" value="' + esc(this.dataset.id) + '">';
+                document.body.appendChild(f);
+                f.submit();
+            });
+        });
+    }
+})();
 </script>
 
 <?php include BASE_PATH.'/admin/inc/footer.php';?>

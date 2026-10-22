@@ -81,7 +81,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['clinical_data']) && is
     }
 
     if (empty($errors) && $saved_count > 0) {
-        header("Location: " . BASE_URL . "profile?id=" . $doctor_id);
+        header("Location: " . BASE_URL . "admin/doctors/profile?id=" . $doctor_id);
         exit();
     }
     if ($saved_count > 0) {
