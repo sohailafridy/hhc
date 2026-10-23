@@ -118,6 +118,13 @@ if (isset($_POST['user_id']) && (int)$_POST['user_id'] != 0) {
                             </div>
                         <?php endif; ?>
 
+                        <!-- Availability -->
+                        <?php if (!empty($doctor['emergency_status']) && $doctor['emergency_status'] != 0): ?>
+                            <div class="experience-badge" style="background-color: red;font-weight: bold;">
+                                <i class="fas fa-briefcase"></i>Unavailable, Please contact 03371320001
+                            </div>
+                        <?php endif; ?>
+
                         <!-- Rating -->
                         <?php 
                         $rating_query = "SELECT AVG(stars) as avg_rating, COUNT(*) as total_reviews 
@@ -137,111 +144,115 @@ if (isset($_POST['user_id']) && (int)$_POST['user_id'] != 0) {
                         <?php endif; ?>
                     </div>
 
-                    <!-- RIGHT CONTENT -->
+                    <!-- RIGHT CONTENT (NOW CLINICAL INFO) -->
                     <div class="profile-content">
-                        
-                        <!-- Contact Information -->
-                        <div class="content-section">
-                            <div class="section-title">
-                                <i class="fas fa-address-card"></i> Contact Information
-                            </div>
-                            <div class="contact-grid">
-                                <?php if (!empty($doctor['doctor_phone'])): ?>
-                                    <div class="contact-item">
-                                        <div class="icon-box">
-                                            <i class="fas fa-phone"></i>
-                                        </div>
-                                        <div>
-                                            <div class="label">Phone</div>
-                                            <div class="value"><?php echo htmlspecialchars($doctor['doctor_phone']); ?></div>
-                                        </div>
-                                    </div>
-                                <?php endif; ?>
+                        <?php
+                        $clinical_query = "SELECT ci.*, hospitals.hospital_name, hospitals.hospital_id,hospitals.hospital_address,cities.city_name
+                                        FROM clinical_info ci 
+                                        INNER JOIN doctor_in_hospital dih ON ci.doctor_in_hosp_id = dih.doctor_in_hosp_id 
+                                        LEFT JOIN hospitals ON dih.hospital_id = hospitals.hospital_id
+                                        LEFT JOIN cities ON cities.city_id = hospitals.city_id
+                                        WHERE dih.doctor_id = " . (int)$doctor['doctor_id'] . " AND dih.inactive=0
+                                        ORDER BY ci.season, ci.shift";
+                        $clinical_result = mysqli_query($con, $clinical_query);
+                        ?>
 
-                                <?php if (!empty($doctor['doctor_email'])): ?>
-                                    <div class="contact-item">
-                                        <div class="icon-box">
-                                            <i class="fas fa-envelope"></i>
-                                        </div>
-                                        <div>
-                                            <div class="label">Email</div>
-                                            <div class="value"><?php echo htmlspecialchars($doctor['doctor_email']); ?></div>
-                                        </div>
-                                    </div>
-                                <?php endif; ?>
-
-                                <?php if (!empty($doctor['city_name'])): ?>
-                                    <div class="contact-item">
-                                        <div class="icon-box">
-                                            <i class="fas fa-map-marker-alt"></i>
-                                        </div>
-                                        <div>
-                                            <div class="label">City</div>
-                                            <div class="value"><?php echo htmlspecialchars($doctor['city_name']); ?></div>
-                                        </div>
-                                    </div>
-                                <?php endif; ?>
-                            </div>
-                        </div>
-
-                        <!-- About Doctor -->
-                        <?php if (!empty($doctor['short_detail'])): ?>
+                        <?php if (mysqli_num_rows($clinical_result) > 0): ?>
                             <div class="content-section">
                                 <div class="section-title">
-                                    <i class="fas fa-info-circle"></i> About Doctor
+                                    <i class="fas fa-clock"></i> Clinical Information
                                 </div>
-                                <div class="about-text">
-                                    <?php echo nl2br(htmlspecialchars($doctor['short_detail'])); ?>
+
+                                <div class="clinical-grid">
+                                    <?php while ($clinical = mysqli_fetch_assoc($clinical_result)): ?>
+                                        <div class="clinical-card">
+                                            <div class="hospital-name">
+                                                <i class="fas fa-hospital"></i>
+                                               <?php
+                                                    if (!empty($clinical['hospital_name'])) {
+                                                        ?>
+                                                            <a href="<?=BASE_URL?>hospital-detail?hospital_id=<?=$clinical['hospital_id']?>"><?=htmlspecialchars($clinical['hospital_name'])?></a>
+                                                        <?php
+                                                        echo "<br><i class='fas fa-map-marker-alt text-info me-1'></i><small class='text-muted'>( " . $clinical['city_name'] . " )</small>";
+                                                    } else {
+                                                        echo 'Personal Clinic';
+                                                        if (!empty($doctor['clinic_address'])) {
+                                                            echo "<br><i class='fas fa-map-marker-alt text-info me-1'></i><small class='text-muted'>( " . nl2br(htmlspecialchars($doctor['clinic_address'])) . " )</small>";
+                                                        }
+                                                    }
+                                                ?>
+                                            </div>
+
+                                            <?php if (!empty($clinical['morning_opening_time']) || !empty($clinical['morning_closing_time'])): ?>
+                                                <div class="clinical-item">
+                                                    <i class="fas fa-sun text-warning"></i>
+                                                    <span class="label">Morning</span>
+                                                    <span class="value">
+                                                        <?php echo date('h:i A', strtotime($clinical['morning_opening_time'])); ?>
+                                                        - 
+                                                        <?php echo date('h:i A', strtotime($clinical['morning_closing_time'])); ?>
+                                                    </span>
+                                                </div>
+                                            <?php endif; ?>
+
+                                            <?php if (!empty($clinical['evening_opening_time']) || !empty($clinical['evening_closing_time'])): ?>
+                                                <div class="clinical-item">
+                                                    <i class="fas fa-moon text-primary"></i>
+                                                    <span class="label">Evening</span>
+                                                    <span class="value">
+                                                        <?php echo date('h:i A', strtotime($clinical['evening_opening_time'])); ?>
+                                                        - 
+                                                        <?php echo date('h:i A', strtotime($clinical['evening_closing_time'])); ?>
+                                                    </span>
+                                                </div>
+                                            <?php endif; ?>
+
+                                            <div class="clinical-item">
+                                                <i class="fas fa-calendar-day text-success"></i>
+                                                <span class="label">Working Days</span>
+                                                <span class="value"><?php echo htmlspecialchars($clinical['days'] ?? 'N/A'); ?></span>
+                                            </div>
+
+                                            <div class="clinical-item">
+                                                <i class="fas fa-calendar-times text-danger"></i>
+                                                <span class="label">Off Days</span>
+                                                <span class="value"><?php echo htmlspecialchars($clinical['off_days'] ?? 'None'); ?></span>
+                                            </div>
+
+                                            <?php if (!empty($clinical['contact'])): ?>
+                                                <div class="clinical-item">
+                                                    <i class="fas fa-phone"></i>
+                                                    <span class="label">Contact</span>
+                                                    <span class="value"><?php echo htmlspecialchars($clinical['contact']); ?></span>
+                                                </div>
+                                            <?php endif; ?>
+
+                                            <?php if (!empty($clinical['detail'])): ?>
+                                                <div class="clinical-item" style="border-top: 1px dashed var(--border); padding-top: 10px; margin-top: 6px;">
+                                                    <i class="fas fa-info-circle text-info"></i>
+                                                    <span class="label">Detail</span>
+                                                    <span class="value" style="font-size:0.82rem;"><?php echo htmlspecialchars($clinical['detail']); ?></span>
+                                                </div>
+                                            <?php endif; ?>
+                                            <?php if (!empty($clinical['hospital_address'])): ?>
+                                                <div class="clinical-item" style="border-top: 1px dashed var(--border); padding-top: 10px; margin-top: 6px;">
+                                                    <i class="fas fa-map-marker-alt text-info me-1"></i>
+                                                    <span class="label">Hospital Address</span>
+                                                    <span class="value" style="font-size:0.82rem;"><?php echo htmlspecialchars($clinical['hospital_address']); ?></span>
+                                                </div>
+                                            <?php endif; ?>
+                                        </div>
+                                    <?php endwhile; ?>
                                 </div>
                             </div>
-                        <?php endif; ?>
-
-                        <!-- Notes -->
-                        <?php if (!empty($doctor['notes'])): ?>
+                        <?php else: ?>
                             <div class="content-section">
                                 <div class="section-title">
-                                    <i class="fas fa-notes-medical"></i> Notes
+                                    <i class="fas fa-clock"></i> Clinical Information
                                 </div>
-                                <div class="info-card">
-                                    <?php echo nl2br(htmlspecialchars($doctor['notes'])); ?>
-                                </div>
-                            </div>
-                        <?php endif; ?>
-
-                        <!-- Clinical Info -->
-                        <?php if (!empty($doctor['static_clinical_info'])): ?>
-                            <div class="content-section">
-                                <div class="section-title">
-                                    <i class="fas fa-clipboard-list"></i> Clinical Info
-                                </div>
-                                <div class="info-card">
-                                    <?php echo nl2br(htmlspecialchars($doctor['static_clinical_info'])); ?>
-                                </div>
-                            </div>
-                        <?php endif; ?>
-
-                        <!-- Other -->
-                        <?php if (!empty($doctor['other'])): ?>
-                            <div class="content-section">
-                                <div class="section-title">
-                                    <i class="fas fa-ellipsis-h"></i> Other Information
-                                </div>
-                                <div class="info-card">
-                                    <?php echo nl2br(htmlspecialchars($doctor['other'])); ?>
-                                </div>
-                            </div>
-                        <?php endif; ?>
-
-                        <!-- If personal Clinic -->
-                        <?php if (!empty($doctor['clinic_name']) AND $doctor['clinic_status']==0): ?>
-                            <div class="content-section">
-                                <div class="section-title">
-                                    <i class="fas fa-ellipsis-h"></i> Personal Clinic
-                                </div>
-                                <div class="info-card">
-                                    <?php echo nl2br(htmlspecialchars($doctor['clinic_name'])); ?>
-                                    <br>
-                                    <?php echo nl2br(htmlspecialchars($doctor['clinic_address'])); ?>
+                                <div class="info-card" style="background-color:red;color: white;font-weight: bold;">
+                                    <i class="fas fa-info-circle text-muted"></i> 
+                                    اس ڈاکٹر کے متعلق معلومات بہت جلد شامل کی جائیں گی۔ مدد کے لیے رابطہ کریں: 0337-1320001
                                 </div>
                             </div>
                         <?php endif; ?>
@@ -249,110 +260,122 @@ if (isset($_POST['user_id']) && (int)$_POST['user_id'] != 0) {
                 </div>
             </div>
 
-            <!-- ===== CLINICAL INFORMATION ===== -->
-            <?php
-            $clinical_query = "SELECT ci.*, hospitals.hospital_name, hospitals.hospital_id,hospitals.hospital_address,cities.city_name
-                            FROM clinical_info ci 
-                            INNER JOIN doctor_in_hospital dih ON ci.doctor_in_hosp_id = dih.doctor_in_hosp_id 
-                            LEFT JOIN hospitals ON dih.hospital_id = hospitals.hospital_id
-                            LEFT JOIN cities ON cities.city_id = hospitals.city_id
-                            WHERE dih.doctor_id = " . (int)$doctor['doctor_id'] . " AND dih.inactive=0
-                            ORDER BY ci.season, ci.shift";
-            $clinical_result = mysqli_query($con, $clinical_query);
-            ?>
+            <!-- ===== ALL DETAILS (PREVIOUSLY IN RIGHT CONTENT) ===== -->
+            <div class="details-section" data-aos="fade-up" data-aos-delay="150" style="display:none;">
+                <div class="container">
+                    <div class="row">
+                        <div class="col-12">
 
-            <?php if (mysqli_num_rows($clinical_result) > 0): ?>
-                <div class="clinical-section" data-aos="fade-up" data-aos-delay="150">
-                    <div class="section-header">
-                        <h3><i class="fas fa-clock"></i> Clinical Information</h3>
-                        <span class="records-badge"><?php echo mysqli_num_rows($clinical_result); ?> Records</span>
-                    </div>
-
-                    <div class="clinical-grid">
-                        <?php while ($clinical = mysqli_fetch_assoc($clinical_result)): ?>
-                            <div class="clinical-card">
-                                <div class="hospital-name">
-                                    <i class="fas fa-hospital"></i>
-                                   <?php
-                                        if (!empty($clinical['hospital_name'])) {
-                                            ?>
-                                                <a href="<?=BASE_URL?>hospital-detail?hospital_id=<?=$clinical['hospital_id']?>"><?=htmlspecialchars($clinical['hospital_name'])?></a>
-                                            <?php
-                                            echo "<br><i class='fas fa-map-marker-alt text-info me-1'></i><small class='text-muted'>( " . $clinical['city_name'] . " )</small>";
-                                        } else {
-                                            echo 'Personal Clinic';
-                                            // Agar clinic address mojood hai to usko nayi line par show karein
-                                            if (!empty($doctor['clinic_address'])) {
-                                                echo "<br><i class='fas fa-map-marker-alt text-info me-1'></i><small class='text-muted'>( " . nl2br(htmlspecialchars($doctor['clinic_address'])) . " )</small>";
-                                            }
-                                        }
-                                    ?>
-                                     
+                            <!-- Contact Information -->
+                            <div class="content-section">
+                                <div class="section-title">
+                                    <i class="fas fa-address-card"></i> Contact Information
                                 </div>
+                                <div class="contact-grid">
+                                    <?php if (!empty($doctor['doctor_phone'])): ?>
+                                        <div class="contact-item">
+                                            <div class="icon-box">
+                                                <i class="fas fa-phone"></i>
+                                            </div>
+                                            <div>
+                                                <div class="label">Phone</div>
+                                                <div class="value"><?php echo htmlspecialchars($doctor['doctor_phone']); ?></div>
+                                            </div>
+                                        </div>
+                                    <?php endif; ?>
 
-                                <?php if (!empty($clinical['morning_opening_time']) || !empty($clinical['morning_closing_time'])): ?>
-                                    <div class="clinical-item">
-                                        <i class="fas fa-sun text-warning"></i>
-                                        <span class="label">Morning</span>
-                                        <span class="value">
-                                            <?php echo date('h:i A', strtotime($clinical['morning_opening_time'])); ?>
-                                            - 
-                                            <?php echo date('h:i A', strtotime($clinical['morning_closing_time'])); ?>
-                                        </span>
-                                    </div>
-                                <?php endif; ?>
+                                    <?php if (!empty($doctor['doctor_email'])): ?>
+                                        <div class="contact-item">
+                                            <div class="icon-box">
+                                                <i class="fas fa-envelope"></i>
+                                            </div>
+                                            <div>
+                                                <div class="label">Email</div>
+                                                <div class="value"><?php echo htmlspecialchars($doctor['doctor_email']); ?></div>
+                                            </div>
+                                        </div>
+                                    <?php endif; ?>
 
-                                <?php if (!empty($clinical['evening_opening_time']) || !empty($clinical['evening_closing_time'])): ?>
-                                    <div class="clinical-item">
-                                        <i class="fas fa-moon text-primary"></i>
-                                        <span class="label">Evening</span>
-                                        <span class="value">
-                                            <?php echo date('h:i A', strtotime($clinical['evening_opening_time'])); ?>
-                                            - 
-                                            <?php echo date('h:i A', strtotime($clinical['evening_closing_time'])); ?>
-                                        </span>
-                                    </div>
-                                <?php endif; ?>
-
-                                <div class="clinical-item">
-                                    <i class="fas fa-calendar-day text-success"></i>
-                                    <span class="label">Working Days</span>
-                                    <span class="value"><?php echo htmlspecialchars($clinical['days'] ?? 'N/A'); ?></span>
+                                    <?php if (!empty($doctor['city_name'])): ?>
+                                        <div class="contact-item">
+                                            <div class="icon-box">
+                                                <i class="fas fa-map-marker-alt"></i>
+                                            </div>
+                                            <div>
+                                                <div class="label">City</div>
+                                                <div class="value"><?php echo htmlspecialchars($doctor['city_name']); ?></div>
+                                            </div>
+                                        </div>
+                                    <?php endif; ?>
                                 </div>
-
-                                <div class="clinical-item">
-                                    <i class="fas fa-calendar-times text-danger"></i>
-                                    <span class="label">Off Days</span>
-                                    <span class="value"><?php echo htmlspecialchars($clinical['off_days'] ?? 'None'); ?></span>
-                                </div>
-
-                                <?php if (!empty($clinical['contact'])): ?>
-                                    <div class="clinical-item">
-                                        <i class="fas fa-phone"></i>
-                                        <span class="label">Contact</span>
-                                        <span class="value"><?php echo htmlspecialchars($clinical['contact']); ?></span>
-                                    </div>
-                                <?php endif; ?>
-
-                                <?php if (!empty($clinical['detail'])): ?>
-                                    <div class="clinical-item" style="border-top: 1px dashed var(--border); padding-top: 10px; margin-top: 6px;">
-                                        <i class="fas fa-info-circle text-info"></i>
-                                        <span class="label">Detail</span>
-                                        <span class="value" style="font-size:0.82rem;"><?php echo htmlspecialchars($clinical['detail']); ?></span>
-                                    </div>
-                                <?php endif; ?>
-                                <?php if (!empty($clinical['hospital_address'])): ?>
-                                    <div class="clinical-item" style="border-top: 1px dashed var(--border); padding-top: 10px; margin-top: 6px;">
-                                        <i class="fas fa-map-marker-alt text-info me-1"></i>
-                                        <span class="label">Hospital Address</span>
-                                        <span class="value" style="font-size:0.82rem;"><?php echo htmlspecialchars($clinical['hospital_address']); ?></span>
-                                    </div>
-                                <?php endif; ?>
                             </div>
-                        <?php endwhile; ?>
+
+                            <!-- About Doctor -->
+                            <?php if (!empty($doctor['short_detail'])): ?>
+                                <div class="content-section">
+                                    <div class="section-title">
+                                        <i class="fas fa-info-circle"></i> About Doctor
+                                    </div>
+                                    <div class="about-text">
+                                        <?php echo nl2br(htmlspecialchars($doctor['short_detail'])); ?>
+                                    </div>
+                                </div>
+                            <?php endif; ?>
+
+                            <!-- Notes -->
+                            <?php if (!empty($doctor['notes'])): ?>
+                                <div class="content-section">
+                                    <div class="section-title">
+                                        <i class="fas fa-notes-medical"></i> Notes
+                                    </div>
+                                    <div class="info-card">
+                                        <?php echo nl2br(htmlspecialchars($doctor['notes'])); ?>
+                                    </div>
+                                </div>
+                            <?php endif; ?>
+
+                            <!-- Clinical Info (Static) -->
+                            <?php if (!empty($doctor['static_clinical_info'])): ?>
+                                <div class="content-section">
+                                    <div class="section-title">
+                                        <i class="fas fa-clipboard-list"></i> Clinical Info
+                                    </div>
+                                    <div class="info-card">
+                                        <?php echo nl2br(htmlspecialchars($doctor['static_clinical_info'])); ?>
+                                    </div>
+                                </div>
+                            <?php endif; ?>
+
+                            <!-- Other -->
+                            <?php if (!empty($doctor['other'])): ?>
+                                <div class="content-section">
+                                    <div class="section-title">
+                                        <i class="fas fa-ellipsis-h"></i> Other Information
+                                    </div>
+                                    <div class="info-card">
+                                        <?php echo nl2br(htmlspecialchars($doctor['other'])); ?>
+                                    </div>
+                                </div>
+                            <?php endif; ?>
+
+                            <!-- Personal Clinic -->
+                            <?php if (!empty($doctor['clinic_name']) AND $doctor['clinic_status']==1): ?>
+                                <div class="content-section">
+                                    <div class="section-title">
+                                        <i class="fas fa-ellipsis-h"></i> Personal Clinic
+                                    </div>
+                                    <div class="info-card">
+                                        <?php echo nl2br(htmlspecialchars($doctor['clinic_name'])); ?>
+                                        <br>
+                                        <?php echo nl2br(htmlspecialchars($doctor['clinic_address'])); ?>
+                                    </div>
+                                </div>
+                            <?php endif; ?>
+
+                        </div>
                     </div>
                 </div>
-            <?php endif; ?>
+            </div>
 
             <!-- ===== REVIEWS SECTION ===== -->
             <div class="reviews-section" data-aos="fade-up" data-aos-delay="200">
@@ -367,7 +390,66 @@ if (isset($_POST['user_id']) && (int)$_POST['user_id'] != 0) {
                     <?php endif; ?>
                 </div>
 
-                <!-- Review Form -->
+                <!-- Reviews List -->
+                <?php
+                $feedback_query = "SELECT * FROM feedback WHERE user_id = " . (int)$doctor['user_id'] . " AND status = 1 
+                                  ORDER BY created_at DESC";
+                $feedback_result = mysqli_query($con, $feedback_query);
+                ?>
+
+                <?php if (mysqli_num_rows($feedback_result) > 0): ?>
+                    <div id="reviewsContainer">
+                        <?php 
+                        $review_index = 0;
+                        while ($feedback = mysqli_fetch_assoc($feedback_result)): 
+                            $review_index++;
+                        ?>
+                            <div class="review-item review-card-item" 
+                                 data-index="<?php echo $review_index; ?>"
+                                 style="<?php echo $review_index > 5 ? 'display:none;' : ''; ?>">
+                                <div class="review-header">
+                                    <div class="reviewer-info">
+                                        <div class="reviewer-avatar">
+                                            <?php echo strtoupper(substr($feedback['commenter_name'], 0, 1)); ?>
+                                        </div>
+                                        <div>
+                                            <span class="reviewer-name"><?php echo htmlspecialchars($feedback['commenter_name']); ?></span>
+                                            <span class="reviewer-email"><?php echo htmlspecialchars($feedback['commenter_gmail']); ?></span>
+                                        </div>
+                                    </div>
+                                    <div class="review-stars">
+                                        <?php for ($i = 1; $i <= 5; $i++): ?>
+                                            <i class="fas fa-star <?php echo $i <= $feedback['stars'] ? '' : 'text-muted'; ?>"></i>
+                                        <?php endfor; ?>
+                                    </div>
+                                </div>
+                                <?php if (!empty($feedback['comment'])): ?>
+                                    <p class="review-comment"><?php echo nl2br(htmlspecialchars($feedback['comment'])); ?></p>
+                                <?php endif; ?>
+                                <div class="review-date">
+                                    <i class="fas fa-calendar-alt"></i> <?php echo date('d M Y', strtotime($feedback['created_at'])); ?>
+                                </div>
+                            </div>
+                        <?php endwhile; ?>
+                    </div>
+
+                    <?php if (mysqli_num_rows($feedback_result) > 5): ?>
+                        <div class="load-more-wrapper" style="text-align:center; margin: 20px 0;">
+                            <button type="button" id="loadMoreBtn" class="btn-submit-review" style="border:none; cursor:pointer;">
+                                <i class="fas fa-chevron-down"></i> Load More Reviews
+                            </button>
+                        </div>
+                    <?php endif; ?>
+
+                <?php else: ?>
+                    <div class="no-reviews">
+                        <i class="fas fa-comment-slash"></i>
+                        <h5>No Reviews Yet</h5>
+                        <p>Be the first to share your experience with this doctor!</p>
+                    </div>
+                <?php endif; ?>
+
+                <!-- Review Form (BELOW REVIEWS LIST) -->
                 <div class="review-form">
                     <h4><i class="fas fa-pen"></i> Share Your Experience</h4>
                     <form method="POST">
@@ -408,47 +490,6 @@ if (isset($_POST['user_id']) && (int)$_POST['user_id'] != 0) {
                     </form>
                 </div>
 
-                <!-- Reviews List -->
-                <?php
-                $feedback_query = "SELECT * FROM feedback WHERE user_id = " . (int)$doctor['user_id'] . " AND status = 1 
-                                  ORDER BY created_at DESC LIMIT 10";
-                $feedback_result = mysqli_query($con, $feedback_query);
-                ?>
-
-                <?php if (mysqli_num_rows($feedback_result) > 0): ?>
-                    <?php while ($feedback = mysqli_fetch_assoc($feedback_result)): ?>
-                        <div class="review-item">
-                            <div class="review-header">
-                                <div class="reviewer-info">
-                                    <div class="reviewer-avatar">
-                                        <?php echo strtoupper(substr($feedback['commenter_name'], 0, 1)); ?>
-                                    </div>
-                                    <div>
-                                        <span class="reviewer-name"><?php echo htmlspecialchars($feedback['commenter_name']); ?></span>
-                                        <span class="reviewer-email"><?php echo htmlspecialchars($feedback['commenter_gmail']); ?></span>
-                                    </div>
-                                </div>
-                                <div class="review-stars">
-                                    <?php for ($i = 1; $i <= 5; $i++): ?>
-                                        <i class="fas fa-star <?php echo $i <= $feedback['stars'] ? '' : 'text-muted'; ?>"></i>
-                                    <?php endfor; ?>
-                                </div>
-                            </div>
-                            <?php if (!empty($feedback['comment'])): ?>
-                                <p class="review-comment"><?php echo nl2br(htmlspecialchars($feedback['comment'])); ?></p>
-                            <?php endif; ?>
-                            <div class="review-date">
-                                <i class="fas fa-calendar-alt"></i> <?php echo date('d M Y', strtotime($feedback['created_at'])); ?>
-                            </div>
-                        </div>
-                    <?php endwhile; ?>
-                <?php else: ?>
-                    <div class="no-reviews">
-                        <i class="fas fa-comment-slash"></i>
-                        <h5>No Reviews Yet</h5>
-                        <p>Be the first to share your experience with this doctor!</p>
-                    </div>
-                <?php endif; ?>
             </div>
 
         </div>
@@ -504,8 +545,11 @@ function setRating(value) {
     ratingLabel.textContent = labels[value];
 }
 
-// Initialize rating on page load
+// ============================================
+// LOAD MORE REVIEWS (5 at a time)
+// ============================================
 document.addEventListener('DOMContentLoaded', function() {
+    // Initialize rating
     setRating(5);
     
     // Hover effect
@@ -522,14 +566,37 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    document.getElementById('ratingSelect').addEventListener('mouseleave', function() {
-        const current = parseInt(document.getElementById('ratingValue').value);
-        stars.forEach(star => {
-            star.classList.remove('active');
-            if (parseInt(star.dataset.value) <= current) {
-                star.classList.add('active');
+    const ratingSelect = document.getElementById('ratingSelect');
+    if (ratingSelect) {
+        ratingSelect.addEventListener('mouseleave', function() {
+            const current = parseInt(document.getElementById('ratingValue').value);
+            stars.forEach(star => {
+                star.classList.remove('active');
+                if (parseInt(star.dataset.value) <= current) {
+                    star.classList.add('active');
+                }
+            });
+        });
+    }
+
+    // Load More reviews
+    const loadMoreBtn = document.getElementById('loadMoreBtn');
+    if (loadMoreBtn) {
+        loadMoreBtn.addEventListener('click', function() {
+            const hiddenReviews = document.querySelectorAll('.review-card-item[style*="display:none"]');
+            let shown = 0;
+            hiddenReviews.forEach(function(item) {
+                if (shown < 5) {
+                    item.style.display = '';
+                    shown++;
+                }
+            });
+            // Hide button if no more hidden reviews
+            const remaining = document.querySelectorAll('.review-card-item[style*="display:none"]');
+            if (remaining.length === 0) {
+                loadMoreBtn.style.display = 'none';
             }
         });
-    });
+    }
 });
 </script>

@@ -16,6 +16,36 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $hospitals = isset($_POST['hospitals']) && is_array($_POST['hospitals']) ? $_POST['hospitals'] : [];
 
     if (!empty($hospitals)) {
+
+        // ============================
+        // Personal Clinic detect
+        // ============================
+        $has_clinic = false;
+        foreach ($hospitals as $h) {
+            if ((int)$h === 0) {
+                $has_clinic = true;
+                break;
+            }
+        }
+
+        // ============================
+        // Agar clinic select hui to doctors table update karo
+        // ============================
+        if ($has_clinic) {
+            $clinic_name    = mysqli_real_escape_string($con, $_POST['clinic_name'] ?? '');
+            $clinic_address = mysqli_real_escape_string($con, $_POST['clinic_address'] ?? '');
+
+            $update_doctor = "UPDATE doctors 
+                              SET clinic_status = 1,
+                                  clinic_name = '$clinic_name',
+                                  clinic_address = '$clinic_address'
+                              WHERE doctor_id = $doctor_id";
+            mysqli_query($con, $update_doctor);
+        }
+
+        // ============================
+        // doctor_in_hospital insert
+        // ============================
         $stmt = mysqli_prepare($con, "INSERT INTO doctor_in_hospital (doctor_id, hospital_id, if_clinic) VALUES (?, ?, ?)");
 
         foreach ($hospitals as $hospital_id) {
@@ -222,6 +252,28 @@ $show_clinic = ($clinic_check == 0) && ($search_raw === '' || stripos('personal 
                            </label>
                         </div>
                      </div>
+
+                     <!-- ===== NEW: Clinic fields (only visible when Personal Clinic selected) ===== -->
+                     <div id="clinicFields" class="clinic-fields" style="display:none;">
+                        <div class="clinic-fields-inner">
+                           <div class="hf-field">
+                              <label class="hf-label" for="clinic_name">
+                                 <i class="fas fa-clinic-medical me-1"></i> Clinic Name
+                              </label>
+                              <input type="text" id="clinic_name" name="clinic_name" class="hf-control"
+                                     placeholder="Enter clinic name"
+                                     value="<?php echo htmlspecialchars($_POST['clinic_name'] ?? ''); ?>">
+                           </div>
+                           <div class="hf-field">
+                              <label class="hf-label" for="clinic_address">
+                                 <i class="fas fa-map-marker-alt me-1"></i> Clinic Address
+                              </label>
+                              <input type="text" id="clinic_address" name="clinic_address" class="hf-control"
+                                     placeholder="Enter clinic address"
+                                     value="<?php echo htmlspecialchars($_POST['clinic_address'] ?? ''); ?>">
+                           </div>
+                        </div>
+                     </div>
                   <?php endif; ?>
 
                   <?php while ($rs = mysqli_fetch_assoc($get_hosp)): ?>
@@ -267,14 +319,45 @@ $show_clinic = ($clinic_check == 0) && ($search_raw === '' || stripos('personal 
    </div>
 </div>
 
+<!-- ===== NEW: Small style for clinic fields (optional, agar aapki css file mein add karna chahein to yahan se hata dein) ===== -->
+<style>
+.clinic-fields {
+   margin: 10px 0 16px 0;
+   padding: 14px 16px;
+   background: #f4f8ff;
+   border: 1px solid #d6e4ff;
+   border-radius: 8px;
+}
+.clinic-fields-inner {
+   display: grid;
+   grid-template-columns: 1fr 1fr;
+   gap: 14px;
+}
+@media (max-width: 640px) {
+   .clinic-fields-inner { grid-template-columns: 1fr; }
+}
+</style>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const selectAllCheckbox = document.getElementById('selectAll');
     const hospitalCheckboxes = document.querySelectorAll('.hospital-checkbox');
     const assignBtn = document.getElementById('assignBtn');
     const hospitalItems = document.querySelectorAll('.hospital-item');
+    const clinicFields = document.getElementById('clinicFields');
 
     if (!selectAllCheckbox || !assignBtn) { return; }
+
+    // NEW: show/hide clinic fields based on Personal Clinic checkbox
+    function toggleClinicFields() {
+        if (!clinicFields) { return; }
+        const personalClinic = document.getElementById('personal_clinic');
+        if (personalClinic && personalClinic.checked) {
+            clinicFields.style.display = 'block';
+        } else {
+            clinicFields.style.display = 'none';
+        }
+    }
 
     // Select All
     selectAllCheckbox.addEventListener('change', function() {
@@ -283,6 +366,7 @@ document.addEventListener('DOMContentLoaded', function() {
             updateHospitalItem(checkbox);
         });
         updateAssignButton();
+        toggleClinicFields();
     });
 
     // Individual checkbox
@@ -291,6 +375,7 @@ document.addEventListener('DOMContentLoaded', function() {
             updateHospitalItem(this);
             updateSelectAllCheckbox();
             updateAssignButton();
+            toggleClinicFields();
         });
     });
 
@@ -303,6 +388,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 updateHospitalItem(checkbox);
                 updateSelectAllCheckbox();
                 updateAssignButton();
+                toggleClinicFields();
             }
         });
     });
@@ -326,8 +412,31 @@ document.addEventListener('DOMContentLoaded', function() {
         if (document.querySelectorAll('.hospital-checkbox:checked').length === 0) {
             e.preventDefault();
             alert('Please select at least one hospital to assign.');
+            return;
+        }
+
+        // NEW: validate clinic fields if Personal Clinic is selected
+        const personalClinic = document.getElementById('personal_clinic');
+        if (personalClinic && personalClinic.checked) {
+            const cName = document.getElementById('clinic_name');
+            const cAddr = document.getElementById('clinic_address');
+            if (!cName.value.trim()) {
+                e.preventDefault();
+                alert('Please enter Clinic Name.');
+                cName.focus();
+                return;
+            }
+            if (!cAddr.value.trim()) {
+                e.preventDefault();
+                alert('Please enter Clinic Address.');
+                cAddr.focus();
+                return;
+            }
         }
     });
+
+    // Initial state (page reload ke baad agar checkbox checked ho)
+    toggleClinicFields();
 });
 </script>
 

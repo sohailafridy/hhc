@@ -119,6 +119,14 @@ if (in_array('recycle', $url_parts)) {
 }
 
 // ============================================
+// UTILITIES (Delete All Clinics etc.)
+// ============================================
+if (in_array('delete-all-clinics', $url_parts)) {
+    $open = 'utilities';
+    $active = 'delete-all-clinics';
+}
+
+// ============================================
 // DASHBOARD (Default — only when nothing else active)
 // ============================================
 $current_page = end($url_parts);
@@ -355,6 +363,34 @@ if (($current_page == 'admin' || $current_page == 'index' || $current_page == ''
 }
 
 /* ============================================
+   UTILITIES SPECIAL (Danger-styled item)
+   ============================================ */
+.main-sidebar .sidebar-menu > li.utility-item > a > span {
+    color: #fbbf24 !important;
+}
+
+.main-sidebar .sidebar-menu > li.utility-item > a > i:first-child {
+    color: #f59e0b;
+}
+
+.main-sidebar .sidebar-menu > li.utility-item > a:hover {
+    background: rgba(245, 158, 11, 0.1);
+}
+
+.main-sidebar .sidebar-menu > li.utility-item > a:hover > i:first-child {
+    color: #fcd34d;
+}
+
+.main-sidebar .sidebar-menu > li.utility-item.active > a {
+    background: linear-gradient(90deg, rgba(245, 158, 11, 0.18) 0%, rgba(245, 158, 11, 0.05) 100%);
+    box-shadow: 0 4px 14px rgba(245, 158, 11, 0.15);
+}
+
+.main-sidebar .sidebar-menu > li.utility-item.active > a::before {
+    background: linear-gradient(180deg, #f59e0b, #fbbf24);
+}
+
+/* ============================================
    LOGOUT SPECIAL
    ============================================ */
 .main-sidebar .sidebar-menu > li.logout-item > a {
@@ -572,6 +608,21 @@ if (($current_page == 'admin' || $current_page == 'index' || $current_page == ''
                 <a class="waves-effect waves-dark" href="https://pmdc.pk/" target="_blank">
                     <i class="icon-trash"></i>
                     <span>PMDC Doctor Check</span>
+                </a>
+            </li>
+
+            <!-- ========================================== -->
+            <!-- ===== UTILITIES (Danger Zone) ===== -->
+            <!-- ========================================== -->
+            <li class="nav-level">Utilities</li>
+
+            <!-- ===== DELETE ALL CLINICS ===== -->
+            <li class="treeview utility-item <?php echo ($active == 'delete-all-clinics') ? 'active' : ''; ?>">
+                <a class="waves-effect waves-dark"
+                   href="<?php echo BASE_URL; ?>admin/delete-all-clinics"
+                   onclick="return confirm('⚠️ WARNING\n\nYe page kholne par ALL doctors ki clinic data delete ho sakti hai.\n\nKya aap waqai kholein?');">
+                    <i class="fas fa-broom"></i>
+                    <span>Delete All Clinics</span>
                 </a>
             </li>
 

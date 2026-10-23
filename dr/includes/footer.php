@@ -71,8 +71,8 @@
                     </div>
                     <div class="col-md-6 text-md-end">
                         <p class="mb-0">
-                            <a href="#" class="text-muted me-3">Privacy Policy</a>
-                            <a href="#" class="text-muted">Terms of Service</a>
+                            <a href="<?= BASE_URL ?>pages/privacy-policy.php" class=" me-3">Privacy Policy</a>
+                            <a href="<?= BASE_URL ?>pages/terms-of-service.php" class="">Terms of Service</a>
                         </p>
                     </div>
                 </div>

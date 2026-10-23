@@ -7,6 +7,87 @@ if (isset($_GET['user_id'])) {
 }
 
 // ============================================
+// CSRF TOKEN (Permanent Delete ke liye)
+// ============================================
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(16));
+}
+
+// ============================================
+// DELETE CLINIC PERMANENT
+// ============================================
+// ============================================
+// DELETE CLINIC PERMANENT
+// (clinical_info + doctor_in_hospital bhi remove hota hai)
+// ============================================
+if (isset($_REQUEST['del_clinic']) && $_REQUEST['del_clinic'] == true && !empty($_REQUEST['id'])) {
+
+    $del_doc_id = (int)$_REQUEST['id'];
+
+    try {
+        mysqli_begin_transaction($con);
+
+        // 1) doctor_in_hospital se clinic ki row dhundo (if_clinic = 1)
+        $dih_ids = [];
+        $dih_q = mysqli_query($con, "SELECT doctor_in_hosp_id 
+                                     FROM doctor_in_hospital 
+                                     WHERE doctor_id = $del_doc_id AND if_clinic = 1");
+        if ($dih_q === false) {
+            throw new Exception(mysqli_error($con));
+        }
+        while ($r = mysqli_fetch_assoc($dih_q)) {
+            $dih_ids[] = (int)$r['doctor_in_hosp_id'];
+        }
+
+        // 2) clinical_info se delete karo (agar clinic row mili ho)
+        if (!empty($dih_ids)) {
+            $dih_list = implode(',', $dih_ids);
+            $del_ci = mysqli_query($con, "DELETE FROM clinical_info WHERE doctor_in_hosp_id IN ($dih_list)");
+            if ($del_ci === false) {
+                throw new Exception(mysqli_error($con));
+            }
+
+            // 3) doctor_in_hospital se delete karo
+            $del_dih = mysqli_query($con, "DELETE FROM doctor_in_hospital WHERE doctor_in_hosp_id IN ($dih_list) AND doctor_id = $del_doc_id AND if_clinic = 1");
+            if ($del_dih === false) {
+                throw new Exception(mysqli_error($con));
+            }
+        }
+
+        // 4) doctors table me clinic fields reset karo
+        $del_clinic = "UPDATE `doctors` 
+                       SET clinic_status = 0, clinic_name = '', clinic_address = '' 
+                       WHERE doctor_id = $del_doc_id";
+        if (mysqli_query($con, $del_clinic) === false) {
+            throw new Exception(mysqli_error($con));
+        }
+
+        mysqli_commit($con);
+
+        $_SESSION['success_msg'] = "Clinic deleted successfully!";
+        ?>
+        <script>window.location.href = "<?= BASE_URL ?>admin/doctors/profile?id=<?= $del_doc_id ?>";</script>
+        <?php
+        exit();
+
+    } catch (Throwable $e) {
+        mysqli_rollback($con);
+        $_SESSION['error_msg'] = "Clinic delete failed, nothing was deleted. " . $e->getMessage();
+        ?>
+        <script>window.location.href = "<?= BASE_URL ?>admin/doctors/profile?id=<?= $del_doc_id ?>";</script>
+        <?php
+        exit();
+    }
+}
+
+
+
+
+
+
+
+
+// ============================================
 // DELETE CLINICAL INFO
 // ============================================
 if(isset($_REQUEST['del_clinic_id']) && $_REQUEST['del_clinic_id'] != 0){
@@ -84,10 +165,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['hospital_action'], $_P
                 // mysqli_query($con, "DELETE FROM `clinical_info` WHERE `doctor_in_hosp_id` = '". $act_dih_id ."'");
 
                 if((int)$_POST['personal_clinic']==1){
-                    mysqli_query($con, "UPDATE `doctors` set `clinic_status`=1 WHERE `doctor_id` = '". $act_doctor_id ."'");
+                    mysqli_query($con, "UPDATE `doctors` set `clinic_status`=0 WHERE `doctor_id` = '". $act_doctor_id ."'");
                 }
             }else{
-                mysqli_query($con, "UPDATE `doctors` set `clinic_status`=0 WHERE `doctor_id` = '". $act_doctor_id ."'");
+                mysqli_query($con, "UPDATE `doctors` set `clinic_status`=1 WHERE `doctor_id` = '". $act_doctor_id ."'");
             }
             $_SESSION['success_msg'] = $ok_msg;
         } else {
@@ -98,6 +179,141 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['hospital_action'], $_P
     // Redirect (refresh par form dobara submit na ho)
     header('Location: ' . strtok($_SERVER['REQUEST_URI'], '?') . '?id=' . $act_doctor_id);
     exit();
+}
+
+// ============================================
+// PERMANENT DELETE DOCTOR
+// Doctor ka saara data har us table se delete hota hai jahan wo maujood ho
+// ============================================
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['permanent_delete_doctor'])) {
+
+    $pd_doctor_id = (int)$_POST['permanent_delete_doctor'];
+    $token_ok = isset($_POST['csrf_token'], $_SESSION['csrf_token'])
+                && hash_equals($_SESSION['csrf_token'], (string)$_POST['csrf_token']);
+
+    if (!$token_ok) {
+        $_SESSION['error_msg'] = "Invalid request. Please refresh the page and try again.";
+        header('Location: ' . strtok($_SERVER['REQUEST_URI'], '?') . '?id=' . $pd_doctor_id);
+        exit();
+    }
+
+    $pd_q   = mysqli_query($con, "SELECT doctor_id, user_id, doctor_name, doctor_pic FROM doctors WHERE doctor_id = $pd_doctor_id");
+    $pd_doc = $pd_q ? mysqli_fetch_assoc($pd_q) : null;
+
+    if (!$pd_doc) {
+        $_SESSION['error_msg'] = "Doctor not found.";
+        header('Location: ' . BASE_URL . 'admin/doctors/list');
+        exit();
+    }
+
+    $pd_user_id = (int)$pd_doc['user_id'];
+    $pd_name    = $pd_doc['doctor_name'];
+    $pd_pic     = $pd_doc['doctor_pic'];
+    $pd_deleted = []; // table => deleted rows
+
+    // Helper: query chalao, fail ho to exception
+    $pd_run = function ($sql) use ($con) {
+        $res = mysqli_query($con, $sql);
+        if ($res === false) {
+            throw new Exception(mysqli_error($con));
+        }
+        return mysqli_affected_rows($con);
+    };
+    $pd_tbl = function ($name) {
+        return '`' . str_replace('`', '``', $name) . '`';
+    };
+
+    try {
+        mysqli_begin_transaction($con);
+
+        // ---- 1) Doctor ki doctor_in_hospital ids ----
+        $dih_ids = [];
+        $dih_q = mysqli_query($con, "SELECT doctor_in_hosp_id FROM doctor_in_hospital WHERE doctor_id = $pd_doctor_id");
+        while ($r = mysqli_fetch_assoc($dih_q)) {
+            $dih_ids[] = (int)$r['doctor_in_hosp_id'];
+        }
+        $dih_list = implode(',', $dih_ids);
+
+        // ---- 2) DB mein jin tables mein ye columns hain wo dhoondein ----
+        $by_dih = []; $by_doctor = []; $by_user = [];
+        $cols_q = mysqli_query($con, "SELECT c.TABLE_NAME, c.COLUMN_NAME
+                                      FROM information_schema.COLUMNS c
+                                      INNER JOIN information_schema.TABLES t
+                                              ON t.TABLE_SCHEMA = c.TABLE_SCHEMA AND t.TABLE_NAME = c.TABLE_NAME
+                                      WHERE c.TABLE_SCHEMA = DATABASE()
+                                        AND t.TABLE_TYPE = 'BASE TABLE'
+                                        AND c.COLUMN_NAME IN ('doctor_in_hosp_id', 'doctor_id', 'user_id')");
+        while ($c = mysqli_fetch_assoc($cols_q)) {
+            $t = $c['TABLE_NAME'];
+            if ($c['COLUMN_NAME'] === 'doctor_in_hosp_id' && $t !== 'doctor_in_hospital') {
+                $by_dih[] = $t;
+            } elseif ($c['COLUMN_NAME'] === 'doctor_id' && !in_array($t, ['doctors', 'doctor_in_hospital'], true)) {
+                $by_doctor[] = $t;
+            } elseif ($c['COLUMN_NAME'] === 'user_id' && !in_array($t, ['users', 'doctors'], true)) {
+                $by_user[] = $t;
+            }
+        }
+
+        // ---- 3) Child tables pehle (doctor_in_hosp_id wali: clinical_info waghera) ----
+        if ($dih_list !== '') {
+            foreach ($by_dih as $t) {
+                $n = $pd_run("DELETE FROM " . $pd_tbl($t) . " WHERE doctor_in_hosp_id IN ($dih_list)");
+                if ($n > 0) { $pd_deleted[$t] = ($pd_deleted[$t] ?? 0) + $n; }
+            }
+        }
+
+        // ---- 4) doctor_in_hospital ----
+        $n = $pd_run("DELETE FROM `doctor_in_hospital` WHERE doctor_id = $pd_doctor_id");
+        if ($n > 0) { $pd_deleted['doctor_in_hospital'] = $n; }
+
+        // ---- 5) Baaki tables jahan doctor_id hai ----
+        foreach ($by_doctor as $t) {
+            $n = $pd_run("DELETE FROM " . $pd_tbl($t) . " WHERE doctor_id = $pd_doctor_id");
+            if ($n > 0) { $pd_deleted[$t] = ($pd_deleted[$t] ?? 0) + $n; }
+        }
+
+        // ---- 6) Tables jahan doctor ka user_id hai (feedback waghera) ----
+        if ($pd_user_id > 0) {
+            foreach ($by_user as $t) {
+                $n = $pd_run("DELETE FROM " . $pd_tbl($t) . " WHERE user_id = $pd_user_id");
+                if ($n > 0) { $pd_deleted[$t] = ($pd_deleted[$t] ?? 0) + $n; }
+            }
+        }
+
+        // ---- 7) doctors aur phir users ----
+        $n = $pd_run("DELETE FROM `doctors` WHERE doctor_id = $pd_doctor_id");
+        if ($n > 0) { $pd_deleted['doctors'] = $n; }
+
+        if ($pd_user_id > 0) {
+            $n = $pd_run("DELETE FROM `users` WHERE user_id = $pd_user_id");
+            if ($n > 0) { $pd_deleted['users'] = $n; }
+        }
+
+        mysqli_commit($con);
+
+        // ---- 8) Profile picture file delete ----
+        if (!empty($pd_pic)) {
+            $pd_pic_path = BASE_PATH . "/admin/inc/uploads/doctors/" . basename($pd_pic);
+            if (is_file($pd_pic_path)) {
+                @unlink($pd_pic_path);
+            }
+        }
+
+        $summary = [];
+        foreach ($pd_deleted as $tname => $cnt) {
+            $summary[] = "$tname ($cnt)";
+        }
+        $_SESSION['success_msg'] = "Dr. " . $pd_name . " permanently deleted. Removed from: " . implode(', ', $summary);
+
+        header('Location: ' . BASE_URL . 'admin/doctors/list');
+        exit();
+
+    } catch (Throwable $e) {
+        mysqli_rollback($con);
+        $_SESSION['error_msg'] = "Permanent delete failed, nothing was deleted. " . $e->getMessage();
+        header('Location: ' . strtok($_SERVER['REQUEST_URI'], '?') . '?id=' . $pd_doctor_id);
+        exit();
+    }
 }
 
 // ============================================
@@ -299,6 +515,22 @@ $past_hospitals_result = mysqli_query($con, $past_hospitals_query);
             <a href="javascript:void(0)" onclick="deleteDoctor(<?php echo $doctor['doctor_id']; ?>)" class="btn-action-header danger">
                 <i class="fas fa-trash"></i> Delete
             </a>
+
+            <!-- ===== PERMANENT DELETE ===== -->
+            <form method="POST" action="" id="permDeleteForm" class="d-none">
+                <input type="hidden" name="permanent_delete_doctor" value="<?php echo (int)$doctor['doctor_id']; ?>">
+                <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token']); ?>">
+            </form>
+            <a href="javascript:void(0)"
+               onclick="permanentDeleteDoctor(<?php echo htmlspecialchars(json_encode($doctor['doctor_name']), ENT_QUOTES); ?>)"
+               class="btn-action-header danger" style="background: rgba(153, 27, 27, 0.85);">
+                <i class="fas fa-user-slash"></i> Permanent Delete
+            </a>
+
+            <a href="<?=BASE_URL?>admin/doctors/profile?id=4&del_clinic=true" class="btn-action-header danger" style="background: rgba(153, 27, 27, 0.85);">
+                <i class="fas fa-user-slash"></i> Delete Clinic
+            </a>
+
             <a href="<?php echo BASE_URL; ?>admin/doctors/list" class="btn-action-header">
                 <i class="fas fa-arrow-left"></i> Back
             </a>
@@ -912,6 +1144,16 @@ $past_hospitals_result = mysqli_query($con, $past_hospitals_query);
 function deleteDoctor(doctorId) {
     if (confirm('Are you sure you want to delete this doctor? This action cannot be undone.')) {
         window.location.href = '?delete_id=' + doctorId;
+    }
+}
+
+function permanentDeleteDoctor(doctorName) {
+    var msg = '⚠️ PERMANENT DELETE\n\n' +
+              'Dr. ' + doctorName + ' aur is doctor ka saara data (account, hospitals, clinical info, feedbacks, aur har wo record jo is doctor se linked hai) HAMESHA ke liye delete ho jayega.\n\n' +
+              'Ye action wapas nahi ho sakta.\n\n' +
+              'Kya aap waqai delete karna chahte hain?';
+    if (confirm(msg)) {
+        document.getElementById('permDeleteForm').submit();
     }
 }
 

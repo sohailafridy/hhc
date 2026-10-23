@@ -1,8 +1,6 @@
 <?php include '../includes/header.php'; ?>
 
 <?php
-   
-    
     // Handle search and filters
     $search = isset($_GET['search']) ? mysqli_real_escape_string($con, $_GET['search']) : '';
     $hospital = isset($_GET['hospital']) ? (int)$_GET['hospital'] : '';
@@ -17,9 +15,6 @@
     $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
     $per_page = 12;
     $offset = ($page - 1) * $per_page;
-
-
-
 
 // Fetch doctor categories and types for specialization dropdown
 $categories_query = "SELECT dc.dr_cat_id, dc.cat_name, dct.dr_cat_type_id, dct.type 
@@ -45,6 +40,7 @@ if ($categories_result) {
         }
     }
 }
+
 ?>
 <link rel="stylesheet" href="<?= BASE_URL ?>style/doctor-list.css">
 <body>
@@ -327,39 +323,161 @@ if ($categories_result) {
                         $doct_stars = mysqli_fetch_assoc($doct_stars_q);
                         $doct_stars = $doct_stars['stars'];
                         $doctor_rating = $doct_stars ? number_format((float)$doct_stars, 1) : 'New';
-                        
-                        $doctor_specialization = !empty($row['doctor_of']) ? $row['doctor_of'] : 'Medical Specialist';
-                        $doctor_card_colors = ['#eef6ff', '#f3efff', '#eefbf5', '#fff6e8', '#fceef3', '#edf8ff'];
-                        $doctor_bg = $doctor_card_colors[($doctor_index - 1) % count($doctor_card_colors)];
                         ?>
-                        <div class="speciality-card doctor-mini-card" data-aos="fade-up">
-                            <div class="speciality-card-body" style="background-color: <?php echo $doctor_bg; ?>;">
-                                <div class="doctor-mini-media">
+
+<?php
+/* ==========================================================
+   STEP A: Doctors Grid se PEHLE palette + helper function
+   ========================================================== */
+$doctor_palette = [
+    ['#eef6ff', '#2f80ed'], // blue
+    ['#f3efff', '#7c4dff'], // purple
+    ['#eefbf5', '#10b981'], // green
+    ['#fff6e8', '#f59e0b'], // orange
+    ['#fceef3', '#ec4899'], // pink
+    ['#edf8ff', '#0ea5e9'], // sky
+];
+
+// Specialization ke hisaab se medical instrument/icon
+if (!function_exists('dr_instrument_icon')) {
+    function dr_instrument_icon($spec, $index) {
+        $s = strtolower((string)$spec);
+        $map = [
+            'cardio'   => 'fa-heart-pulse',
+            'heart'    => 'fa-heart-pulse',
+            'dent'     => 'fa-tooth',
+            'eye'      => 'fa-eye',
+            'ophthal'  => 'fa-eye',
+            'neuro'    => 'fa-brain',
+            'brain'    => 'fa-brain',
+            'psych'    => 'fa-brain',
+            'pulmo'    => 'fa-lungs',
+            'chest'    => 'fa-lungs',
+            'lung'     => 'fa-lungs',
+            'ortho'    => 'fa-bone',
+            'bone'     => 'fa-bone',
+            'pediat'   => 'fa-baby',
+            'child'    => 'fa-baby',
+            'gyn'      => 'fa-person-pregnant',
+            'obstet'   => 'fa-person-pregnant',
+            'radiolog' => 'fa-x-ray',
+            'patholog' => 'fa-microscope',
+            'lab'      => 'fa-microscope',
+        ];
+        foreach ($map as $key => $icon) {
+            if (strpos($s, $key) !== false) {
+                return $icon;
+            }
+        }
+        $defaults = ['fa-stethoscope', 'fa-syringe', 'fa-heart-pulse', 'fa-pills', 'fa-microscope', 'fa-kit-medical'];
+        return $defaults[$index % count($defaults)];
+    }
+}
+
+$dr_bg_icons = ['fa-stethoscope', 'fa-syringe', 'fa-pills', 'fa-kit-medical', 'fa-microscope', 'fa-heart-pulse'];
+
+/* ==========================================================
+   STEP B: Loop ke andar values prepare karein
+   ========================================================== */
+$doctor_specialization = !empty($row['doctor_of']) ? $row['doctor_of'] : 'Medical Specialist';
+list($doctor_bg, $doctor_accent) = $doctor_palette[($doctor_index - 1) % count($doctor_palette)];
+
+$rating_num   = $doct_stars ? (float)$doct_stars : 0;
+$filled_stars = (int)round($rating_num);
+$is_lady      = (isset($row['gender']) && strtolower($row['gender']) === 'female');
+$experience   = (int)($row['experience_years'] ?? 0);
+
+$art_icon = dr_instrument_icon($doctor_specialization, $doctor_index - 1);
+$bg_icon  = $dr_bg_icons[($doctor_index + 1) % count($dr_bg_icons)];
+if ($bg_icon === $art_icon) {
+    $bg_icon = $dr_bg_icons[($doctor_index + 2) % count($dr_bg_icons)];
+}
+
+// NEW: emergency status
+$emergency_status = isset($row['emergency_status']) ? (int)$row['emergency_status'] : 0;
+$is_unavailable   = ($emergency_status === 1);
+?>
+
+                        <div class="dr-card"
+                             style="--dr-bg: <?php echo $doctor_bg; ?>; --dr-accent: <?php echo $doctor_accent; ?>;"
+                             data-aos="fade-up" data-aos-delay="<?php echo (($doctor_index - 1) % 4) * 80; ?>">
+
+                            <!-- ===== Background instrument (card ke peeche) ===== -->
+                            <i class="fas <?php echo $bg_icon; ?> dr-bg-icon" aria-hidden="true"></i>
+
+                            <!-- ===== Top banner ===== -->
+                            <div class="dr-card-top">
+
+                                <!-- Medical art: bara instrument + ECG heartbeat line -->
+                                <div class="dr-art" aria-hidden="true">
+                                    <i class="fas <?php echo $art_icon; ?> dr-art-icon"></i>
+                                    <svg class="dr-ecg" viewBox="0 0 300 60" preserveAspectRatio="xMidYMid slice">
+                                        <path pathLength="100" d="M0 32 H64 L74 32 L84 10 L96 54 L106 32 H150 L158 24 L166 32 H196 L206 14 L218 50 L228 32 H300"/>
+                                    </svg>
+                                </div>
+
+                                <?php if ($is_lady): ?>
+                                    <span class="dr-pill dr-pill-female"><i class="fas fa-venus"></i> Lady Doctor</span>
+                                <?php endif; ?>
+
+                                <!-- NEW: Emergency / Availability pill -->
+                                <span class="dr-pill dr-pill-status <?php echo $is_unavailable ? 'is-unavailable' : 'is-available'; ?>"
+                                      title="<?php echo $is_unavailable ? 'Doctor is currently unavailable' : 'Doctor is available'; ?>">
+                                    <i class="fas <?php echo $is_unavailable ? 'fa-circle-xmark' : 'fa-circle-check'; ?>"></i>
+                                    <?php echo $is_unavailable ? 'Unavailable' : 'Available'; ?>
+                                </span>
+
+                                <?php if ($rating_num > 0): ?>
+                                    <span class="dr-pill dr-pill-rating"><i class="fas fa-star"></i> <?php echo $doctor_rating; ?></span>
+                                <?php else: ?>
+                                    <span class="dr-pill dr-pill-rating is-new"><i class="fas fa-bolt"></i> New</span>
+                                <?php endif; ?>
+
+                                <div class="dr-avatar">
                                     <?php if (!empty($row['doctor_pic'])): ?>
-                                        <img src="<?php echo BASE_URL; ?>admin/inc/uploads/doctors/<?php echo $row['doctor_pic']; ?>" 
-                                            alt="<?php echo $row['doctor_name']; ?>" class="img-fluid">
+                                        <img src="<?php echo BASE_URL; ?>admin/inc/uploads/doctors/<?php echo htmlspecialchars($row['doctor_pic']); ?>"
+                                             alt="<?php echo htmlspecialchars($row['doctor_name']); ?>" loading="lazy">
                                     <?php else: ?>
-                                        <div class="doctor-mini-icon-wrap">
-                                            <i class="fas fa-user-md doctor-mini-icon"></i>
-                                        </div>
+                                        <div class="dr-avatar-icon"><i class="fas fa-user-md"></i></div>
                                     <?php endif; ?>
                                 </div>
-                                <div class="doctor-mini-content">
-                                    <div class="doctor-mini-specialty">
-                                        <i class="fas fa-user-md"></i><?php echo htmlspecialchars($doctor_specialization); ?>
-                                    </div>
-                                    <h4 class="speciality-title"><?php echo htmlspecialchars($row['doctor_name']); ?></h4>
-                                    <div class="doctor-mini-meta">
-                                        <i class="fas fa-location-dot"></i><?php echo htmlspecialchars($row['city_name']); ?>
-                                    </div>
-                                    <div class="doctor-mini-rating">
-                                        <i class="fas fa-star text-warning"></i><?php echo $doctor_rating; ?> Rating
-                                    </div>
-                                    <a href="doctor-detail?doctor_id=<?php echo $row['doctor_id']; ?>" class="speciality-btn">
-                                        <i class="fas fa-stethoscope"></i>
-                                        PROFILE
-                                    </a>
+                            </div>
+
+                            <!-- ===== Body ===== -->
+                            <div class="dr-card-body">
+                                <span class="dr-spec" title="<?php echo htmlspecialchars($doctor_specialization); ?>">
+                                    <i class="fas fa-stethoscope"></i> <?php echo htmlspecialchars($doctor_specialization); ?>
+                                </span>
+
+                                <h4 class="dr-name">Dr. <?php echo htmlspecialchars($row['doctor_name']); ?></h4>
+                                <p class="dr-qual"><?php echo !empty($row['short_detail']) ? htmlspecialchars($row['short_detail']) : '&nbsp;'; ?></p>
+
+                                <ul class="dr-meta">
+                                    <?php if (!empty($row['city_name'])): ?>
+                                        <li><i class="fas fa-location-dot"></i><span><?php echo htmlspecialchars($row['city_name']); ?></span></li>
+                                    <?php endif; ?>
+
+                                    <?php if (!empty($row['hospital_name'])): ?>
+                                        <li><i class="fas fa-hospital"></i><span><?php echo htmlspecialchars($row['hospital_name']); ?></span></li>
+                                    <?php endif; ?>
+
+                                    <?php if ($experience > 0): ?>
+                                        <li><i class="fas fa-briefcase-medical"></i><span><?php echo $experience; ?> Years Experience</span></li>
+                                    <?php endif; ?>
+                                </ul>
+                            </div>
+
+                            <!-- ===== Footer ===== -->
+                            <div class="dr-card-footer">
+                                <div class="dr-stars" title="<?php echo $rating_num > 0 ? $doctor_rating . ' / 5' : 'No ratings yet'; ?>">
+                                    <?php for ($s = 1; $s <= 5; $s++): ?>
+                                        <i class="fas fa-star <?php echo $s <= $filled_stars ? 'on' : ''; ?>"></i>
+                                    <?php endfor; ?>
                                 </div>
+
+                                <a href="doctor-detail?doctor_id=<?php echo (int)$row['doctor_id']; ?>" class="dr-btn">
+                                    View Profile <i class="fas fa-arrow-right"></i>
+                                </a>
                             </div>
                         </div>
                         <?php
@@ -457,8 +575,6 @@ if ($categories_result) {
     <!-- Footer -->
    <?php include BASE_PATH.'/includes/footer.php';?>
 
-   
-
    <script>
 $(document).ready(function() {
     $('#citySelect').select2({
@@ -474,7 +590,5 @@ $(document).ready(function() {
         allowClear: true,
         width: '100%'
     });
-
-
 });
 </script>
