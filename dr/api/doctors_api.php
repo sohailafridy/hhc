@@ -19,7 +19,6 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
 }
 
 try {
-    // Agar $con nahi mila toh error dein
     if (!isset($con)) {
         throw new Exception("Database connection (\$con) not found in config.php");
     }
@@ -37,7 +36,9 @@ try {
     $offset = ($page - 1) * $per_page;
 
     // ---------------- WHERE ----------------
-    $where  = "WHERE u.user_type_id = 2 AND u.status = 1";
+    // NOTE: Yahan user_type_id = 2 ki bajaye hum status check kar rahe hain. 
+    // Agar aapke database mein doctors ki ID 2 hai, toh aap user_type_id = 2 bhi use kar sakte hain.
+    $where  = "WHERE u.status = 1"; 
     $types  = '';
     $params = [];
 
@@ -57,11 +58,13 @@ try {
         $params[] = $category_id;
     }
 
+    // ---------------- JOINs ----------------
+    // Maine yahan INNER JOIN use kiya hai hospitals ke sath, taake sirf woh doctors aayein jinka hospital assigned hai.
     $from = "FROM `users` u
-             LEFT JOIN `dr_categories` c ON c.dr_cat_id = u.user_type_id
-             LEFT JOIN `doctor_in_hospital` dh ON dh.doctor_id = u.user_id
-             LEFT JOIN `hospitals` h ON h.hospital_id = dh.hospital_id
-             LEFT JOIN `cities` ci ON ci.city_id = h.city_id";
+             INNER JOIN `doctor_in_hospital` dh ON dh.doctor_id = u.user_id
+             INNER JOIN `hospitals` h ON h.hospital_id = dh.hospital_id
+             LEFT JOIN `cities` ci ON ci.city_id = h.city_id
+             LEFT JOIN `dr_categories` c ON c.dr_cat_id = u.user_type_id";
 
     // ---------------- Total count ----------------
     $count_sql = "SELECT COUNT(DISTINCT u.user_id) AS total $from $where";
@@ -85,6 +88,7 @@ try {
                 c.cat_name AS specialty,
                 ci.city_name,
                 h.hospital_name,
+                h.hospital_pic,
                 u.status AS is_available
             $from $where 
             GROUP BY u.user_id 
@@ -103,11 +107,11 @@ try {
     while ($row = mysqli_fetch_assoc($res)) {
         $doctors[] = [
             'doctor_id'    => (int)$row['doctor_id'],
-            'doctor_name'  => $row['doctor_name'],
-            'qualification'=> $row['qualification'],
-            'specialty'    => $row['specialty'],
-            'city_name'    => $row['city_name'],
-            'hospital_name'=> $row['hospital_name'],
+            'doctor_name'  => $row['doctor_name'] ? $row['doctor_name'] : 'N/A',
+            'qualification'=> $row['qualification'] ? $row['qualification'] : 'N/A',
+            'specialty'    => $row['specialty'] ? $row['specialty'] : 'General Physician',
+            'city_name'    => $row['city_name'] ? $row['city_name'] : 'N/A',
+            'hospital_name'=> $row['hospital_name'] ? $row['hospital_name'] : 'N/A',
             'is_available' => (int)$row['is_available'] === 1 ? true : false
         ];
     }
