@@ -527,7 +527,7 @@ $past_hospitals_result = mysqli_query($con, $past_hospitals_query);
                 <i class="fas fa-user-slash"></i> Permanent Delete
             </a>
 
-            <a href="<?=BASE_URL?>admin/doctors/profile?id=4&del_clinic=true" class="btn-action-header danger" style="background: rgba(153, 27, 27, 0.85);">
+            <a href="<?=BASE_URL?>admin/doctors/profile?id=<?= (int)$doctor['doctor_id'] ?>&del_clinic=true" class="btn-action-header danger" style="background: rgba(153, 27, 27, 0.85);">
                 <i class="fas fa-user-slash"></i> Delete Clinic
             </a>
 
