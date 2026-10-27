@@ -1,7 +1,7 @@
 <?php
 // get_doctors.php
 include '../config.php';
-echo 'done';exit;
+
 $city_id = isset($_GET['city_id']) ? $_GET['city_id'] : '';
 $hospital_id = isset($_GET['hospital_id']) ? $_GET['hospital_id'] : '';
 $category_id = isset($_GET['category_id']) ? $_GET['category_id'] : '';
