@@ -2,7 +2,7 @@
 // get_doctors.php
 include '../config.php';
 
-include '../config.php';
+
 if(isset($pdo)) {
     echo "Database connected successfully!";
 } else {
