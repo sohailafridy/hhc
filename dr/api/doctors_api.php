@@ -1,6 +1,6 @@
 <?php
 // get_doctors.php
-include '../config.php';
+include $_SERVER['DOCUMENT_ROOT'] . '/dr/config.php'; 
 
 
 if(isset($pdo)) {
