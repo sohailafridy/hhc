@@ -7,7 +7,7 @@ header('Access-Control-Allow-Headers: Content-Type');
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { http_response_code(204); exit; }
 
 // TODO: apni existing DB connection file include karein ($conn = mysqli object hona chahiye)
-require_once __DIR__ . '/../config/db.php';
+require_once __DIR__ . '/../config.php';
 $conn->set_charset('utf8mb4');
 
 define('BASE_URL', 'https://hassanhomehealthcare.com/dr/');
