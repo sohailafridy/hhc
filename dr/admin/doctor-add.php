@@ -704,11 +704,11 @@ if ($edit_mode) {
                                             <span class="required">*</span>
                                         </label>
                                         <input type="text" class="form-control-modern" name="pmdc_no" id="pmdc_no"
-                                               placeholder="1001-N, 1002-P etc."
-                                               required
-                                               pattern="\d{1,6}-[NP]"
-                                               title="Format: numbers + dash + N ya P (e.g. 1001-N, 1002-P)"
-                                               value="<?php echo $edit_mode ? htmlspecialchars($doctor_data['pmdc_no'] ?? '') : ''; ?>">
+                                           placeholder="1001-N, 1002-P, 1003-A etc."
+                                           required
+                                           pattern="\d{1,6}-[A-Za-z]"
+                                           title="Format: numbers + dash + koi bhi letter A-Z (e.g. 1001-N, 1002-P)"
+                                           value="<?php echo $edit_mode ? htmlspecialchars($doctor_data['pmdc_no'] ?? '') : ''; ?>">
                                         <small class="field-msg" id="pmdc_no_msg"></small>
                                     </div>
                                 </div>

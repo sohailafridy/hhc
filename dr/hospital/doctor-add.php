@@ -302,13 +302,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                                         cat_type_id, experience_years, doctor_phone, doctor_email, cnic,
                                         pmdc_no,
                                         doctor_type, gender, short_detail, other, static_clinical_info,
-                                        mahre_amraz, notes, doctor_pic, approve, status, added_by, created_at
+                                        mahre_amraz, notes, doctor_pic, approve, added_by, created_at
                                     ) VALUES (
                                         '$user_id_new', '$city_id', '$hospital_id', '$doctor_name',
                                         '$cat_type_id', '$experience_years', '$doctor_phone', '$doctor_email', '$cnic',
                                         '$pmdc_no',
                                         '1', '$gender', '$short_detail', '$other', '$static_clinical_info',
-                                        '$mahre_amraz', '$notes', '$doctor_pic', 1, 1, '$added_by', NOW()
+                                        '$mahre_amraz', '$notes', '$doctor_pic', 1, '$added_by', NOW()
                                     )";
 
                     if (mysqli_query($con, $insert_query)) {
@@ -567,7 +567,7 @@ function ci_options(array $options, $selected) {
                             <div class="form-group">
                                 <label class="form-label">PMDC No <span class="required">*</span></label>
                                 <input type="text" class="form-control-modern" id="pmdcNo" name="pmdc_no" required
-                                       placeholder="1001-N, 1002-P etc." pattern="\d{1,6}-[NP]"
+                                       placeholder="1001-N, 1002-P etc." pattern="\d{1,6}-[A-Za-z]"
                                        title="Format: numbers + dash + N ya P (e.g. 1001-N, 1002-P)"
                                        value="<?php echo fv('pmdc_no'); ?>"
                                        <?php echo $edit_mode ? 'readonly' : ''; ?>>
