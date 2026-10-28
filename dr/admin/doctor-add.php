@@ -90,9 +90,10 @@ $doctor_data = null;
 
 if (isset($_GET['id']) && is_numeric($_GET['id'])) {
     $doctor_id = (int)$_GET['id'];
-    $edit_query = "SELECT doctors.*, u.user_id as u_id, u.status as estatus, u.username
+    $edit_query = "SELECT doctors.*, u.user_id as u_id, u.status as estatus, u.username,dct.treatment
     FROM doctors 
     LEFT JOIN users u ON u.user_id = doctors.user_id
+    LEFT JOIN dr_cat_types dct ON doctors.cat_type_id = dct.dr_cat_type_id
     WHERE doctor_id = $doctor_id";
     $edit_result = mysqli_query($con, $edit_query);
     
@@ -128,40 +129,42 @@ $hospitals_result = mysqli_query($con, $hospitals_query);
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $doct_role = "No Role";
-    $specialization = mysqli_real_escape_string($con, $_POST['specialization']);
+    $specialization = mysqli_real_escape_string($con, $_POST['specialization'] ?? '');
+    
     if (isset($_POST['if_not_available']) && $_POST['if_not_available'] !== '' && is_numeric($_POST['if_not_available'])) {
        
         $if_not_available = (int) mysqli_real_escape_string($con, $_POST['if_not_available']);
-        $doct_role = mysqli_real_escape_string($con, $_POST['specialization_txt']);
+        $doct_role = mysqli_real_escape_string($con, $_POST['specialization_txt'] ?? '');
+        $treatment = mysqli_real_escape_string($con, $_POST['treatment_txt'] ?? '');
     
-         $new_cat = "INSERT INTO dr_cat_types (dr_cat_id,type) 
-                       VALUES (12,'$doct_role')";
+        $new_cat = "INSERT INTO dr_cat_types (dr_cat_id, type, treatment) 
+                    VALUES (12, '$doct_role', '$treatment')";
         if(mysqli_query($con, $new_cat)){
             $specialization = mysqli_insert_id($con);
         }
     }
 
-    $city_id = mysqli_real_escape_string($con, $_POST['city_id']);
-    $user_id = (int)$_POST['user_id'];
-    $user_name = mysqli_real_escape_string($con, $_POST['username']);
-    $pass = mysqli_real_escape_string($con, $_POST['password']);
+    $city_id = mysqli_real_escape_string($con, $_POST['city_id'] ?? '');
+    $user_id = (int)($_POST['user_id'] ?? 0);
+    $user_name = mysqli_real_escape_string($con, $_POST['username'] ?? '');
+    $pass = mysqli_real_escape_string($con, $_POST['password'] ?? '');
     $password = base64_encode($pass);
 
-    $doctor_name = mysqli_real_escape_string($con, $_POST['doctor_name']);
-    $short_detail = mysqli_real_escape_string($con, $_POST['short_detail']);
-    $experience_years = mysqli_real_escape_string($con, $_POST['experience_years']);
-    $doctor_phone = mysqli_real_escape_string($con, $_POST['doctor_phone']);
-    $doctor_email = mysqli_real_escape_string($con, $_POST['doctor_email']);
-    $doctor_type = mysqli_real_escape_string($con, $_POST['doctor_type']);
-    $gender = mysqli_real_escape_string($con, $_POST['gender']);
-    $other = mysqli_real_escape_string($con, $_POST['other']);
-    $cnic = mysqli_real_escape_string($con, trim($_POST['cnic']));
-    $pmdc_no = mysqli_real_escape_string($con, strtoupper(trim($_POST['pmdc_no'])));
-    $static_clinical_info = mysqli_real_escape_string($con, $_POST['static_clinical_info']);
+    $doctor_name = mysqli_real_escape_string($con, $_POST['doctor_name'] ?? '');
+    $short_detail = mysqli_real_escape_string($con, $_POST['short_detail'] ?? '');
+    $experience_years = mysqli_real_escape_string($con, $_POST['experience_years'] ?? '');
+    $doctor_phone = mysqli_real_escape_string($con, $_POST['doctor_phone'] ?? '');
+    $doctor_email = mysqli_real_escape_string($con, $_POST['doctor_email'] ?? '');
+    $doctor_type = mysqli_real_escape_string($con, $_POST['doctor_type'] ?? '');
+    $gender = mysqli_real_escape_string($con, $_POST['gender'] ?? '');
+    $other = mysqli_real_escape_string($con, $_POST['other'] ?? '');
+    $cnic = mysqli_real_escape_string($con, trim($_POST['cnic'] ?? ''));
+    $pmdc_no = mysqli_real_escape_string($con, strtoupper(trim($_POST['pmdc_no'] ?? '')));
+    $static_clinical_info = mysqli_real_escape_string($con, $_POST['static_clinical_info'] ?? '');
     $status = isset($_POST['status']) ? 1 : 0;
 
-    $mahre_amraz = mysqli_real_escape_string($con, $_POST['mahre_amraz']);
-    $notes = mysqli_real_escape_string($con, $_POST['notes']);
+    $mahre_amraz = mysqli_real_escape_string($con, $_POST['mahre_amraz'] ?? '');
+    $notes = mysqli_real_escape_string($con, $_POST['notes'] ?? '');
 
     // ===== Server-side validation =====
     $dup_errors   = [];
@@ -175,22 +178,22 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $dup_errors[] = "PMDC No format galat hai. Sahi format: 1001-N ya 1002-P";
     } elseif (mysqli_num_rows(mysqli_query($con,
         "SELECT 1 FROM doctors WHERE UPPER(pmdc_no)='$pmdc_no' AND doctor_id<>$ex_doctor_id LIMIT 1")) > 0) {
-        $dup_errors[] = "This PMDC No '" . htmlspecialchars($pmdc_no) . "' already exists.";
+        $dup_errors[] = "This PMDC No '" . htmlspecialchars((string)$pmdc_no) . "' already exists.";
     }
 
     if ($cnic_digits !== '' && mysqli_num_rows(mysqli_query($con,
         "SELECT 1 FROM doctors WHERE REPLACE(cnic,'-','')='$cnic_digits' AND doctor_id<>$ex_doctor_id LIMIT 1")) > 0) {
-        $dup_errors[] = "This CNIC '" . htmlspecialchars($_POST['cnic']) . "' already exists.";
+        $dup_errors[] = "This CNIC '" . htmlspecialchars((string)($_POST['cnic'] ?? '')) . "' already exists.";
     }
 
     if ($doctor_email !== '' && mysqli_num_rows(mysqli_query($con,
         "SELECT 1 FROM doctors WHERE doctor_email='$doctor_email' AND doctor_id<>$ex_doctor_id LIMIT 1")) > 0) {
-        $dup_errors[] = "This Email '" . htmlspecialchars($_POST['doctor_email']) . "' already exists.";
+        $dup_errors[] = "This Email '" . htmlspecialchars((string)($_POST['doctor_email'] ?? '')) . "' already exists.";
     }
 
     if ($user_name !== '' && mysqli_num_rows(mysqli_query($con,
         "SELECT 1 FROM users WHERE username='$user_name' AND user_id<>$user_id LIMIT 1")) > 0) {
-        $dup_errors[] = "This Username '" . htmlspecialchars($_POST['username']) . "' already exists.";
+        $dup_errors[] = "This Username '" . htmlspecialchars((string)($_POST['username'] ?? '')) . "' already exists.";
     }
 
     $dup_error = implode('<br>', $dup_errors);
@@ -254,8 +257,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                             notes = '$notes'";
         
         if ($doctor_type == 1) {
-            // Edit mode mein hospital select nahi hota (hospitals neeche "Registered Hospitals" list se manage hote hain),
-            // is liye hospital_id sirf tab update karein jab form se aaye. Warna khali '' se purani value mit jati thi.
             if ($hospital_id !== '' && $hospital_id !== null) {
                 $update_query .= ", hospital_id = '" . $hospital_id . "'";
             }
@@ -271,9 +272,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $update_query .= ", updated_at = NOW() WHERE doctor_id = $doctor_id";
         
         if (mysqli_query($con, $update_query)) {
-            $ref='';
-            if($status==0){
-                $ref = mysqli_real_escape_string($con, $_POST['ref']);
+            
+            // === NEW: Update Treatment in dr_cat_types table as well ===
+            if (!empty($specialization)) {
+                mysqli_query($con, "UPDATE dr_cat_types SET treatment = '$mahre_amraz' WHERE dr_cat_type_id = '$specialization'");
+            }
+            // =============================================================
+
+            $ref = '';
+            if ($status == 0) {
+                $ref = mysqli_real_escape_string($con, $_POST['ref'] ?? '');
             }
 
             $user_update = "UPDATE users SET status='". $status ."', reference='". $ref ."'";
@@ -284,8 +292,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             mysqli_query($con, $user_update);
 
             $success_msg = "Doctor updated successfully!";
-            $edit_result = mysqli_query($con, "SELECT doctors.*, u.user_id as u_id, u.status as estatus, u.reference as ref, u.username
-                FROM doctors LEFT JOIN users u ON u.user_id = doctors.user_id
+            $edit_result = mysqli_query($con, "SELECT doctors.*, u.user_id as u_id, u.status as estatus, u.reference as ref, u.username, dct.treatment
+                FROM doctors 
+                LEFT JOIN users u ON u.user_id = doctors.user_id
+                LEFT JOIN dr_cat_types dct ON doctors.cat_type_id = dct.dr_cat_type_id
                 WHERE doctor_id = $doctor_id");
             $doctor_data = mysqli_fetch_assoc($edit_result);
 
@@ -305,9 +315,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         mysqli_query($con, $generate_user_id);
         $userid = mysqli_insert_id($con);
 
-        $added_by = $_SESSION['user_id']; // get the session user id
+        $added_by = $_SESSION['user_id'];
 
-        // 1) doctors table mein hospital_id NAHI jayega
         $insert_query = "INSERT INTO doctors (
                             user_id, city_id, doctor_name, 
                             short_detail, cat_type_id, experience_years, doctor_phone, 
@@ -328,16 +337,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
             $last_insert_doctor = mysqli_insert_id($con);
 
-            /* ---------------------------------------------------------
-               hospital_id ab yahan save hoga (doctor_in_hospital table)
-               Sirf tab insert karo jab doctor hospital ka ho
-               aur hospital_id mojood ho.
-            --------------------------------------------------------- */
             if ($doctor_type == 1 && !empty($hospital_id)) {
 
-                $hospital_id_val = (int) $hospital_id;   // cast for safety
+                $hospital_id_val = (int) $hospital_id;
                 $doctor_id_val   = (int) $last_insert_doctor;
-                $if_clinic_val   = 0;                     // apni requirement ke mutabiq adjust karein
+                $if_clinic_val   = 0;
 
                 $insert_hospital_query = "INSERT INTO doctor_in_hospital 
                                             (doctor_id, hospital_id, if_clinic) 
@@ -509,7 +513,7 @@ if ($edit_mode) {
                                     while ($city = mysqli_fetch_assoc($cities_result)): ?>
                                         <option value="<?php echo $city['city_id']; ?>" 
                                                 <?php echo ($edit_mode && $doctor_data['city_id'] == $city['city_id']) ? 'selected' : ''; ?>>
-                                            <?php echo htmlspecialchars($city['city_name']); ?>
+                                            <?php echo htmlspecialchars((string)$city['city_name']); ?>
                                         </option>
                                     <?php endwhile; ?>
                                 </select>
@@ -531,7 +535,7 @@ if ($edit_mode) {
                                                     <option value="<?php echo $hospital['hospital_id']; ?>" 
                                                             data-city="<?php echo $hospital['city_id']; ?>"
                                                             <?php echo ($edit_mode && $doctor_data['hospital_id'] == $hospital['hospital_id']) ? 'selected' : ''; ?>>
-                                                        <?php echo htmlspecialchars($hospital['hospital_name']); ?>
+                                                        <?php echo htmlspecialchars((string)$hospital['hospital_name']); ?>
                                                     </option>
                                                 <?php endwhile; ?>
                                             </select>
@@ -548,7 +552,7 @@ if ($edit_mode) {
                                     </label>
                                     <input type="text" class="form-control-modern" id="clinicName" name="clinic_name" 
                                            placeholder="e.g. Dr. Smith's Care"
-                                           value="<?php echo $edit_mode ? htmlspecialchars($doctor_data['clinic_name']) : ''; ?>"
+                                           value="<?php echo $edit_mode ? htmlspecialchars((string)$doctor_data['clinic_name']) : ''; ?>"
                                            required>
                                 </div>
                                 <div class="form-group">
@@ -557,13 +561,13 @@ if ($edit_mode) {
                                         <span class="required">*</span>
                                     </label>
                                     <textarea class="form-control-modern" id="clinicAddress" name="clinic_address" rows="3"
-                                              placeholder="Full address of the clinic" required><?php echo $edit_mode ? htmlspecialchars($doctor_data['clinic_address']) : ''; ?></textarea>
+                                              placeholder="Full address of the clinic" required><?php echo $edit_mode ? htmlspecialchars((string)$doctor_data['clinic_address']) : ''; ?></textarea>
                                 </div>
                             </div>
                         </div>
 
                         <?php if ($edit_mode): ?>
-                        <!-- ===== EDIT MODE: Registered / Past Hospitals (add + remove + re-add, doctor-profile jaisa) ===== -->
+                        <!-- ===== EDIT MODE: Registered / Past Hospitals ===== -->
                         <div class="card-body-custom" style="border-top: 1px dashed #e2e8f0;">
 
                             <!-- Registered Hospitals (inactive = 0) -->
@@ -597,12 +601,12 @@ if ($edit_mode) {
                                                             <span class="badge bg-success">Personal Clinic</span>
                                                         <?php elseif (!empty($rh['hospital_name'])): ?>
                                                             <i class="fas fa-hospital text-primary me-1"></i>
-                                                            <a href="<?php echo BASE_URL; ?>admin/hospitals/detail?id=<?php echo (int)$rh['hospital_id']; ?>"><?php echo htmlspecialchars($rh['hospital_name']); ?></a>
+                                                            <a href="<?php echo BASE_URL; ?>admin/hospitals/detail?id=<?php echo (int)$rh['hospital_id']; ?>"><?php echo htmlspecialchars((string)$rh['hospital_name']); ?></a>
                                                         <?php else: ?>
                                                             <span class="text-muted">Hospital not found</span>
                                                         <?php endif; ?>
                                                     </td>
-                                                    <td><?php echo htmlspecialchars($rh['city_name'] ?? '-'); ?></td>
+                                                    <td><?php echo htmlspecialchars((string)($rh['city_name'] ?? '-')); ?></td>
                                                     <td>
                                                         <small class="text-muted">
                                                             <?php echo !empty($rh['created_at']) ? date('d M Y', strtotime($rh['created_at'])) : '-'; ?>
@@ -653,12 +657,12 @@ if ($edit_mode) {
                                                             <span class="badge bg-success">Personal Clinic</span>
                                                         <?php elseif (!empty($ph['hospital_name'])): ?>
                                                             <i class="fas fa-hospital text-secondary me-1"></i>
-                                                            <a href="<?php echo BASE_URL; ?>admin/hospitals/detail?id=<?php echo (int)$ph['hospital_id']; ?>"><?php echo htmlspecialchars($ph['hospital_name']); ?></a>
+                                                            <a href="<?php echo BASE_URL; ?>admin/hospitals/detail?id=<?php echo (int)$ph['hospital_id']; ?>"><?php echo htmlspecialchars((string)$ph['hospital_name']); ?></a>
                                                         <?php else: ?>
                                                             <span class="text-muted">Hospital not found</span>
                                                         <?php endif; ?>
                                                     </td>
-                                                    <td><?php echo htmlspecialchars($ph['city_name'] ?? '-'); ?></td>
+                                                    <td><?php echo htmlspecialchars((string)($ph['city_name'] ?? '-')); ?></td>
                                                     <td>
                                                         <small class="text-muted">
                                                             <?php echo !empty($ph['updated_at']) ? date('d M Y', strtotime($ph['updated_at'])) : '-'; ?>
@@ -682,7 +686,6 @@ if ($edit_mode) {
                             <?php endif; ?>
 
                         </div>
-                        <!-- ===== END Registered / Past Hospitals ===== -->
                         <?php endif; ?>
                     </div>
                 </div>
@@ -695,7 +698,7 @@ if ($edit_mode) {
                         </div>
                         <div class="card-body-custom">
 
-                            <!-- ===== PMDC NO (Required, top) ===== -->
+                            <!-- ===== PMDC NO ===== -->
                             <div class="row">
                                 <div class="col-md-12">
                                     <div class="form-group">
@@ -708,12 +711,11 @@ if ($edit_mode) {
                                            required
                                            pattern="\d{1,10}-[A-Za-z]"
                                            title="Format: numbers + dash + koi bhi letter A-Z (e.g. 1001-N, 1002-P)"
-                                           value="<?php echo $edit_mode ? htmlspecialchars($doctor_data['pmdc_no'] ?? '') : ''; ?>">
+                                           value="<?php echo $edit_mode ? htmlspecialchars((string)($doctor_data['pmdc_no'] ?? '')) : ''; ?>">
                                         <small class="field-msg" id="pmdc_no_msg"></small>
                                     </div>
                                 </div>
                             </div>
-                            <!-- ===== END PMDC NO ===== -->
 
                             <div class="row">
                                 <div class="col-md-6">
@@ -724,7 +726,7 @@ if ($edit_mode) {
                                         </label>
                                         <input type="text" class="form-control-modern" name="username" id="username"
                                                placeholder="Enter username" required
-                                               value="<?php echo $edit_mode ? htmlspecialchars($doctor_data['username'] ?? '') : ''; ?>"
+                                               value="<?php echo $edit_mode ? htmlspecialchars((string)($doctor_data['username'] ?? '')) : ''; ?>"
                                                <?php echo $edit_mode ? 'readonly' : ''; ?>>
                                         <small class="field-msg" id="username_msg"></small>
                                     </div>
@@ -755,7 +757,7 @@ if ($edit_mode) {
                                         </label>
                                         <input type="text" class="form-control-modern" name="doctor_name" required
                                                placeholder="Dr. John Doe"
-                                               value="<?php echo $edit_mode ? htmlspecialchars($doctor_data['doctor_name']) : ''; ?>">
+                                               value="<?php echo $edit_mode ? htmlspecialchars((string)$doctor_data['doctor_name']) : ''; ?>">
                                     </div>
                                 </div>
                                 <div class="col-md-6">
@@ -767,11 +769,11 @@ if ($edit_mode) {
                                         <select class="form-control-modern" name="specialization" id="specializationSelect" required>
                                             <option value="">Search Specialization...</option>
                                             <?php foreach ($categories_data as $category_id => $category): ?>
-                                                <optgroup label="<?php echo htmlspecialchars($category['cat_name']); ?>">
+                                                <optgroup label="<?php echo htmlspecialchars((string)$category['cat_name']); ?>">
                                                     <?php foreach ($category['types'] as $type): ?>
                                                         <option value="<?php echo $type['dr_cat_type_id']; ?>" 
                                                                 <?php echo ($edit_mode && $doctor_data['cat_type_id'] == $type['dr_cat_type_id']) ? 'selected' : ''; ?>>
-                                                            <?php echo htmlspecialchars($type['type']); ?>
+                                                            <?php echo htmlspecialchars((string)$type['type']); ?>
                                                         </option>
                                                     <?php endforeach; ?>
                                                 </optgroup>
@@ -782,8 +784,12 @@ if ($edit_mode) {
                                             <input type="checkbox" value="1" id="if_not_available" name="if_not_available"> 
                                             <label class="form-label text-danger" for="if_not_available" style="display:inline; font-size:12px; text-transform:none;">Specialization not listed?</label>
                                         </div>
+                                        
                                         <input type="text" class="form-control-modern" name="specialization_txt"
                                                placeholder="Enter Specialization" id="specialization_txt" style="display:none; margin-top:6px;">
+                                               
+                                        <input type="text" class="form-control-modern" name="treatment_txt"
+                                               placeholder="Enter Treatment (بیماریاں)" id="treatment_txt" style="display:none; margin-top:6px;">
                                     </div>
                                 </div>
                             </div>
@@ -797,7 +803,7 @@ if ($edit_mode) {
                                         </label>
                                         <input type="number" class="form-control-modern" name="experience_years" min="0" 
                                                placeholder="e.g. 5"
-                                               value="<?php echo $edit_mode ? htmlspecialchars($doctor_data['experience_years']) : ''; ?>">
+                                               value="<?php echo $edit_mode ? htmlspecialchars((string)$doctor_data['experience_years']) : ''; ?>">
                                     </div>
                                 </div>
                                 <div class="col-md-6">
@@ -808,7 +814,7 @@ if ($edit_mode) {
                                         </label>
                                         <input type="tel" class="form-control-modern" name="doctor_phone" 
                                                placeholder="Contact Number"
-                                               value="<?php echo $edit_mode ? htmlspecialchars($doctor_data['doctor_phone']) : ''; ?>"
+                                               value="<?php echo $edit_mode ? htmlspecialchars((string)$doctor_data['doctor_phone']) : ''; ?>"
                                                required>
                                     </div>
                                 </div>
@@ -821,7 +827,7 @@ if ($edit_mode) {
                                 </label>
                                 <input type="text" class="form-control-modern" name="short_detail" 
                                        placeholder="MBBS/FCPS/LONDON/CHINA"
-                                       value="<?php echo $edit_mode ? htmlspecialchars($doctor_data['short_detail']) : ''; ?>">
+                                       value="<?php echo $edit_mode ? htmlspecialchars((string)$doctor_data['short_detail']) : ''; ?>">
                             </div>
                             
                             <div class="form-group">
@@ -831,7 +837,7 @@ if ($edit_mode) {
                                 </label>
                                 <input type="text" class="form-control-modern" name="other"
                                        placeholder="Incharge/DHQ etc"
-                                       value="<?php echo $edit_mode ? htmlspecialchars($doctor_data['other']) : ''; ?>">
+                                       value="<?php echo $edit_mode ? htmlspecialchars((string)$doctor_data['other']) : ''; ?>">
                             </div>
 
                             <div class="row">
@@ -842,7 +848,7 @@ if ($edit_mode) {
                                         </label>
                                         <input type="email" class="form-control-modern" name="doctor_email" id="doctor_email"
                                             placeholder="doctor@example.com"
-                                            value="<?php echo $edit_mode ? htmlspecialchars($doctor_data['doctor_email']) : ''; ?>">
+                                            value="<?php echo $edit_mode ? htmlspecialchars((string)$doctor_data['doctor_email']) : ''; ?>">
                                         <small class="field-msg" id="doctor_email_msg"></small>
                                     </div>
                                 </div>
@@ -871,12 +877,11 @@ if ($edit_mode) {
                                         <input type="text" class="form-control-modern" name="cnic" id="cnic"
                                                placeholder="1234512345671" maxlength="15"
                                                title="Format: 1234512345671"
-                                               value="<?php echo $edit_mode ? htmlspecialchars($doctor_data['cnic'] ?? '') : ''; ?>">
+                                               value="<?php echo $edit_mode ? htmlspecialchars((string)($doctor_data['cnic'] ?? '')) : ''; ?>">
                                         <small class="field-msg" id="cnic_msg"></small>
                                     </div>
                                 </div>
                             </div>
-                            <!-- ===== END CNIC ===== -->
 
                             <!-- ===== MAHRE AMRAZ & NOTES ===== -->
                             <div class="row">
@@ -888,7 +893,7 @@ if ($edit_mode) {
                                         </label>
                                         <input type="text" class="form-control-modern" name="mahre_amraz" 
                                                placeholder="مثال: ماہرِ قلب، ماہرِ اعصاب، ماہرِ اطفال"
-                                               value="<?php echo $edit_mode ? htmlspecialchars($doctor_data['mahre_amraz']) : ''; ?>">
+                                               value="<?php echo $edit_mode ? htmlspecialchars((string)$doctor_data['treatment']) : ''; ?>">
                                         <small class="text-muted">وہ بیماری یا شعبہ جس میں ڈاکٹر مہارت رکھتا ہے</small>
                                     </div>
                                 </div>
@@ -903,12 +908,11 @@ if ($edit_mode) {
                                         </label>
                                         <input type="text" class="form-control-modern" name="notes" 
                                                placeholder="مثال: مفت الٹراساؤنڈ، مفت ایکس رے، مفت مشورہ"
-                                               value="<?php echo $edit_mode ? htmlspecialchars($doctor_data['notes']) : ''; ?>">
+                                               value="<?php echo $edit_mode ? htmlspecialchars((string)$doctor_data['notes']) : ''; ?>">
                                         <small class="text-muted">کوئی خاص پیشکش، نوٹس یا ہدایات (جیسے: مفت الٹراساؤنڈ، مفت ایکس رے، ڈسکاؤنٹ)</small>
                                     </div>
                                 </div>
                             </div>
-                            <!-- ===== END ===== -->
 
                             <div class="row">
                                 <div class="col-md-12">
@@ -918,7 +922,7 @@ if ($edit_mode) {
                                             <span class="optional">(Optional)</span>
                                         </label>
                                         <textarea class="form-control-modern" name="static_clinical_info" rows="3"
-                                                  placeholder="Add clinical notes or special instructions..."><?php echo $edit_mode ? htmlspecialchars($doctor_data['static_clinical_info']) : ''; ?></textarea>
+                                                  placeholder="Add clinical notes or special instructions..."><?php echo $edit_mode ? htmlspecialchars((string)$doctor_data['static_clinical_info']) : ''; ?></textarea>
                                     </div>
                                 </div>
                             </div>
@@ -980,7 +984,7 @@ if ($edit_mode) {
                                     <span class="required">*</span>
                                 </label>
                                 <textarea class="form-control" id="ref" name="ref" rows="5"
-                                          <?php echo ($edit_mode && isset($doctor_data['estatus']) && $doctor_data['estatus'] == 0) ? 'required' : ''; ?>><?php if(isset($doctor_data['ref'])){ echo $doctor_data['ref']; } ?></textarea>
+                                          <?php echo ($edit_mode && isset($doctor_data['estatus']) && $doctor_data['estatus'] == 0) ? 'required' : ''; ?>><?php if(isset($doctor_data['ref'])){ echo htmlspecialchars((string)$doctor_data['ref']); } ?></textarea>
                             </div>
                         </div>
                     </div>
@@ -1160,22 +1164,34 @@ document.addEventListener('DOMContentLoaded', function () {
         const checkbox = document.getElementById('if_not_available');
         const selectWrapper = document.getElementById('specializationSelect');
         const textWrapper = document.getElementById('specialization_txt');
+        const treatmentWrapper = document.getElementById('treatment_txt');
 
         function toggleFields() {
             if (checkbox.checked) {
                 selectWrapper.style.display = 'none';
                 textWrapper.style.display = 'block';
+                treatmentWrapper.style.display = 'block';
+                
                 document.getElementById('specializationSelect').value = '';
+                
                 textWrapper.setAttribute('required', 'required');
+                treatmentWrapper.setAttribute('required', 'required');
                 selectWrapper.removeAttribute('required');
+                
                 $('#specializationSelect').select2('destroy');
                 $('#specializationSelect').hide();
             } else {
                 selectWrapper.style.display = 'block';
                 textWrapper.style.display = 'none';
+                treatmentWrapper.style.display = 'none';
+                
                 document.getElementById('specialization_txt').value = '';
+                document.getElementById('treatment_txt').value = '';
+                
                 selectWrapper.setAttribute('required', 'required');
                 textWrapper.removeAttribute('required');
+                treatmentWrapper.removeAttribute('required');
+                
                 $('#specializationSelect').show();
                 $('#specializationSelect').select2({
                     theme: 'bootstrap-5',

@@ -61,7 +61,7 @@ $is_edit = isset($_GET['id']) && is_numeric($_GET['id']);
 if ($is_edit) {
     $doctor_id = (int)$_GET['id'];
 
-    $check_query = "SELECT d.*, dct.type as specialization_name, u.status as estatus,
+    $check_query = "SELECT d.*, dct.type as specialization_name, dct.treatment as cat_treatment, u.status as estatus,
                            u.status as user_status, u.reference as ref, u.username
                     FROM doctors d
                     LEFT JOIN dr_cat_types dct ON d.cat_type_id = dct.dr_cat_type_id
@@ -139,9 +139,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $pmdc_no     = mysqli_real_escape_string($con, strtoupper(trim($_POST['pmdc_no'] ?? '')));
         $cat_type_id = (int)$_POST['specialization'];
 
+        // Yahan Mahre Amraz (treatment) ko pakar rahe hain
+        $treatment = mysqli_real_escape_string($con, $_POST['mahre_amraz'] ?? '');
+
         if (isset($_POST['if_not_available']) && $_POST['if_not_available'] == 1) {
             $doct_role = mysqli_real_escape_string($con, $_POST['specialization_txt']);
-            $new_cat = "INSERT INTO dr_cat_types (dr_cat_id, type) VALUES (12, '$doct_role')";
+            
+            // Naye specialization ke sath treatment (mahre amraz) save ho raha hai
+            $new_cat = "INSERT INTO dr_cat_types (dr_cat_id, type, treatment) VALUES (12, '$doct_role', '$treatment')";
             if (mysqli_query($con, $new_cat)) {
                 $cat_type_id = mysqli_insert_id($con);
             }
@@ -154,7 +159,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $other                = mysqli_real_escape_string($con, $_POST['other'] ?? '');
         $static_clinical_info = mysqli_real_escape_string($con, $_POST['static_clinical_info'] ?? '');
         $status               = isset($_POST['status']) ? 1 : 0;
-        $mahre_amraz          = mysqli_real_escape_string($con, $_POST['mahre_amraz'] ?? '');
         $notes                = mysqli_real_escape_string($con, $_POST['notes'] ?? '');
         $pass                 = mysqli_real_escape_string($con, $_POST['password'] ?? '');
 
@@ -179,6 +183,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 }
             }
 
+            // Yahan doctors table mein mahre_amraz (treatment) update ho raha hai
             $update_query = "UPDATE doctors SET
                                 doctor_name = '$doctor_name',
                                 cat_type_id = '$cat_type_id',
@@ -188,12 +193,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                                 short_detail = '$short_detail',
                                 other = '$other',
                                 static_clinical_info = '$static_clinical_info',
-                                mahre_amraz = '$mahre_amraz',
+                                mahre_amraz = '$treatment',
                                 notes = '$notes'";
             if ($doctor_pic !== '') { $update_query .= ", doctor_pic = '$doctor_pic'"; }
             $update_query .= ", updated_at = NOW() WHERE doctor_id = $doctor_id";
 
             if (mysqli_query($con, $update_query)) {
+                
+                // === NEW: Update Treatment in dr_cat_types table as well ===
+                if (!empty($cat_type_id)) {
+                    mysqli_query($con, "UPDATE dr_cat_types SET treatment = '$treatment' WHERE dr_cat_type_id = '$cat_type_id'");
+                }
+                // =============================================================
+
                 $ref = ($status == 0) ? mysqli_real_escape_string($con, $_POST['ref'] ?? '') : '';
                 $user_update = "UPDATE users SET status = '$status', reference = '$ref'";
                 if ($pass !== '') { $user_update .= ", password = '" . base64_encode($pass) . "'"; }
@@ -308,7 +320,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                                         '$cat_type_id', '$experience_years', '$doctor_phone', '$doctor_email', '$cnic',
                                         '$pmdc_no',
                                         '1', '$gender', '$short_detail', '$other', '$static_clinical_info',
-                                        '$mahre_amraz', '$notes', '$doctor_pic', 1, '$added_by', NOW()
+                                        '$treatment', '$notes', '$doctor_pic', 1, '$added_by', NOW()
                                     )";
 
                     if (mysqli_query($con, $insert_query)) {
@@ -376,19 +388,17 @@ if ($edit_mode) {
 function fv($key, $post_key = null) {
     global $edit_mode, $doctor_data;
     $pk = $post_key ?? $key;
-    if (isset($_POST[$pk])) return htmlspecialchars($_POST[$pk]);
-    return ($edit_mode && isset($doctor_data[$key])) ? htmlspecialchars($doctor_data[$key]) : '';
+    if (isset($_POST[$pk])) return htmlspecialchars((string)$_POST[$pk]);
+    return ($edit_mode && isset($doctor_data[$key])) ? htmlspecialchars((string)$doctor_data[$key]) : '';
 }
 
 // ---- Clinical info helpers ----
-// "14:30", "14:30:00" ya "02:30 PM" -> hamesha "02:30 PM" (flatpickr format)
 function ci_time($v) {
     $v = trim((string)$v);
     if ($v === '') return '';
     $t = strtotime($v);
     return $t ? date('h:i A', $t) : $v;
 }
-// Dropdown options; agar purani value list mein nahi hai to bhi show hogi
 function ci_options(array $options, $selected) {
     $selected = (string)$selected;
     if ($selected !== '' && !in_array($selected, $options, true)) {
@@ -474,10 +484,10 @@ function ci_options(array $options, $selected) {
                                 <?php foreach ($existing_doctors as $doc): ?>
                                     <option value="<?php echo $doc['doctor_id']; ?>">
                                         <?php if(!empty($doc['pmdc_no'])): ?>
-                                            [<?php echo htmlspecialchars($doc['pmdc_no']); ?>] - 
+                                            [<?php echo htmlspecialchars((string)$doc['pmdc_no']); ?>] - 
                                         <?php endif; ?>
-                                        <?php echo htmlspecialchars($doc['doctor_name']); ?> 
-                                        (<?php echo htmlspecialchars($doc['specialization'] ?? 'General'); ?>)
+                                        <?php echo htmlspecialchars((string)$doc['doctor_name']); ?> 
+                                        (<?php echo htmlspecialchars((string)($doc['specialization'] ?? 'General')); ?>)
                                     </option>
                                 <?php endforeach; ?>
                             </select>
@@ -503,7 +513,7 @@ function ci_options(array $options, $selected) {
                             <div class="form-group">
                                 <label class="form-label">Hospital</label>
                                 <input type="text" class="form-control-modern" 
-                                       value="<?php echo htmlspecialchars($hospital_name); ?>" disabled>
+                                       value="<?php echo htmlspecialchars((string)$hospital_name); ?>" disabled>
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -513,7 +523,7 @@ function ci_options(array $options, $selected) {
                                        value="<?php 
                                             $city_result = mysqli_query($con, "SELECT city_name FROM cities WHERE city_id = $city_id");
                                             $city_row = mysqli_fetch_assoc($city_result);
-                                            echo htmlspecialchars($city_row['city_name'] ?? 'N/A');
+                                            echo htmlspecialchars((string)($city_row['city_name'] ?? 'N/A'));
                                        ?>" disabled>
                             </div>
                         </div>
@@ -533,7 +543,7 @@ function ci_options(array $options, $selected) {
                                 <label class="form-label">Username <span class="required">*</span></label>
                                 <input type="text" class="form-control-modern" id="username" name="username" 
                                        placeholder="Enter username" required
-                                       value="<?php echo $edit_mode ? htmlspecialchars($doctor_data['username'] ?? '') : fv('username'); ?>"
+                                       value="<?php echo $edit_mode ? htmlspecialchars((string)($doctor_data['username'] ?? '')) : fv('username'); ?>"
                                        <?php echo $edit_mode ? 'readonly' : ''; ?>>
                                 <small class="field-msg" id="username_msg"></small>
                             </div>
@@ -567,8 +577,8 @@ function ci_options(array $options, $selected) {
                             <div class="form-group">
                                 <label class="form-label">PMDC No <span class="required">*</span></label>
                                 <input type="text" class="form-control-modern" id="pmdcNo" name="pmdc_no" required
-                                       placeholder="1001-N, 1002-P etc." pattern="\d{1,6}-[A-Za-z]"
-                                       title="Format: numbers + dash + N ya P (e.g. 1001-N, 1002-P)"
+                                       placeholder="1001-N, 1002-M etc." pattern="\d{1,10}-[A-Za-z]"
+                                       title="Format: numbers + dash + koi bhi letter A-Z (e.g. 1001-N, 1002-P)"
                                        value="<?php echo fv('pmdc_no'); ?>"
                                        <?php echo $edit_mode ? 'readonly' : ''; ?>>
                                 <small class="field-msg" id="pmdcNo_msg"></small>
@@ -645,11 +655,11 @@ function ci_options(array $options, $selected) {
                                 <select class="form-control-modern" name="specialization" id="specializationSelect" style="width:100%;" required>
                                     <option value="">-- Search Specialization --</option>
                                     <?php foreach ($categories_data as $category_id => $category): ?>
-                                        <optgroup label="<?php echo htmlspecialchars($category['cat_name']); ?>">
+                                        <optgroup label="<?php echo htmlspecialchars((string)$category['cat_name']); ?>">
                                             <?php foreach ($category['types'] as $type): ?>
                                                 <option value="<?php echo $type['dr_cat_type_id']; ?>" 
                                                         <?php echo ($sel_cat == $type['dr_cat_type_id']) ? 'selected' : ''; ?>>
-                                                    <?php echo htmlspecialchars($type['type']); ?>
+                                                    <?php echo htmlspecialchars((string)$type['type']); ?>
                                                 </option>
                                             <?php endforeach; ?>
                                         </optgroup>
@@ -660,6 +670,7 @@ function ci_options(array $options, $selected) {
                                     <input type="checkbox" value="1" id="if_not_available" name="if_not_available"> 
                                     <label class="form-label text-danger" for="if_not_available" style="display:inline; font-size:12px; text-transform:none;">Specialization not listed?</label>
                                 </div>
+                                
                                 <input type="text" class="form-control-modern" name="specialization_txt"
                                        placeholder="Enter Specialization" id="specialization_txt" style="display:none; margin-top:6px;">
                             </div>
@@ -683,9 +694,10 @@ function ci_options(array $options, $selected) {
                                     <i class="fas fa-star me-2" style="color:#f59e0b;"></i> ماہرِ امراض (Specialist in Disease)
                                     <span class="optional">(Optional)</span>
                                 </label>
+                                <!-- Yahan treatment show ho raha hai -->
                                 <input type="text" class="form-control-modern" id="mahreAmraz" name="mahre_amraz" 
                                        placeholder="مثال: ماہرِ قلب، ماہرِ اعصاب، ماہرِ اطفال"
-                                       value="<?php echo fv('mahre_amraz'); ?>">
+                                       value="<?php echo $edit_mode ? htmlspecialchars((string)($doctor_data['cat_treatment'] ?? '')) : fv('mahre_amraz'); ?>">
                                 <small class="text-muted">وہ بیماری یا شعبہ جس میں ڈاکٹر مہارت رکھتا ہے</small>
                             </div>
                         </div>
@@ -740,11 +752,11 @@ function ci_options(array $options, $selected) {
                     ?>
                         <div class="hospital-clinical-card">
                             <div class="hospital-name d-flex justify-content-between align-items-center">
-                                <span><i class="fas fa-hospital me-2"></i><?php echo htmlspecialchars($hospital_name_display); ?></span>
+                                <span><i class="fas fa-hospital me-2"></i><?php echo htmlspecialchars((string)$hospital_name_display); ?></span>
                                 <?php if ($has_ci): ?>
                                     <span class="badge bg-success">
                                         <i class="fas fa-check me-1"></i> Info Saved
-                                        <?php if (!empty($ci_data['shift'])): ?>(<?php echo htmlspecialchars($ci_data['shift']); ?>)<?php endif; ?>
+                                        <?php if (!empty($ci_data['shift'])): ?>(<?php echo htmlspecialchars((string)$ci_data['shift']); ?>)<?php endif; ?>
                                     </span>
                                 <?php else: ?>
                                     <span class="badge bg-secondary">Not added yet</span>
@@ -807,7 +819,7 @@ function ci_options(array $options, $selected) {
                                     <label class="form-label">Contact</label>
                                     <input type="text" class="form-control-modern"
                                            name="clinical_data[<?php echo $dih_id; ?>][contact]"
-                                           value="<?php echo htmlspecialchars($ci_data['contact'] ?? ''); ?>"
+                                           value="<?php echo htmlspecialchars((string)($ci_data['contact'] ?? '')); ?>"
                                            placeholder="0300-1234567">
                                 </div>
 
@@ -832,7 +844,7 @@ function ci_options(array $options, $selected) {
                                     <textarea class="form-control-modern"
                                               name="clinical_data[<?php echo $dih_id; ?>][detail]"
                                               rows="2"
-                                              placeholder="Additional clinical notes..."><?php echo htmlspecialchars($ci_data['detail'] ?? ''); ?></textarea>
+                                              placeholder="Additional clinical notes..."><?php echo htmlspecialchars((string)($ci_data['detail'] ?? '')); ?></textarea>
                                 </div>
                             </div>
                         </div>
@@ -857,7 +869,7 @@ function ci_options(array $options, $selected) {
                         </div>
                         <div class="col-md-6 text-center">
                             <?php if ($edit_mode && !empty($doctor_data['doctor_pic'])): ?>
-                                <img src="<?php echo BASE_URL; ?>admin/inc/uploads/doctors/<?php echo htmlspecialchars($doctor_data['doctor_pic']); ?>" 
+                                <img src="<?php echo BASE_URL; ?>admin/inc/uploads/doctors/<?php echo htmlspecialchars((string)$doctor_data['doctor_pic']); ?>" 
                                      alt="Current Picture" class="img-preview">
                                 <p class="text-muted mt-1">Current Photo</p>
                             <?php endif; ?>
@@ -889,7 +901,7 @@ function ci_options(array $options, $selected) {
                                 <label class="form-label">Inactive Status Detail <span class="required">*</span></label>
                                 <textarea class="form-control-modern" id="ref" name="ref" rows="4" 
                                           placeholder="Reason for inactive status..."
-                                          <?php echo ($edit_mode && isset($doctor_data['estatus']) && $doctor_data['estatus'] == 0) ? 'required' : ''; ?>><?php if(isset($doctor_data['ref'])){ echo htmlspecialchars($doctor_data['ref']); } ?></textarea>
+                                          <?php echo ($edit_mode && isset($doctor_data['estatus']) && $doctor_data['estatus'] == 0) ? 'required' : ''; ?>><?php if(isset($doctor_data['ref'])){ echo htmlspecialchars((string)$doctor_data['ref']); } ?></textarea>
                             </div>
                         </div>
                     </div>
