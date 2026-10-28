@@ -66,6 +66,7 @@ $query = "
         h.hospital_name,
         h.hospital_address,
         dct.type AS specialization,
+        dct.treatment,
         dc.cat_name AS specialization_category
     FROM doctors d
     LEFT JOIN cities c ON d.city_id = c.city_id
@@ -223,7 +224,7 @@ echo json_encode([
             "experience_years"  => (int)($doctor['experience_years'] ?? 0),
             "emergency_status"  => (int)($doctor['emergency_status'] ?? 0),
             "availability"      => ($doctor['emergency_status'] == 1) ? "Unavailable" : "Available",
-            "mahre_amraz"       => $doctor['mahre_amraz'] ?? '',
+            "mahre_amraz"       => $doctor['treatment'] ?? '',
             "notes"             => $doctor['notes'] ?? '',
             "static_clinical_info" => $doctor['static_clinical_info'] ?? '',
             "other"             => $doctor['other'] ?? '',
