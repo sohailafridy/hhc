@@ -1,134 +1,160 @@
 <?php
 /**
- * Blood Banks List API
- * URL example:
- *   /api/blood-banks.php?city=1&search=red&page=1&per_page=10
- *
- * Saare params optional hain.
- * NOTE: neeche wali include line apne project ke hisaab se adjust karein
- *       (jahan $con, BASE_URL aur $city_id define hote hain).
+ * Blood Banks Listing API
+ * Returns approved blood banks (NO duplicate cities data)
+ * Method: GET
+ * URL: /api/blood_banks_api.php
+ * 
+ * Query Parameters (optional):
+ * - search=xyz        (blood bank name search)
+ * - city=1            (city id filter)
+ * - page=1            (pagination)
+ * - limit=10          (per page, max 50)
  */
-include '../config.php';
 
+// ============================================
+// STEP 1: Headers & CORS
+// ============================================
 header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type, Authorization');
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(204);
-    exit();
-}
-if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
-    http_response_code(405);
-    echo json_encode(['success' => false, 'message' => 'Only GET allowed']);
+    http_response_code(200);
     exit();
 }
 
-try {
-    // ---------------- Filters ----------------
-    $search = isset($_GET['search']) ? trim($_GET['search']) : '';
-    // Page ki tarah: city na aaye to default $city_id; city=0 ya "" matlab All Cities
-    if (isset($_GET['city'])) {
-        $city = (int)$_GET['city'];
-    } else {
-        $city = isset($city_id) ? (int)$city_id : 0;
-    }
+// ============================================
+// STEP 2: Database Connection
+// ============================================
+include '../config.php';
+// Agar $con nahi mil raha: $con = mysqli_connect("localhost", "user", "pass", "doctor");
 
-    // ---------------- Pagination ----------------
-    $page     = max(1, (int)($_GET['page'] ?? 1));
-    $per_page = (int)($_GET['per_page'] ?? 10);
-    if ($per_page < 1)  { $per_page = 10; }
-    if ($per_page > 50) { $per_page = 50; }
-    $offset = ($page - 1) * $per_page;
-
-    // ---------------- WHERE (prepared statement) ----------------
-    $where  = "WHERE u.status = 1 AND bb.approve = 1";
-    $types  = '';
-    $params = [];
-
-    if ($search !== '') {
-        $where   .= " AND bb.bb_name LIKE ?";
-        $types   .= 's';
-        $params[] = '%' . $search . '%';
-    }
-    if ($city > 0) {
-        $where   .= " AND bb.city_id = ?";
-        $types   .= 'i';
-        $params[] = $city;
-    }
-
-    $from = "FROM blood_bank bb
-             LEFT JOIN cities c ON bb.city_id = c.city_id
-             LEFT JOIN users u ON u.user_id = bb.user_id
-             LEFT JOIN (
-                 SELECT user_id, AVG(stars) AS avg_stars, COUNT(*) AS total_reviews
-                 FROM feedback
-                 GROUP BY user_id
-             ) f ON f.user_id = bb.user_id";
-
-    // ---------------- Total count ----------------
-    $count_stmt = mysqli_prepare($con, "SELECT COUNT(*) AS total $from $where");
-    if ($count_stmt === false) { throw new Exception(mysqli_error($con)); }
-    if ($types !== '') { mysqli_stmt_bind_param($count_stmt, $types, ...$params); }
-    mysqli_stmt_execute($count_stmt);
-    $total = (int)mysqli_fetch_assoc(mysqli_stmt_get_result($count_stmt))['total'];
-    mysqli_stmt_close($count_stmt);
-
-    $total_pages = (int)ceil($total / $per_page);
-
-    // ---------------- Records ----------------
-    $sql = "SELECT bb.bb_id, bb.bb_name, bb.city_id, c.city_name,
-                   f.avg_stars, f.total_reviews
-            $from $where
-            ORDER BY bb.bb_name ASC
-            LIMIT ? OFFSET ?";
-    $stmt = mysqli_prepare($con, $sql);
-    if ($stmt === false) { throw new Exception(mysqli_error($con)); }
-
-    $rec_params = array_merge($params, [$per_page, $offset]);
-    mysqli_stmt_bind_param($stmt, $types . 'ii', ...$rec_params);
-    mysqli_stmt_execute($stmt);
-    $res = mysqli_stmt_get_result($stmt);
-
-    $base = defined('BASE_URL') ? BASE_URL : '';
-    $blood_banks = [];
-    while ($row = mysqli_fetch_assoc($res)) {
-        $avg = $row['avg_stars'] !== null ? round((float)$row['avg_stars'], 1) : 0;
-
-        $blood_banks[] = [
-            'bb_id'         => (int)$row['bb_id'],
-            'bb_name'       => $row['bb_name'],
-            'city_id'       => (int)$row['city_id'],
-            'city_name'     => $row['city_name'],
-            'rating'        => $avg,                    // 0 = New
-            'is_new'        => $avg <= 0,
-            'total_reviews' => (int)($row['total_reviews'] ?? 0),
-            'detail_url'    => $base . 'blood-bank-detail?blood_bankid=' . (int)$row['bb_id'],
-        ];
-    }
-    mysqli_stmt_close($stmt);
-
-    echo json_encode([
-        'success' => true,
-        'filters' => [
-            'search' => $search,
-            'city'   => $city,
-        ],
-        'pagination' => [
-            'page'          => $page,
-            'per_page'      => $per_page,
-            'total_records' => $total,
-            'total_pages'   => $total_pages,
-            'showing_from'  => $total > 0 ? $offset + 1 : 0,
-            'showing_to'    => min($offset + $per_page, $total),
-            'has_next'      => $page < $total_pages,
-            'has_prev'      => $page > 1,
-        ],
-        'count' => count($blood_banks),
-        'data'  => $blood_banks,
-    ], JSON_UNESCAPED_UNICODE);
-
-} catch (Throwable $e) {
-    http_response_code(500);
-    echo json_encode(['success' => false, 'message' => 'Server error', 'error' => $e->getMessage()]);
+if (!$con) {
+    echo json_encode(["status" => false, "message" => "DB connection failed"]);
+    exit();
 }
+mysqli_set_charset($con, 'utf8mb4');
+
+// ============================================
+// STEP 3: Input Parameters
+// ============================================
+$search  = isset($_GET['search']) ? mysqli_real_escape_string($con, trim($_GET['search'])) : '';
+$city_id = isset($_GET['city']) ? (int)$_GET['city'] : 0;
+$page    = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
+$per_page = isset($_GET['limit']) ? min(50, max(1, (int)$_GET['limit'])) : 10;
+$offset  = ($page - 1) * $per_page;
+
+// ============================================
+// STEP 4: WHERE Clause
+// ============================================
+$where_clause = " AND bb.approve = 1 AND u.status = 1 ";
+
+if (!empty($search)) {
+    $where_clause .= " AND bb.bb_name LIKE '%$search%' ";
+}
+if (!empty($city_id) && $city_id > 0) {
+    $where_clause .= " AND bb.city_id = $city_id ";
+}
+
+// ============================================
+// STEP 5: Total Count
+// ============================================
+$count_query = "
+    SELECT COUNT(*) AS total
+    FROM blood_bank bb
+    LEFT JOIN cities c ON bb.city_id = c.city_id
+    LEFT JOIN users u ON u.user_id = bb.user_id
+    WHERE 1=1 $where_clause
+";
+$count_result = mysqli_query($con, $count_query);
+
+if (!$count_result) {
+    echo json_encode(["status" => false, "message" => "Count query failed: " . mysqli_error($con)]);
+    exit();
+}
+
+$total_row        = mysqli_fetch_assoc($count_result);
+$total_blood_banks = (int)$total_row['total'];
+$total_pages      = ($total_blood_banks > 0) ? ceil($total_blood_banks / $per_page) : 0;
+
+// ============================================
+// STEP 6: Main Query
+// ============================================
+$query = "
+    SELECT 
+        bb.bb_id,
+        bb.bb_name,
+        bb.bb_address,
+        bb.bb_contact,
+        bb.bb_pic,
+        bb.city_id,
+        bb.updated_at,
+        c.city_name,
+        (SELECT AVG(f.stars) FROM feedback f WHERE f.user_id = bb.user_id AND f.status = 1) AS avg_rating,
+        (SELECT COUNT(*) FROM feedback f WHERE f.user_id = bb.user_id AND f.status = 1) AS total_reviews
+    FROM blood_bank bb
+    LEFT JOIN cities c ON bb.city_id = c.city_id
+    LEFT JOIN users u ON u.user_id = bb.user_id
+    WHERE 1=1 $where_clause
+    ORDER BY bb.bb_name ASC
+    LIMIT $per_page OFFSET $offset
+";
+
+$result = mysqli_query($con, $query);
+
+if (!$result) {
+    echo json_encode(["status" => false, "message" => "Query failed: " . mysqli_error($con)]);
+    exit();
+}
+
+// ============================================
+// STEP 7: Data Prepare
+// ============================================
+$blood_banks = [];
+
+while ($row = mysqli_fetch_assoc($result)) {
+    // Blood Bank Pic Full URL
+    $bb_pic = '';
+    if (!empty($row['bb_pic'])) {
+        $bb_pic = BASE_URL . 'admin/inc/uploads/blood_banks/' . $row['bb_pic'];
+    }
+
+    $avg_rating    = $row['avg_rating'] ? round((float)$row['avg_rating'], 1) : 0;
+    $total_reviews = (int)$row['total_reviews'];
+
+    $blood_banks[] = [
+        "bb_id"        => (int)$row['bb_id'],
+        "bb_name"      => $row['bb_name'],
+        "bb_pic"       => $bb_pic,
+        "bb_address"   => $row['bb_address'] ?? '',
+        "bb_contact"   => $row['bb_contact'] ?? '',
+        "city_id"      => (int)$row['city_id'],
+        "city_name"    => $row['city_name'] ?? '',
+        "rating"       => $avg_rating,
+        "total_reviews"=> $total_reviews,
+        "updated_at"   => $row['updated_at'] ?? ''
+    ];
+}
+
+// ============================================
+// STEP 8: Final Response
+// ============================================
+echo json_encode([
+    "status"      => true,
+    "message"     => "Blood banks fetched successfully",
+    "server_time" => date('Y-m-d H:i:s'),
+    "pagination"  => [
+        "total_blood_banks" => $total_blood_banks,
+        "current_page"      => $page,
+        "per_page"          => $per_page,
+        "total_pages"       => $total_pages
+    ],
+    "data" => [
+        "blood_banks" => $blood_banks
+    ]
+], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+
+mysqli_close($con);
+?>
