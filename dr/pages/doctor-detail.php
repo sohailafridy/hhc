@@ -85,7 +85,7 @@ if (isset($_POST['user_id']) && (int)$_POST['user_id'] != 0) {
                         
                         <div class="profile-specialty">
                             <?php
-                            $spec_query = "SELECT `type` FROM dr_cat_types WHERE dr_cat_type_id = " . (int)$doctor['cat_type_id'];
+                            $spec_query = "SELECT * FROM dr_cat_types WHERE dr_cat_type_id = " . (int)$doctor['cat_type_id'];
                             $spec_result = mysqli_query($con, $spec_query);
                             $spec = mysqli_fetch_assoc($spec_result);
                             echo $spec ? htmlspecialchars($spec['type']) : 'General Practitioner';
@@ -95,12 +95,24 @@ if (isset($_POST['user_id']) && (int)$_POST['user_id'] != 0) {
                         <div class="profile-qualification"><?php echo htmlspecialchars($doctor['short_detail']); ?></div>
                         
                         <!-- Mahre Amraz -->
-                        <?php if (!empty($doctor['mahre_amraz'])): ?>
+                        <?php 
+                            /*
+                        if (!empty($doctor['mahre_amraz'])): ?>
                             <div class="mahre-amraz-badge">
                                 <i class="fas fa-star"></i>
                                 ماہرِ امراض: <?php echo htmlspecialchars($doctor['mahre_amraz']); ?>
                             </div>
+                        <?php endif; */ ?>
+
+                        <!-- Mahre Amraz from cat tbl-->
+                            <?php if (!empty($spec['treatment'])): ?>
+                            <div class="mahre-amraz-badge">
+                                <i class="fas fa-star"></i>
+                                ماہرِ امراض: <?php echo htmlspecialchars($spec['treatment']); ?>
+                            </div>
                         <?php endif; ?>
+                          
+                        
                         
                         <!-- Notes -->
                         <?php if (!empty($doctor['notes'])): ?>
