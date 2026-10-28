@@ -171,7 +171,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     // PMDC required + format check
     if ($pmdc_no === '') {
         $dup_errors[] = "PMDC No zaroori hai.";
-    } elseif (!preg_match('/^\d{1,6}-[NP]$/', $pmdc_no)) {
+    } elseif (!preg_match('/^\d{1,10}-[A-Za-z]$/', $pmdc_no)) {
         $dup_errors[] = "PMDC No format galat hai. Sahi format: 1001-N ya 1002-P";
     } elseif (mysqli_num_rows(mysqli_query($con,
         "SELECT 1 FROM doctors WHERE UPPER(pmdc_no)='$pmdc_no' AND doctor_id<>$ex_doctor_id LIMIT 1")) > 0) {
