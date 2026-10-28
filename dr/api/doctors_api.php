@@ -1,98 +1,194 @@
 <?php
-// GET api/doctors.php?search=&city_id=&hospital_id=&specialization_id=&lady_doctor=1&page=1&per_page=12&updated_since=2026-10-01
-require_once __DIR__ . '/_common.php';
+/**
+ * Doctors API - Without Filters
+ * Returns all approved doctors with their details
+ * Method: GET
+ * URL: /api/doctors_api.php
+ */
 
-if ($_SERVER['REQUEST_METHOD'] !== 'GET') json_error('Method not allowed', 405);
+// ============================================
+// STEP 1: Headers & CORS Setup (Mobile App ke liye)
+// ============================================
+header('Content-Type: application/json; charset=utf-8');
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type, Authorization');
 
-$search   = trim($_GET['search'] ?? '');
-$cityId   = (int)($_GET['city_id'] ?? 0);
-$hospId   = (int)($_GET['hospital_id'] ?? 0);
-$specId   = (int)($_GET['specialization_id'] ?? 0);
-$lady     = !empty($_GET['lady_doctor']);
-$since    = trim($_GET['updated_since'] ?? '');
-$page     = max(1, (int)($_GET['page'] ?? 1));
-$perPage  = min(50, max(1, (int)($_GET['per_page'] ?? 12)));
-$offset   = ($page - 1) * $perPage;
-
-// ---- WHERE ----
-$where  = ['u.status = 1', 'd.approve = 1'];
-$types  = '';
-$params = [];
-
-if ($search !== '') {
-    $where[] = 'd.doctor_name LIKE ?';
-    $types .= 's'; $params[] = '%' . $search . '%';
+// OPTIONS preflight request handle karein
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit();
 }
-if ($cityId > 0) {
-    $where[] = 'd.city_id = ?';
-    $types .= 'i'; $params[] = $cityId;
-}
-if ($specId > 0) {
-    $where[] = 'd.dr_cat_type_id = ?';
-    $types .= 'i'; $params[] = $specId;
-}
-if ($lady) {
-    $where[] = 'd.is_lady = 1';
-}
-if ($hospId > 0) {
-    $where[] = 'EXISTS (SELECT 1 FROM doctor_in_hospital dh
-                        WHERE dh.doctor_id = d.doctor_id AND dh.hospital_id = ? AND dh.inactive = 0)';
-    $types .= 'i'; $params[] = $hospId;
-}
-if ($since !== '') {
-    $where[] = 'd.updated_at >= ?';
-    $types .= 's'; $params[] = $since;
-}
-$whereSql = implode(' AND ', $where);
 
-$from = "FROM doctors d
-         JOIN users u ON u.user_id = d.user_id
-         LEFT JOIN dr_cat_types t ON t.dr_cat_type_id = d.dr_cat_type_id
-         LEFT JOIN cities c ON c.city_id = d.city_id
-         LEFT JOIN (
-             SELECT user_id, ROUND(AVG(stars), 1) AS avg_stars, COUNT(*) AS cnt
-             FROM feedback WHERE status = 1 GROUP BY user_id
-         ) f ON f.user_id = d.user_id";
+// ============================================
+// STEP 2: Database Connection
+// ============================================
+// Apne path ke hisaab se adjust karein
+include '../config.php';
+// Agar $con nahi mil raha to direct connection lagayein:
+// $con = mysqli_connect("localhost", "username", "password", "doctor");
 
-// ---- total ----
-$total = (int)(db_one($conn, "SELECT COUNT(*) AS total $from WHERE $whereSql", $types, $params)['total'] ?? 0);
+if (!$con) {
+    echo json_encode([
+        "status" => false,
+        "message" => "Database connection failed",
+        "data" => []
+    ]);
+    exit();
+}
 
-// ---- page data ----
-$sql = "SELECT d.doctor_id, d.doctor_name, d.qualification, d.experience, d.photo,
-               d.is_lady, d.emergency, d.created_at, d.updated_at,
-               t.type AS specialization, c.city_name,
-               COALESCE(f.avg_stars, 0) AS rating, COALESCE(f.cnt, 0) AS reviews_count
-        $from
-        WHERE $whereSql
-        ORDER BY d.doctor_id DESC
-        LIMIT $perPage OFFSET $offset";
-$rows = db_all($conn, $sql, $types, $params);
+mysqli_set_charset($con, 'utf8mb4');
 
-$data = array_map(function ($r) {
-    return [
-        'doctor_id'      => (int)$r['doctor_id'],
-        'name'           => $r['doctor_name'],
-        'qualification'  => $r['qualification'],
-        'specialization' => $r['specialization'],
-        'city'           => $r['city_name'],
-        'experience'     => $r['experience'] !== null ? (int)$r['experience'] : null,
-        'photo'          => photo_url($r['photo']),
-        'is_lady_doctor' => (bool)$r['is_lady'],
-        'is_available'   => (bool)$r['emergency'],
-        'is_new'         => strtotime($r['created_at']) > strtotime('-30 days'),
-        'rating'         => (float)$r['rating'],
-        'reviews_count'  => (int)$r['reviews_count'],
-        'updated_at'     => $r['updated_at'],
+// ============================================
+// STEP 3: Main Query (Saara Data Ek Saath)
+// ============================================
+$query = "
+    SELECT 
+        d.doctor_id,
+        d.doctor_name,
+        d.doctor_pic,
+        d.short_detail,
+        d.gender,
+        d.experience_years,
+        d.emergency_status,
+        d.cat_type_id,
+        d.city_id,
+        d.hospital_id,
+        d.updated_at,
+        dct.type AS specialization,
+        c.city_name,
+        h.hospital_name,
+        h.hospital_address,
+        u.user_id,
+        u.email,
+        u.status AS user_status
+    FROM doctors d
+    LEFT JOIN dr_cat_types dct ON d.cat_type_id = dct.dr_cat_type_id
+    LEFT JOIN cities c ON d.city_id = c.city_id
+    LEFT JOIN hospitals h ON d.hospital_id = h.hospital_id
+    LEFT JOIN users u ON u.user_id = d.user_id
+    WHERE u.status = 1 AND d.approve = 1
+    ORDER BY d.doctor_name ASC
+";
+
+$result = mysqli_query($con, $query);
+
+if (!$result) {
+    echo json_encode([
+        "status" => false,
+        "message" => "Query failed: " . mysqli_error($con),
+        "data" => []
+    ]);
+    exit();
+}
+
+// ============================================
+// STEP 4: Data Prepare Karein
+// ============================================
+$doctors = [];
+
+while ($row = mysqli_fetch_assoc($result)) {
+    $doctor_id = (int)$row['doctor_id'];
+
+    // Rating calculate karein (feedback table se)
+    $rating_query = "SELECT AVG(stars) AS avg_stars, COUNT(*) AS total_reviews 
+                     FROM feedback WHERE user_id = '$doctor_id'";
+    $rating_result = mysqli_query($con, $rating_query);
+    $rating_data = mysqli_fetch_assoc($rating_result);
+    
+    $avg_stars = $rating_data['avg_stars'] ? round((float)$rating_data['avg_stars'], 1) : 0;
+    $total_reviews = (int)$rating_data['total_reviews'];
+
+    // Doctor Pic ka full URL banayein
+    $doctor_pic = '';
+    if (!empty($row['doctor_pic'])) {
+        $doctor_pic = BASE_URL . 'admin/inc/uploads/doctors/' . $row['doctor_pic'];
+    }
+
+    // Final Data Array
+    $doctors[] = [
+        "doctor_id"         => $doctor_id,
+        "doctor_name"       => "Dr. " . $row['doctor_name'],
+        "doctor_pic"        => $doctor_pic,
+        "short_detail"      => $row['short_detail'] ?? '',
+        "gender"            => $row['gender'] ?? '',
+        "is_lady_doctor"    => (strtolower($row['gender'] ?? '') === 'female') ? 1 : 0,
+        "experience_years"  => (int)($row['experience_years'] ?? 0),
+        "emergency_status"  => (int)($row['emergency_status'] ?? 0),
+        "availability"      => ($row['emergency_status'] == 1) ? "Unavailable" : "Available",
+        "specialization_id" => (int)$row['cat_type_id'],
+        "specialization"    => $row['specialization'] ?? 'Medical Specialist',
+        "city_id"           => (int)$row['city_id'],
+        "city_name"         => $row['city_name'] ?? '',
+        "hospital_id"       => (int)$row['hospital_id'],
+        "hospital_name"     => $row['hospital_name'] ?? '',
+        "hospital_address"  => $row['hospital_address'] ?? '',
+        "email"             => $row['email'] ?? '',
+        "rating"            => $avg_stars,
+        "total_reviews"     => $total_reviews,
+        "updated_at"        => $row['updated_at'] ?? date('Y-m-d H:i:s')
     ];
-}, $rows);
+}
 
-json_out([
-    'success'    => true,
-    'data'       => $data,
-    'pagination' => [
-        'page'        => $page,
-        'per_page'    => $perPage,
-        'total'       => $total,
-        'total_pages' => (int)ceil($total / $perPage),
-    ],
-]);
+// ============================================
+// STEP 5: Filter Dropdowns ka Data (Cities, Hospitals, Specializations)
+// ============================================
+// Yeh data mobile app ko dropdowns populate karne ke liye chahiye
+
+// Cities
+$cities = [];
+$city_q = mysqli_query($con, "SELECT city_id, city_name FROM cities WHERE status = 1 ORDER BY city_name ASC");
+while ($c = mysqli_fetch_assoc($city_q)) {
+    $cities[] = [
+        "city_id" => (int)$c['city_id'],
+        "city_name" => $c['city_name']
+    ];
+}
+
+// Hospitals
+$hospitals = [];
+$hosp_q = mysqli_query($con, "SELECT hospital_id, hospital_name, city_id FROM hospitals WHERE approve = 1 ORDER BY hospital_name ASC");
+while ($h = mysqli_fetch_assoc($hosp_q)) {
+    $hospitals[] = [
+        "hospital_id" => (int)$h['hospital_id'],
+        "hospital_name" => $h['hospital_name'],
+        "city_id" => (int)$h['city_id']
+    ];
+}
+
+// Specializations (Categories + Types)
+$specializations = [];
+$spec_q = mysqli_query($con, "
+    SELECT dct.dr_cat_type_id, dct.type, dc.cat_name 
+    FROM dr_cat_types dct 
+    LEFT JOIN dr_categories dc ON dct.dr_cat_id = dc.dr_cat_id 
+    ORDER BY dc.cat_name, dct.type
+");
+while ($s = mysqli_fetch_assoc($spec_q)) {
+    $specializations[] = [
+        "specialization_id" => (int)$s['dr_cat_type_id'],
+        "specialization_name" => $s['type'],
+        "category_name" => $s['cat_name'] ?? ''
+    ];
+}
+
+// ============================================
+// STEP 6: Final JSON Response
+// ============================================
+echo json_encode([
+    "status" => true,
+    "message" => "Doctors fetched successfully",
+    "total_doctors" => count($doctors),
+    "server_time" => date('Y-m-d H:i:s'),
+    "data" => [
+        "doctors" => $doctors,
+        "filter_options" => [
+            "cities" => $cities,
+            "hospitals" => $hospitals,
+            "specializations" => $specializations
+        ]
+    ]
+], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+
+mysqli_close($con);
+?>
