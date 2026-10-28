@@ -1,104 +1,268 @@
 <?php
-// GET api/doctor-detail.php?doctor_id=2
-require_once __DIR__ . '/_common.php';
+/**
+ * Doctor Detail API
+ * Returns complete details of a single doctor
+ * Method: GET
+ * URL: /api/doctor_detail_api.php?doctor_id=1
+ * 
+ * Response mein woh sab kuch hoga jo detail page par dikhta hai:
+ * - Basic Info (name, pic, specialization, experience)
+ * - Contact Info
+ * - Clinical Info (multiple hospitals/shifts)
+ * - Reviews (with pagination)
+ * - Rating Summary
+ */
 
-if ($_SERVER['REQUEST_METHOD'] !== 'GET') json_error('Method not allowed', 405);
+// ============================================
+// STEP 1: Headers & CORS
+// ============================================
+header('Content-Type: application/json; charset=utf-8');
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: GET, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type, Authorization');
 
-$doctorId = (int)($_GET['doctor_id'] ?? 0);
-if ($doctorId <= 0) json_error('doctor_id is required');
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit();
+}
 
-// ---- doctor ----
-$d = db_one($conn,
-    "SELECT d.*, t.type AS specialization, c.city_name
-     FROM doctors d
-     JOIN users u ON u.user_id = d.user_id
-     LEFT JOIN dr_cat_types t ON t.dr_cat_type_id = d.dr_cat_type_id
-     LEFT JOIN cities c ON c.city_id = d.city_id
-     WHERE d.doctor_id = ? AND u.status = 1 AND d.approve = 1",
-    'i', [$doctorId]);
+// ============================================
+// STEP 2: Database Connection
+// ============================================
+include '../config.php';
+// Agar $con nahi mil raha: $con = mysqli_connect("localhost", "user", "pass", "doctor");
 
-if (!$d) json_error('Doctor not found', 404);
+if (!$con) {
+    echo json_encode(["status" => false, "message" => "DB connection failed"]);
+    exit();
+}
+mysqli_set_charset($con, 'utf8mb4');
 
-// ---- rating ----
-$rating = db_one($conn,
-    "SELECT ROUND(COALESCE(AVG(stars), 0), 1) AS average, COUNT(*) AS cnt
-     FROM feedback WHERE user_id = ? AND status = 1",
-    'i', [(int)$d['user_id']]);
+// ============================================
+// STEP 3: Input Validation
+// ============================================
+$doctor_id = isset($_GET['doctor_id']) ? (int)$_GET['doctor_id'] : 0;
 
-// ---- clinics (doctor_in_hospital + clinical_info) ----
-$clinicRows = db_all($conn,
-    "SELECT dh.doctor_in_hosp_id, dh.if_clinic,
-            h.hospital_id, h.hospital_name, h.hospital_address, h.hospital_phone,
-            h.hospital_pic, h.is_personal, hc.city_name AS hospital_city,
-            ci.morning_opening_time, ci.morning_closing_time,
-            ci.evening_opening_time, ci.evening_closing_time,
-            ci.shift, ci.season, ci.days, ci.off_days, ci.contact, ci.detail, ci.clinic_address
-     FROM doctor_in_hospital dh
-     JOIN hospitals h ON h.hospital_id = dh.hospital_id
-     LEFT JOIN cities hc ON hc.city_id = h.city_id
-     LEFT JOIN clinical_info ci ON ci.doctor_in_hosp_id = dh.doctor_in_hosp_id
-     WHERE dh.doctor_id = ? AND dh.inactive = 0",
-    'i', [$doctorId]);
+if ($doctor_id <= 0) {
+    echo json_encode([
+        "status" => false,
+        "message" => "Invalid or missing doctor_id"
+    ]);
+    exit();
+}
 
-$clinics = array_map(function ($r) {
-    $personal = (int)$r['is_personal'] === 1;
-    return [
-        'hospital_id'     => (int)$r['hospital_id'],
-        'hospital_name'   => $r['hospital_name'],
-        'is_personal'     => $personal,
-        'is_clinic'       => (bool)$r['if_clinic'],
-        'city'            => $r['hospital_city'],
-        // personal clinic ka apna address clinical_info.clinic_address mein hota hai
-        'address'         => ($personal && !empty($r['clinic_address'])) ? $r['clinic_address'] : $r['hospital_address'],
-        'morning_opening' => $r['morning_opening_time'],
-        'morning_closing' => $r['morning_closing_time'],
-        'evening_opening' => $r['evening_opening_time'],
-        'evening_closing' => $r['evening_closing_time'],
-        'shift'           => $r['shift'],
-        'season'          => $r['season'],
-        'days'            => $r['days'],
-        'off_days'        => $r['off_days'],
-        'contact'         => $r['contact'] ?: $r['hospital_phone'],
-        'detail'          => $r['detail'],
+// Reviews pagination (default: pehle 10 reviews)
+$review_page = isset($_GET['review_page']) ? (int)$_GET['review_page'] : 1;
+$reviews_per_page = 10;
+$review_offset = ($review_page - 1) * $reviews_per_page;
+
+// ============================================
+// STEP 4: Doctor Basic Info Fetch
+// ============================================
+$query = "
+    SELECT 
+        d.*,
+        c.city_name,
+        h.hospital_name,
+        h.hospital_address,
+        dct.type AS specialization,
+        dc.cat_name AS specialization_category
+    FROM doctors d
+    LEFT JOIN cities c ON d.city_id = c.city_id
+    LEFT JOIN hospitals h ON d.hospital_id = h.hospital_id
+    LEFT JOIN users u ON u.user_id = d.user_id
+    LEFT JOIN dr_cat_types dct ON d.cat_type_id = dct.dr_cat_type_id
+    LEFT JOIN dr_categories dc ON dct.dr_cat_id = dc.dr_cat_id
+    WHERE d.doctor_id = $doctor_id 
+      AND u.status = 1 
+      AND d.approve = 1
+    LIMIT 1
+";
+
+$result = mysqli_query($con, $query);
+
+if (!$result || mysqli_num_rows($result) === 0) {
+    echo json_encode([
+        "status" => false,
+        "message" => "Doctor not found or not approved"
+    ]);
+    exit();
+}
+
+$doctor = mysqli_fetch_assoc($result);
+
+// ============================================
+// STEP 5: Rating Summary
+// ============================================
+$rating_query = "SELECT AVG(stars) AS avg_rating, COUNT(*) AS total_reviews 
+                 FROM feedback 
+                 WHERE user_id = " . (int)$doctor['user_id'] . " AND status = 1";
+$rating_result = mysqli_query($con, $rating_query);
+$rating_data = mysqli_fetch_assoc($rating_result);
+
+$avg_rating = $rating_data['avg_rating'] ? round((float)$rating_data['avg_rating'], 1) : 0;
+$total_reviews = (int)$rating_data['total_reviews'];
+
+// ============================================
+// STEP 6: Clinical Info (Multiple Hospitals/Shifts)
+// ============================================
+$clinical_query = "
+    SELECT 
+        ci.clinical_info_id,
+        ci.morning_opening_time,
+        ci.morning_closing_time,
+        ci.evening_opening_time,
+        ci.evening_closing_time,
+        ci.shift,
+        ci.season,
+        ci.detail,
+        ci.contact,
+        ci.clinic_address,
+        ci.days,
+        ci.off_days,
+        h.hospital_id,
+        h.hospital_name,
+        h.hospital_address,
+        c.city_name
+    FROM clinical_info ci
+    INNER JOIN doctor_in_hospital dih ON ci.doctor_in_hosp_id = dih.doctor_in_hosp_id
+    LEFT JOIN hospitals h ON dih.hospital_id = h.hospital_id
+    LEFT JOIN cities c ON h.city_id = c.city_id
+    WHERE dih.doctor_id = $doctor_id AND dih.inactive = 0
+    ORDER BY ci.season, ci.shift
+";
+
+$clinical_result = mysqli_query($con, $clinical_query);
+$clinical_info = [];
+
+while ($row = mysqli_fetch_assoc($clinical_result)) {
+    // Time format (08:00 AM - 12:00 PM) agar value mojood ho
+    $morning = null;
+    if (!empty($row['morning_opening_time']) && !empty($row['morning_closing_time'])) {
+        $morning = date('h:i A', strtotime($row['morning_opening_time'])) 
+                 . ' - ' 
+                 . date('h:i A', strtotime($row['morning_closing_time']));
+    }
+
+    $evening = null;
+    if (!empty($row['evening_opening_time']) && !empty($row['evening_closing_time'])) {
+        $evening = date('h:i A', strtotime($row['evening_opening_time'])) 
+                 . ' - ' 
+                 . date('h:i A', strtotime($row['evening_closing_time']));
+    }
+
+    $clinical_info[] = [
+        "clinical_info_id"  => (int)$row['clinical_info_id'],
+        "hospital_id"       => (int)$row['hospital_id'],
+        "hospital_name"     => $row['hospital_name'] ?? 'Personal Clinic',
+        "hospital_address"  => $row['hospital_address'] ?? ($row['clinic_address'] ?? ''),
+        "city_name"         => $row['city_name'] ?? '',
+        "morning_timing"    => $morning,
+        "evening_timing"    => $evening,
+        "working_days"      => $row['days'] ?? 'N/A',
+        "off_days"          => $row['off_days'] ?? 'None',
+        "contact"           => $row['contact'] ?? '',
+        "detail"            => $row['detail'] ?? '',
+        "shift"             => $row['shift'] ?? '',
+        "season"            => $row['season'] ?? ''
     ];
-}, $clinicRows);
+}
 
-// ---- reviews (email kabhi expose nahi karni) ----
-$reviewRows = db_all($conn,
-    "SELECT commenter_name, stars, comment, created_at
-     FROM feedback WHERE user_id = ? AND status = 1
-     ORDER BY created_at DESC LIMIT 50",
-    'i', [(int)$d['user_id']]);
+// ============================================
+// STEP 7: Reviews (Paginated)
+// ============================================
+$reviews_query = "
+    SELECT feedback_id, commenter_name, commenter_gmail, comment, stars, created_at
+    FROM feedback 
+    WHERE user_id = " . (int)$doctor['user_id'] . " AND status = 1
+    ORDER BY created_at DESC
+    LIMIT $reviews_per_page OFFSET $review_offset
+";
+$reviews_result = mysqli_query($con, $reviews_query);
+$reviews = [];
 
-$reviews = array_map(fn($r) => [
-    'name'       => $r['commenter_name'],
-    'stars'      => (int)$r['stars'],
-    'comment'    => $r['comment'],
-    'created_at' => $r['created_at'],
-], $reviewRows);
+while ($r = mysqli_fetch_assoc($reviews_result)) {
+    $reviews[] = [
+        "review_id"     => (int)$r['feedback_id'],
+        "patient_name"  => $r['commenter_name'],
+        "patient_email" => $r['commenter_gmail'],
+        "comment"       => $r['comment'] ?? '',
+        "stars"         => (int)$r['stars'],
+        "date"          => date('d M Y', strtotime($r['created_at']))
+    ];
+}
 
-json_out([
-    'success' => true,
-    'data' => [
-        'doctor' => [
-            'doctor_id'      => (int)$d['doctor_id'],
-            'name'           => $d['doctor_name'],
-            'photo'          => photo_url($d['photo']),
-            'specialization' => $d['specialization'],
-            'qualification'  => $d['qualification'],
-            'experience'     => $d['experience'] !== null ? (int)$d['experience'] : null,
-            'city'           => $d['city_name'],
-            'phone'          => $d['phone'] ?? null,
-            'email'          => $d['email'] ?? null,
-            'description'    => $d['description'] ?? null,
-            'notes'          => $d['notes'] ?? null,
-            'other_info'     => $d['other_info'] ?? null,
-            'is_lady_doctor' => (bool)($d['is_lady'] ?? 0),
-            'is_available'   => (bool)($d['emergency'] ?? 0),
-            'updated_at'     => $d['updated_at'] ?? null,
+$total_review_pages = ceil($total_reviews / $reviews_per_page);
+
+// ============================================
+// STEP 8: Doctor Pic Full URL
+// ============================================
+$doctor_pic = '';
+if (!empty($doctor['doctor_pic'])) {
+    $doctor_pic = BASE_URL . 'admin/inc/uploads/doctors/' . $doctor['doctor_pic'];
+}
+
+// ============================================
+// STEP 9: Final Response
+// ============================================
+echo json_encode([
+    "status"  => true,
+    "message" => "Doctor detail fetched successfully",
+    "data" => [
+        // ---------- BASIC INFO ----------
+        "doctor_info" => [
+            "doctor_id"         => (int)$doctor['doctor_id'],
+            "user_id"           => (int)$doctor['user_id'],
+            "doctor_name"       => "Dr. " . $doctor['doctor_name'],
+            "doctor_pic"        => $doctor_pic,
+            "gender"            => $doctor['gender'] ?? '',
+            "is_lady_doctor"    => (strtolower($doctor['gender'] ?? '') === 'female') ? 1 : 0,
+            "specialization"    => $doctor['specialization'] ?? 'General Practitioner',
+            "specialization_category" => $doctor['specialization_category'] ?? '',
+            "short_detail"      => $doctor['short_detail'] ?? '',
+            "experience_years"  => (int)($doctor['experience_years'] ?? 0),
+            "emergency_status"  => (int)($doctor['emergency_status'] ?? 0),
+            "availability"      => ($doctor['emergency_status'] == 1) ? "Unavailable" : "Available",
+            "mahre_amraz"       => $doctor['mahre_amraz'] ?? '',
+            "notes"             => $doctor['notes'] ?? '',
+            "static_clinical_info" => $doctor['static_clinical_info'] ?? '',
+            "other"             => $doctor['other'] ?? '',
+            "clinic_name"       => $doctor['clinic_name'] ?? '',
+            "clinic_address"    => $doctor['clinic_address'] ?? '',
+            "clinic_status"     => (int)($doctor['clinic_status'] ?? 0),
+            "updated_at"        => $doctor['updated_at'] ?? ''
         ],
-        'rating'  => ['average' => (float)$rating['average'], 'count' => (int)$rating['cnt']],
-        'clinics' => $clinics,
-        'reviews' => $reviews,
-    ],
-]);
+
+        // ---------- CONTACT INFO ----------
+        "contact_info" => [
+            "phone"        => $doctor['doctor_phone'] ?? '',
+            "email"        => $doctor['doctor_email'] ?? '',
+            "city_id"      => (int)($doctor['city_id'] ?? 0),
+            "city_name"    => $doctor['city_name'] ?? '',
+            "hospital_id"  => (int)($doctor['hospital_id'] ?? 0),
+            "hospital_name"=> $doctor['hospital_name'] ?? '',
+            "hospital_address" => $doctor['hospital_address'] ?? ''
+        ],
+
+        // ---------- RATING SUMMARY ----------
+        "rating_summary" => [
+            "average_rating" => $avg_rating,
+            "total_reviews"  => $total_reviews
+        ],
+
+        // ---------- CLINICAL INFO (Multiple Shifts) ----------
+        "clinical_info" => $clinical_info,
+
+        // ---------- REVIEWS ----------
+        "reviews" => [
+            "list"           => $reviews,
+            "current_page"   => $review_page,
+            "total_pages"    => $total_review_pages,
+            "total_reviews"  => $total_reviews,
+            "per_page"       => $reviews_per_page
+        ]
+    ]
+], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+
+mysqli_close($con);
+?>
