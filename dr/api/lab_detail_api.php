@@ -25,7 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 // ============================================
 // STEP 2: Database Connection
 // ============================================
-require_once '../includes/db_connect.php';
+include '../config.php';
 // Agar $con nahi mil raha: $con = mysqli_connect("localhost", "user", "pass", "doctor");
 
 if (!$con) {
