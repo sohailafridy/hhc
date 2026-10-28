@@ -61,6 +61,8 @@ if (in_array('doctors', $url_parts)) {
         $active = 'list';
     } elseif (in_array('assign-hospitals', $url_parts)) {
         $active = 'assign-hospitals';
+    } elseif (in_array('import-doctors', $url_parts)) {
+        $active = 'import-doctors';
     }
 }
 
@@ -499,6 +501,12 @@ if (($current_page == 'admin' || $current_page == 'index' || $current_page == ''
                     <li class="<?php echo ($active == 'list') ? 'active' : ''; ?>">
                         <a class="waves-effect waves-dark" href="<?php echo BASE_URL; ?>admin/doctors/list">
                             <i class="icon-arrow-right"></i> List
+                        </a>
+                    </li>
+                    <!-- ✅ NAYA LINK: Import Doctors -->
+                    <li class="<?php echo ($active == 'import-doctors') ? 'active' : ''; ?>">
+                        <a class="waves-effect waves-dark" href="<?php echo BASE_URL; ?>admin/import-doctors">
+                            <i class="icon-cloud-upload"></i> Import Doctors
                         </a>
                     </li>
                 </ul>

@@ -34,6 +34,9 @@ RewriteRule ^blood-banks/detail$ blood-bank-detail.php [L]
 RewriteRule ^delete-all-clinics$ delete-all-clinics.php [L]
 
 
+RewriteRule ^import-doctors$ excel-import.php [L]
+
+
 RewriteRule ^recycle$ recycle.php [L]
 
 
