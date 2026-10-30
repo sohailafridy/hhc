@@ -1,11 +1,48 @@
 <?php include '../includes/header.php'; 
 $city_id = (int)$city_id;
+
+// 1. QUERY UPDATE: treatment column add kiya gaya hai
+$categories_query = "SELECT dc.dr_cat_id, dc.cat_name, dct.dr_cat_type_id, dct.type, dct.treatment 
+                   FROM dr_categories dc 
+                   LEFT JOIN dr_cat_types dct ON dc.dr_cat_id = dct.dr_cat_id 
+                   ORDER BY dc.cat_name, dct.type";
+$categories_result = mysqli_query($con, $categories_query);
+
+// 2. ARRAY UPDATE: treatment ko categories_data me save kiya gaya hai
+$categories_data = [];
+if ($categories_result) {
+    while ($row = mysqli_fetch_assoc($categories_result)) {
+        if (!isset($categories_data[$row['dr_cat_id']])) {
+            $categories_data[$row['dr_cat_id']] = [
+                'cat_name' => $row['cat_name'],
+                'types' => []
+            ];
+        }
+        if ($row['dr_cat_type_id']) {
+            $categories_data[$row['dr_cat_id']]['types'][] = [
+                'dr_cat_type_id' => $row['dr_cat_type_id'],
+                'type' => $row['type'],
+                'treatment' => $row['treatment'] // Naya column yahan add hua
+            ];
+        }
+    }
+}
 ?>
 
 <style>
-    
-   
-   
+    /* Urdu dropdown styling for better readability */
+    .urdu-text {
+        font-family: 'Jameel Noori Nastaleeq', 'Noto Nastaliq Urdu', 'Arial', sans-serif;
+        font-size: 1.1rem;
+        text-align: right;
+        direction: rtl;
+    }
+    .eng-subtext {
+        text-align: left;
+        direction: ltr;
+        display: block;
+        font-size: 0.75rem;
+    }
 </style>
 
     <!-- Navbar -->
@@ -69,8 +106,18 @@ $city_id = (int)$city_id;
                                     </div>
                                     <div class="col-12">
                                         <label class="form-label">Search Doctor</label>
-                                        <input type="text" class="form-control" name="search" placeholder="Enter doctor name..." required>
+                                        <input type="text" class="form-control" name="search" placeholder="Enter doctor name...">
                                     </div>
+                                    <div class="col-12">
+                                        <label class="form-label">Filter by Disease / Treatment</label>
+                                        <div class="input-with-icon position-relative">
+                                            <input type="text" class="form-control" id="specializationSearch" placeholder="Search disease (e.g., دل)..." autocomplete="off" dir="auto">
+                                            <input type="hidden" name="specialization" id="specializationValue" value="<?php echo $specialization; ?>">
+                                            <div class="position-absolute w-100 bg-white border border-top-0 shadow-sm" id="specializationDropdown" style="display: none; z-index: 1000; max-height: 250px; overflow-y: auto;">
+                                            </div>
+                                        </div>
+                                    </div>
+
                                 </div>
                                 <button type="submit" class="btn btn-primary w-100 rounded-pill py-3 fw-bold mt-3">
                                     <i class="fas fa-search me-2"></i>Search Doctors
@@ -252,71 +299,6 @@ $city_id = (int)$city_id;
                 </a>
             </div>
     </section>
-
-    <!-- About Section -->
-    <!-- <section id="about" class="section-padding" style="background-color: var(--bg-light);">
-        <div class="container">
-            <div class="section-header" data-aos="fade-up">
-                <h2 class="section-title heading-color">About DoctorApp</h2>
-                <p class="section-subtitle normal-color">Your trusted healthcare platform connecting you with the best medical professionals and facilities</p>
-            </div>
-            <div class="row">
-                <div class="col-lg-6" data-aos="fade-right">
-                    <img src="<?=BASE_URL?>includes/uploads/home-about.png" alt="About Us img" class="img-fluid about-us-img">
-                </div>
-                <div class="col-lg-6" data-aos="fade-left">
-                    <h3 class="mb-4 heading-color mgt">Your Health, Our Priority</h3>
-                    <p class="mb-4 normal-color">DoctorApp is a comprehensive healthcare platform designed to make medical services accessible to everyone. We connect patients with qualified doctors, hospitals, laboratories, and blood banks across the country.</p>
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <div class="d-flex align-items-center">
-                                <div class="service-icon me-3" style="width: 50px; height: 50px; font-size: 1.2rem;">
-                                    <i class="fas fa-user-md"></i>
-                                </div>
-                                <div>
-                                    <h5 class="mb-1 heading-color">Expert Doctors</h5>
-                                    <p class="mb-0 text-muted normal-color">Qualified medical professionals</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <div class="d-flex align-items-center">
-                                <div class="service-icon me-3" style="width: 50px; height: 50px; font-size: 1.2rem;">
-                                    <i class="fas fa-hospital"></i>
-                                </div>
-                                <div>
-                                    <h5 class="mb-1 heading-color">Top Hospitals</h5>
-                                    <p class="mb-0 text-muted normal-color">Best medical facilities</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <div class="d-flex align-items-center">
-                                <div class="service-icon me-3" style="width: 50px; height: 50px; font-size: 1.2rem;">
-                                    <i class="fas fa-flask"></i>
-                                </div>
-                                <div>
-                                    <h5 class="mb-1 heading-color">Laboratories</h5>
-                                    <p class="mb-0 text-muted normal-color">Advanced diagnostic services</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <div class="d-flex align-items-center">
-                                <div class="service-icon me-3" style="width: 50px; height: 50px; font-size: 1.2rem;">
-                                    <i class="fas fa-tint"></i>
-                                </div>
-                                <div>
-                                    <h5 class="mb-1 heading-color">Blood Banks</h5>
-                                    <p class="mb-0 text-muted normal-color">Life-saving blood services</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section> -->
 
     <!-- Top Hospitals Section -->
     <section class="modern-cards section-padding" style="background-color: var(--light);">
@@ -729,5 +711,100 @@ $(document).ready(function() {
             }
         });
     });
+});
+</script>
+
+
+<script>
+// 3. JAVASCRIPT UPDATE: Treatment show karne aur search karne ke liye update kiya gaya hai
+const specializationSearch = document.getElementById('specializationSearch');
+const specializationValue = document.getElementById('specializationValue');
+const specializationDropdown = document.getElementById('specializationDropdown');
+let allOptions = [];
+
+// Initialize options
+function initializeSpecializationOptions() {
+    allOptions = [];
+    
+    // Build options from PHP data
+    <?php foreach ($categories_data as $category_id => $category): ?>
+        <?php foreach ($category['types'] as $type): ?>
+            allOptions.push({
+                value: '<?php echo $type['dr_cat_type_id']; ?>',
+                // Yahan text me treatment de diya hai jo ke urdu me hai
+                text: '<?php echo addslashes($type['treatment']); ?>',
+                // Search filter ke liye dataText me Speciality aur English Type rakh diya hai
+                dataText: '<?php echo addslashes($category['cat_name'] . ' - ' . $type['type']); ?>' 
+            });
+        <?php endforeach; ?>
+    <?php endforeach; ?>
+    
+    // Set initial value if selected
+    const currentSpecialization = '<?php echo $specialization; ?>';
+    if (currentSpecialization) {
+        const selectedOption = allOptions.find(option => option.value === currentSpecialization);
+        if (selectedOption) {
+            specializationSearch.value = selectedOption.text;
+        }
+    }
+}
+
+// Filter options based on search
+function filterSpecializations(searchTerm) {
+    const filtered = allOptions.filter(option => 
+        option.text.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        option.dataText.toLowerCase().includes(searchTerm.toLowerCase()) // Ye line ensure karegi ke English type se bhi search ho jaye
+    );
+    
+    if (searchTerm === '') {
+        specializationDropdown.style.display = 'none';
+        return;
+    }
+    
+    if (filtered.length > 0) {
+        let html = '';
+        filtered.forEach(option => {
+            // UI me urdu text right align aur english text left align kiya gaya hai
+            html += `<div class="dropdown-item py-2 px-3" style="cursor: pointer;" data-value="${option.value}" data-text="${option.text}">
+                        <div class="fw-bold urdu-text mb-1">${option.text}</div>
+                        <small class="text-muted eng-subtext">${option.dataText}</small>
+                    </div>`;
+        });
+        specializationDropdown.innerHTML = html;
+        specializationDropdown.style.display = 'block';
+    } else {
+        specializationDropdown.innerHTML = '<div class="p-3 text-muted">No diseases found</div>';
+        specializationDropdown.style.display = 'block';
+    }
+}
+
+// Handle search input
+specializationSearch.addEventListener('input', function() {
+    filterSpecializations(this.value);
+});
+
+// Handle dropdown item click
+specializationDropdown.addEventListener('click', function(e) {
+    const item = e.target.closest('.dropdown-item');
+    if (item) {
+        const value = item.getAttribute('data-value');
+        const text = item.getAttribute('data-text');
+        
+        specializationSearch.value = text;
+        specializationValue.value = value;
+        specializationDropdown.style.display = 'none';
+    }
+});
+
+// Hide dropdown when clicking outside
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('.position-relative')) {
+        specializationDropdown.style.display = 'none';
+    }
+});
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    initializeSpecializationOptions();
 });
 </script>

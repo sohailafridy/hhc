@@ -16,12 +16,13 @@
     $per_page = 12;
     $offset = ($page - 1) * $per_page;
 
-// Fetch doctor categories and types for specialization dropdown
-$categories_query = "SELECT dc.dr_cat_id, dc.cat_name, dct.dr_cat_type_id, dct.type 
+// 1. QUERY UPDATE: treatment column add kiya gaya hai
+$categories_query = "SELECT dc.dr_cat_id, dc.cat_name, dct.dr_cat_type_id, dct.type, dct.treatment 
                    FROM dr_categories dc 
                    LEFT JOIN dr_cat_types dct ON dc.dr_cat_id = dct.dr_cat_id 
                    ORDER BY dc.cat_name, dct.type";
 $categories_result = mysqli_query($con, $categories_query);
+
     // Group categories and types
 $categories_data = [];
 if ($categories_result) {
@@ -35,7 +36,8 @@ if ($categories_result) {
         if ($row['dr_cat_type_id']) {
             $categories_data[$row['dr_cat_id']]['types'][] = [
                 'dr_cat_type_id' => $row['dr_cat_type_id'],
-                'type' => $row['type']
+                'type' => $row['type'],
+                'treatment' => $row['treatment'] // Naya column yahan add hua
             ];
         }
     }
@@ -43,6 +45,22 @@ if ($categories_result) {
 
 ?>
 <link rel="stylesheet" href="<?= BASE_URL ?>style/doctor-list.css">
+<style>
+    /* Urdu dropdown styling for better readability */
+    .urdu-text {
+        font-family: 'Jameel Noori Nastaleeq', 'Noto Nastaliq Urdu', 'Arial', sans-serif;
+        font-size: 1.1rem;
+        text-align: right;
+        direction: rtl;
+    }
+    .eng-subtext {
+        text-align: left;
+        direction: ltr;
+        display: block;
+        font-size: 0.75rem;
+        margin-top: 4px;
+    }
+</style>
 <body>
 
     <!-- Navbar -->
@@ -125,12 +143,13 @@ if ($categories_result) {
                             </div>
                         </div>
                         <div class="col-lg-3 col-md-6">
-                            <label class="form-label text-muted small">Filter by Specialization</label>
+                            <!-- LABEL UPDATE: Disease / Treatment -->
+                            <label class="form-label text-muted small">Filter by Disease / Treatment</label>
                             <div class="input-with-icon position-relative">
                                 <i class="fas fa-stethoscope input-icon"></i>
-                                <input type="text" class="form-control" id="specializationSearch" placeholder="Search specialization..." autocomplete="off">
+                                <input type="text" class="form-control" id="specializationSearch" placeholder="Search disease (e.g., دل)..." autocomplete="off" dir="auto">
                                 <input type="hidden" name="specialization" id="specializationValue" value="<?php echo $specialization; ?>">
-                                <div class="position-absolute w-100 bg-white border border-top-0" id="specializationDropdown" style="display: none; z-index: 1000; max-height: 200px; overflow-y: auto;">
+                                <div class="position-absolute w-100 bg-white border border-top-0 shadow-sm" id="specializationDropdown" style="display: none; z-index: 1000; max-height: 250px; overflow-y: auto;">
                                 </div>
                             </div>
                         </div>
@@ -179,7 +198,7 @@ if ($categories_result) {
                     }
                 });
 
-                // Specialization Search functionality
+                // 2. JAVASCRIPT UPDATE: Treatment (Urdu) logic
                 const specializationSearch = document.getElementById('specializationSearch');
                 const specializationValue = document.getElementById('specializationValue');
                 const specializationDropdown = document.getElementById('specializationDropdown');
@@ -194,7 +213,9 @@ if ($categories_result) {
                         <?php foreach ($category['types'] as $type): ?>
                             allOptions.push({
                                 value: '<?php echo $type['dr_cat_type_id']; ?>',
-                                text: '<?php echo addslashes($type['type']); ?>',
+                                // Yahan text me treatment de diya hai jo ke urdu me hai
+                                text: '<?php echo addslashes($type['treatment']); ?>',
+                                // Search filter ke liye dataText me Speciality aur English Type rakh diya hai
                                 dataText: '<?php echo addslashes($category['cat_name'] . ' - ' . $type['type']); ?>'
                             });
                         <?php endforeach; ?>
@@ -214,7 +235,7 @@ if ($categories_result) {
                 function filterSpecializations(searchTerm) {
                     const filtered = allOptions.filter(option => 
                         option.text.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        option.dataText.toLowerCase().includes(searchTerm.toLowerCase())
+                        option.dataText.toLowerCase().includes(searchTerm.toLowerCase()) // Ye line ensure karegi ke English type se bhi search ho jaye
                     );
                     
                     if (searchTerm === '') {
@@ -225,15 +246,16 @@ if ($categories_result) {
                     if (filtered.length > 0) {
                         let html = '';
                         filtered.forEach(option => {
+                            // UI me urdu text right align aur english text left align kiya gaya hai
                             html += `<div class="dropdown-item py-2 px-3" style="cursor: pointer;" data-value="${option.value}" data-text="${option.text}">
-                                        <div class="fw-medium">${option.text}</div>
-                                        <small class="text-muted">${option.dataText}</small>
+                                        <div class="fw-bold urdu-text mb-1">${option.text}</div>
+                                        <small class="text-muted eng-subtext">${option.dataText}</small>
                                     </div>`;
                         });
                         specializationDropdown.innerHTML = html;
                         specializationDropdown.style.display = 'block';
                     } else {
-                        specializationDropdown.innerHTML = '<div class="p-3 text-muted">No specializations found</div>';
+                        specializationDropdown.innerHTML = '<div class="p-3 text-muted">No diseases found</div>';
                         specializationDropdown.style.display = 'block';
                     }
                 }
@@ -592,3 +614,5 @@ $(document).ready(function() {
     });
 });
 </script>
+</body>
+</html>

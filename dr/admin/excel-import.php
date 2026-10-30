@@ -25,10 +25,47 @@ function find_city_id($con, $city_name) {
 }
 
 function find_specialization_id($con, $spec_text) {
-    $spec_text = mysqli_real_escape_string($con, trim($spec_text));
-    $q = mysqli_query($con, "SELECT dr_cat_type_id FROM dr_cat_types WHERE LOWER(type) = LOWER('$spec_text') LIMIT 1");
-    if ($q && mysqli_num_rows($q) > 0) return (int)mysqli_fetch_assoc($q)['dr_cat_type_id'];
-    return 0;
+    $spec_text_clean = trim($spec_text);
+    if (empty($spec_text_clean)) return 0;
+
+    $spec_text_esc = mysqli_real_escape_string($con, $spec_text_clean);
+    
+    // 1. Pehle EXACT match check karein (Case Insensitive)
+    $q = mysqli_query($con, "SELECT dr_cat_type_id FROM dr_cat_types WHERE LOWER(type) = LOWER('$spec_text_esc') LIMIT 1");
+    if ($q && mysqli_num_rows($q) > 0) {
+        return (int)mysqli_fetch_assoc($q)['dr_cat_type_id'];
+    }
+
+    // 2. Agar exact na mile, toh "LIKE" match try karein (e.g. PEDIATRICIAN -> Pediatrician (Child Specialist))
+    // Isse wo DB ke bracket wale naam bhi pakad lega.
+    $q_like = mysqli_query($con, "SELECT dr_cat_type_id FROM dr_cat_types WHERE type LIKE '%$spec_text_esc%' LIMIT 1");
+    if ($q_like && mysqli_num_rows($q_like) > 0) {
+        return (int)mysqli_fetch_assoc($q_like)['dr_cat_type_id'];
+    }
+
+    // 3. Special Manual Map (Kyunke kuch short forms match nahi hotin)
+    $excel_spec = strtoupper($spec_text_clean);
+    $manual_map = [
+        'GP - GENERAL PRACTICE' => 'General Physician / Family Medicine',
+        'PHYSICIAN GP'          => 'General Physician / Family Medicine',
+        'MEDICAL GP'            => 'General Physician / Family Medicine',
+        'PHYSICIAN'             => 'General Physician / Family Medicine',
+        'MEDICAL'               => 'General Physician / Family Medicine',
+        'GYNECOLOGIST/OBS'      => 'Gynecologist & Obstetrician (OB-GYN)',
+        'ORTHOPEDICS'           => 'Orthopedic Surgeon',
+        'NEURO'                 => 'Neurologist',
+        'CHEST'                 => 'Pulmonologist'
+    ];
+
+    if (array_key_exists($excel_spec, $manual_map)) {
+        $mapped_name = mysqli_real_escape_string($con, $manual_map[$excel_spec]);
+        $q_map = mysqli_query($con, "SELECT dr_cat_type_id FROM dr_cat_types WHERE type = '$mapped_name' LIMIT 1");
+        if ($q_map && mysqli_num_rows($q_map) > 0) {
+            return (int)mysqli_fetch_assoc($q_map)['dr_cat_type_id'];
+        }
+    }
+
+    return 0; // Agar kuch bhi match na ho
 }
 
 // ============================================================
@@ -289,11 +326,11 @@ include BASE_PATH.'/admin/inc/nav.php';
                                 </td>
                                 <td class="text-center fw-bold"><?= $i + 1 ?></td>
                                 <td>
-                                    <input type="text" name="rows[<?= $i ?>][pmdc_no]" class="form-control pmdc-input" value="<?= htmlspecialchars($row['pmdc_no']) ?>" data-idx="<?= $i ?>" required>
+                                    <input type="text" name="rows[<?= $i ?>][pmdc_no]" class="form-control pmdc-input" value="<?= htmlspecialchars($row['pmdc_no']) ?>" data-idx="<?= $i ?>" required style="width: 80px;">
                                     <small class="msg-small pmdc-msg"></small>
                                 </td>
-                                <td><input type="text" name="rows[<?= $i ?>][name]" class="form-control" value="<?= htmlspecialchars($row['name']) ?>" required></td>
-                                <td><input type="text" name="rows[<?= $i ?>][qualification]" class="form-control" value="<?= htmlspecialchars($row['qualification']) ?>"></td>
+                                <td><input type="text" name="rows[<?= $i ?>][name]" class="form-control" value="<?= htmlspecialchars($row['name']) ?>" required style="width: 150px;"></td>
+                                <td><input type="text" name="rows[<?= $i ?>][qualification]" class="form-control" value="<?= htmlspecialchars($row['qualification']) ?>" style="width: 120px;"></td>
                                 <td>
                                     <select name="rows[<?= $i ?>][gender]" class="form-select">
                                         <option value="Male" <?= $row['gender'] === 'male' ? 'selected' : '' ?>>Male</option>
@@ -301,9 +338,9 @@ include BASE_PATH.'/admin/inc/nav.php';
                                         <option value="Other" <?= ($row['gender'] !== 'male' && $row['gender'] !== 'female') ? 'selected' : '' ?>>Other</option>
                                     </select>
                                 </td>
-                                <td><input type="text" name="rows[<?= $i ?>][mobile]" class="form-control" value="<?= htmlspecialchars($row['mobile']) ?>"></td>
+                                <td><input type="text" name="rows[<?= $i ?>][mobile]" class="form-control" value="<?= htmlspecialchars($row['mobile']) ?>" style="width: 100px;"></td>
                                 <td>
-                                    <input type="text" name="rows[<?= $i ?>][username]" class="form-control username-input" value="<?= htmlspecialchars($row['username']) ?>" data-idx="<?= $i ?>" required>
+                                    <input type="text" name="rows[<?= $i ?>][username]" class="form-control username-input" value="<?= htmlspecialchars($row['username']) ?>" data-idx="<?= $i ?>" required style="width: 150px;">
                                     <small class="msg-small username-msg"></small>
                                 </td>
                                 <td>
@@ -341,7 +378,7 @@ include BASE_PATH.'/admin/inc/nav.php';
                                         <?php endforeach; ?>
                                     </select>
                                 </td>
-                                <td><input type="text" name="rows[<?= $i ?>][address]" class="form-control" value="<?= htmlspecialchars($row['address']) ?>"></td>
+                                <td><input type="text" name="rows[<?= $i ?>][address]" class="form-control" value="<?= htmlspecialchars($row['address']) ?>" style="width: 250px;"></td>
                                 <td class="text-center">
                                     <?php if ($row['city_id'] > 0 && $row['spec_id'] > 0): ?>
                                         <span class="status-ok">✓</span>
