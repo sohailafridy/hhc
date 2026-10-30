@@ -159,7 +159,7 @@ while ($h = mysqli_fetch_assoc($hosp_q)) {
 // Specializations (Categories + Types)
 $specializations = [];
 $spec_q = mysqli_query($con, "
-    SELECT dct.dr_cat_type_id, dct.type, dc.cat_name 
+    SELECT dct.dr_cat_type_id, dct.type, dc.cat_name,dct.treatment as disease
     FROM dr_cat_types dct 
     LEFT JOIN dr_categories dc ON dct.dr_cat_id = dc.dr_cat_id 
     ORDER BY dc.cat_name, dct.type
@@ -168,6 +168,7 @@ while ($s = mysqli_fetch_assoc($spec_q)) {
     $specializations[] = [
         "specialization_id" => (int)$s['dr_cat_type_id'],
         "specialization_name" => $s['type'],
+        "disease" => $s['disease'],
         "category_name" => $s['cat_name'] ?? ''
     ];
 }
