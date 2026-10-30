@@ -95,9 +95,17 @@ $feedback_result = mysqli_query($con, $feedback_query);
                      <?php endif; ?>
                   </div>
                   <div class="col-md-10">
-                     <h2 class="mb-2"><?php echo htmlspecialchars($laboratory['lab_name']); ?></h2>
-                     <p class="mb-1"><i class="fas fa-envelope me-2"></i><?php echo htmlspecialchars($laboratory['lab_email']); ?></p>
-                     <p class="mb-0"><i class="fas fa-phone me-2"></i><?php echo htmlspecialchars($laboratory['lab_phone']); ?></p>
+                      <h2 class="mb-2">
+                          <?php echo !empty($laboratory['lab_name']) && $laboratory['lab_name'] !== '0' ? htmlspecialchars($laboratory['lab_name']) : 'Laboratory Name Not Available'; ?>
+                      </h2>
+                      
+                      <?php if (!empty($laboratory['lab_email']) && $laboratory['lab_email'] !== '0' && $laboratory['lab_email'] !== 'null'): ?>
+                          <p class="mb-1"><i class="fas fa-envelope me-2"></i><?php echo htmlspecialchars($laboratory['lab_email']); ?></p>
+                      <?php endif; ?>
+                      
+                      <?php if (!empty($laboratory['lab_phone']) && $laboratory['lab_phone'] !== '0' && $laboratory['lab_phone'] !== 'null'): ?>
+                          <p class="mb-0"><i class="fas fa-phone me-2"></i><?php echo htmlspecialchars($laboratory['lab_phone']); ?></p>
+                      <?php endif; ?>
                   </div>
                </div>
             </div>
@@ -106,82 +114,100 @@ $feedback_result = mysqli_query($con, $feedback_query);
 
       <!-- Laboratory Information -->
       <div class="row">
-         <div class="col-lg-6">
-            <div class="info-card">
-               <div class="info-card-header">
-                  <h5><i class="fas fa-flask me-2"></i>Laboratory Information</h5>
-               </div>
-               <div class="info-card-body">
-                  <div class="info-item">
-                     <span class="info-label">Laboratory ID</span>
-                     <span class="info-value"><?php echo $laboratory['lab_id']; ?></span>
-                  </div>
-                  <div class="info-item">
-                     <span class="info-label">Phone</span>
-                     <span class="info-value"><?php echo htmlspecialchars($laboratory['lab_phone']); ?></span>
-                  </div>
-                  <div class="info-item">
-                     <span class="info-label">Email</span>
-                     <span class="info-value"><?php echo htmlspecialchars($laboratory['lab_email']); ?></span>
-                  </div>
-                  <div class="info-item">
-                     <span class="info-label">Status</span>
-                     <span class="info-value">
-                        <?php if ($laboratory['estatus'] == 1): ?>
-                           <span class="badge-status badge-active">Active</span>
-                        <?php else: ?>
-                           <span class="badge-status badge-inactive">Inactive</span>
-                        <?php endif; ?>
-                     </span>
-                  </div>
-               </div>
-            </div>
+   <div class="col-lg-6">
+      <div class="info-card">
+         <div class="info-card-header">
+            <h5><i class="fas fa-flask me-2"></i>Laboratory Information</h5>
          </div>
-         
-         <div class="col-lg-6">
-            <div class="info-card">
-               <div class="info-card-header">
-                  <h5><i class="fas fa-map-marker-alt me-2"></i>Location & Type</h5>
-               </div>
-               <div class="info-card-body">
-                  <div class="info-item">
-                     <span class="info-label">City</span>
-                     <span class="info-value"><?php echo htmlspecialchars($laboratory['city_name']); ?></span>
-                  </div>
-                  <?php if ($laboratory['lab_type'] == 1): ?>
-                     <div class="info-item">
-                        <span class="info-label">Type</span>
-                        <span class="info-value">Hospital Lab</span>
-                     </div>
-                     <div class="info-item">
-                        <span class="info-label">Hospital</span>
-                        <span class="info-value"><?php echo htmlspecialchars($laboratory['hospital_name']); ?></span>
-                     </div>
+         <div class="info-card-body">
+            <div class="info-item">
+               <span class="info-label">Laboratory ID</span>
+               <span class="info-value"><?php echo htmlspecialchars($laboratory['lab_id'] ?? '-'); ?></span>
+            </div>
+            
+            <?php if (!empty($laboratory['lab_phone']) && $laboratory['lab_phone'] !== '0' && $laboratory['lab_phone'] !== 'null'): ?>
+            <div class="info-item">
+               <span class="info-label">Phone</span>
+               <span class="info-value"><?php echo htmlspecialchars($laboratory['lab_phone']); ?></span>
+            </div>
+            <?php endif; ?>
+
+            <?php if (!empty($laboratory['lab_email']) && $laboratory['lab_email'] !== '0' && $laboratory['lab_email'] !== 'null'): ?>
+            <div class="info-item">
+               <span class="info-label">Email</span>
+               <span class="info-value"><?php echo htmlspecialchars($laboratory['lab_email']); ?></span>
+            </div>
+            <?php endif; ?>
+
+            <div class="info-item">
+               <span class="info-label">Status</span>
+               <span class="info-value">
+                  <?php if (isset($laboratory['estatus']) && $laboratory['estatus'] == 1): ?>
+                     <span class="badge-status badge-active">Active</span>
                   <?php else: ?>
-                     <div class="info-item">
-                        <span class="info-label">Type</span>
-                        <span class="info-value">Independent Lab</span>
-                     </div>
+                     <span class="badge-status badge-inactive">Inactive</span>
                   <?php endif; ?>
-                  <div class="info-item">
-                     <span class="info-label">Address</span>
-                     <span class="info-value"><?php echo nl2br(htmlspecialchars($laboratory['lab_address'])); ?></span>
-                  </div>
-                  <div class="info-item">
-                     <span class="info-label">Created At</span>
-                     <span class="info-value"><?php echo date('d M Y, h:i A', strtotime($laboratory['created_at'])); ?></span>
-                  </div>
-                  <?php if (!empty($laboratory['updated_at'])): ?>
-                  <div class="info-item">
-                     <span class="info-label">Updated At</span>
-                     <span class="info-value"><?php echo date('d M Y, h:i A', strtotime($laboratory['updated_at'])); ?></span>
-                  </div>
-                  <?php endif; ?>
-               </div>
+               </span>
             </div>
          </div>
       </div>
-      
+   </div>
+   
+   <div class="col-lg-6">
+      <div class="info-card">
+         <div class="info-card-header">
+            <h5><i class="fas fa-map-marker-alt me-2"></i>Location & Type</h5>
+         </div>
+         <div class="info-card-body">
+            <?php if (!empty($laboratory['city_name']) && $laboratory['city_name'] !== '0'): ?>
+            <div class="info-item">
+               <span class="info-label">City</span>
+               <span class="info-value"><?php echo htmlspecialchars($laboratory['city_name']); ?></span>
+            </div>
+            <?php endif; ?>
+
+            <?php if (isset($laboratory['lab_type']) && $laboratory['lab_type'] == 1): ?>
+               <div class="info-item">
+                  <span class="info-label">Type</span>
+                  <span class="info-value">Hospital Lab</span>
+               </div>
+               <?php if (!empty($laboratory['hospital_name']) && $laboratory['hospital_name'] !== '0'): ?>
+               <div class="info-item">
+                  <span class="info-label">Hospital</span>
+                  <span class="info-value"><?php echo htmlspecialchars($laboratory['hospital_name']); ?></span>
+               </div>
+               <?php endif; ?>
+            <?php else: ?>
+               <div class="info-item">
+                  <span class="info-label">Type</span>
+                  <span class="info-value">Independent Lab</span>
+               </div>
+            <?php endif; ?>
+
+            <?php if (!empty($laboratory['lab_address']) && $laboratory['lab_address'] !== '0'): ?>
+            <div class="info-item">
+               <span class="info-label">Address</span>
+               <span class="info-value"><?php echo nl2br(htmlspecialchars($laboratory['lab_address'])); ?></span>
+            </div>
+            <?php endif; ?>
+
+            <?php if (!empty($laboratory['created_at']) && $laboratory['created_at'] !== '0000-00-00 00:00:00'): ?>
+            <div class="info-item">
+               <span class="info-label">Created At</span>
+               <span class="info-value"><?php echo date('d M Y, h:i A', strtotime($laboratory['created_at'])); ?></span>
+            </div>
+            <?php endif; ?>
+
+            <?php if (!empty($laboratory['updated_at']) && $laboratory['updated_at'] !== '0000-00-00 00:00:00'): ?>
+            <div class="info-item">
+               <span class="info-label">Updated At</span>
+               <span class="info-value"><?php echo date('d M Y, h:i A', strtotime($laboratory['updated_at'])); ?></span>
+            </div>
+            <?php endif; ?>
+         </div>
+      </div>
+   </div>
+</div>
       <!-- Actions -->
       <div class="row mt-4">
          <div class="col-12">

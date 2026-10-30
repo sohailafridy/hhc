@@ -35,6 +35,7 @@ RewriteRule ^delete-all-clinics$ delete-all-clinics.php [L]
 
 
 RewriteRule ^import-doctors$ excel-import.php [L]
+RewriteRule ^import-all$ excel-import-data.php [L]
 
 
 RewriteRule ^recycle$ recycle.php [L]

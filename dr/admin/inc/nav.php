@@ -63,6 +63,8 @@ if (in_array('doctors', $url_parts)) {
         $active = 'assign-hospitals';
     } elseif (in_array('import-doctors', $url_parts)) {
         $active = 'import-doctors';
+    } elseif (in_array('import-all', $url_parts)) {
+        $active = 'import-all';
     }
 }
 
@@ -553,6 +555,12 @@ if (($current_page == 'admin' || $current_page == 'index' || $current_page == ''
                     </li>
                 </ul>
             </li>
+
+            <li class="<?php echo ($active == 'import-all') ? 'active' : ''; ?>">
+                        <a class="waves-effect waves-dark" href="<?php echo BASE_URL; ?>admin/import-all">
+                            <i class="icon-cloud-upload"></i> Import All
+                        </a>
+                    </li>
 
             <!-- ========================================== -->
             <!-- ===== USERS MENU ===== -->

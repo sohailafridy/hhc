@@ -247,10 +247,7 @@ $result = mysqli_query($con, $query);
                                     <h5 class="mb-1">
                                        <?php echo htmlspecialchars($lab['lab_name']); ?>
                                     </h5>
-                                    <div class="text-light small mb-2">
-                                       <i class="fas fa-envelope me-1"></i>
-                                       <?php echo htmlspecialchars($lab['lab_email']); ?>
-                                    </div>
+                                    
                                     <div class="d-flex justify-content-center flex-wrap gap-1">
                                        <?php if ($lab['estatus'] == 1): ?>
                                           <span class="badge-modern badge bg-success">Active</span>

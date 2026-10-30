@@ -47,16 +47,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $lab_email   = mysqli_real_escape_string($con, $_POST['lab_email']);
     $lab_type    = mysqli_real_escape_string($con, $_POST['lab_type']);
     $status      = isset($_POST['status']) ? 1 : 0;
-    $username = mysqli_real_escape_string($con, $_POST['username']);
-    $pass = mysqli_real_escape_string($con, $_POST['password']);
-    $password = base64_encode($pass);
+    $username    = mysqli_real_escape_string($con, $_POST['username']);
+    $pass        = mysqli_real_escape_string($con, $_POST['password']);
+    $password    = base64_encode($pass);
     
     // Handle lab type specific fields
     $hospital_id = null;
     
     if ($lab_type == 1) {
         // Hospital Lab
-        $hospital_id = mysqli_real_escape_string($con, $_POST['hospital_id']);
+        $hospital_id = mysqli_real_escape_string($con, $_POST['hospital_id'] ?? '');
     }
     
     // Handle file upload for lab picture
@@ -177,14 +177,15 @@ VALUES ('$username', '$lab_email', '$password', 3, 1, '$created_at')";
         <?php endif; ?>
 
         <form method="POST" action="" enctype="multipart/form-data" class="animate-up delay-1">
-            <input type="hidden" name="lab_type" id="lab_type" value="<?php echo $edit_mode ? $lab_data['lab_type'] : '1'; ?>">
-            <input type="hidden" name="user_id" value="<?php if(isset($lab_data['user_id'])){ echo $lab_data['user_id']; } ?>">
+            <input type="hidden" name="lab_type" id="lab_type" value="<?php echo ($edit_mode && isset($lab_data['lab_type'])) ? htmlspecialchars($lab_data['lab_type']) : '1'; ?>">
+            <input type="hidden" name="user_id" value="<?php echo ($edit_mode && isset($lab_data['user_id'])) ? htmlspecialchars($lab_data['user_id']) : ''; ?>">
+            
             <!-- Mode Selection -->
             <div class="modern-card">
                 <div class="card-body-custom">
                     <div class="toggle-container">
                         <label class="custom-switch">
-                            <input type="checkbox" id="independent_lab_toggle" <?php echo ($edit_mode && $lab_data['lab_type'] == 2) ? 'checked' : ''; ?>>
+                            <input type="checkbox" id="independent_lab_toggle" <?php echo ($edit_mode && isset($lab_data['lab_type']) && $lab_data['lab_type'] == 2) ? 'checked' : ''; ?>>
                             <span class="slider"></span>
                         </label>
                         <div>
@@ -214,9 +215,10 @@ VALUES ('$username', '$lab_email', '$password', 3, 1, '$created_at')";
                                     <option value="">Select City</option>
                                     <?php 
                                     mysqli_data_seek($cities_result, 0);
-                                    while ($city = mysqli_fetch_assoc($cities_result)): ?>
-                                        <option value="<?php echo $city['city_id']; ?>" 
-                                                <?php echo ($edit_mode && $lab_data['city_id'] == $city['city_id']) ? 'selected' : ''; ?>>
+                                    while ($city = mysqli_fetch_assoc($cities_result)): 
+                                        $selected_city = ($edit_mode && isset($lab_data['city_id']) && $lab_data['city_id'] == $city['city_id']) ? 'selected' : '';
+                                    ?>
+                                        <option value="<?php echo $city['city_id']; ?>" <?php echo $selected_city; ?>>
                                             <?php echo htmlspecialchars($city['city_name']); ?>
                                         </option>
                                     <?php endwhile; ?>
@@ -230,10 +232,12 @@ VALUES ('$username', '$lab_email', '$password', 3, 1, '$created_at')";
                                         <option value="">Select Hospital</option>
                                         <?php 
                                         mysqli_data_seek($hospitals_result, 0);
-                                        while ($hospital = mysqli_fetch_assoc($hospitals_result)): ?>
+                                        while ($hospital = mysqli_fetch_assoc($hospitals_result)): 
+                                            $selected_hosp = ($edit_mode && isset($lab_data['hospital_id']) && $lab_data['hospital_id'] == $hospital['hospital_id']) ? 'selected' : '';
+                                        ?>
                                             <option value="<?php echo $hospital['hospital_id']; ?>" 
                                                     data-city="<?php echo $hospital['city_id']; ?>"
-                                                    <?php echo ($edit_mode && $lab_data['hospital_id'] == $hospital['hospital_id']) ? 'selected' : ''; ?>>
+                                                    <?php echo $selected_hosp; ?>>
                                                 <?php echo htmlspecialchars($hospital['hospital_name']); ?>
                                             </option>
                                         <?php endwhile; ?>
@@ -258,7 +262,7 @@ VALUES ('$username', '$lab_email', '$password', 3, 1, '$created_at')";
                                         <label class="form-label">Username</label>
                                         <input type="text" class="form-control-modern" name="username" 
                                                placeholder="Enter username" required autocomplete="off"
-                                               value="<?php echo $edit_mode ? htmlspecialchars($lab_data['username'] ?? '') : ''; ?>" <?php echo $edit_mode ? 'readonly' : ''; ?>>
+                                               value="<?php echo ($edit_mode && !empty($lab_data['username'])) ? htmlspecialchars($lab_data['username']) : ''; ?>" <?php echo $edit_mode ? 'readonly' : ''; ?>>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
@@ -274,27 +278,27 @@ VALUES ('$username', '$lab_email', '$password', 3, 1, '$created_at')";
                                 <label class="form-label">Laboratory Name</label>
                                 <input type="text" class="form-control-modern" name="lab_name" required
                                        placeholder="e.g. City Medical Laboratory"
-                                       value="<?php echo $edit_mode ? htmlspecialchars($lab_data['lab_name']) : ''; ?>">
+                                       value="<?php echo ($edit_mode && !empty($lab_data['lab_name'])) ? htmlspecialchars($lab_data['lab_name']) : ''; ?>">
                             </div>
 
                             <div class="form-group">
                                 <label class="form-label">Phone Number</label>
                                 <input type="tel" class="form-control-modern" name="lab_phone"
                                        placeholder="Contact Number"
-                                       value="<?php echo $edit_mode ? htmlspecialchars($lab_data['lab_phone']) : ''; ?>">
+                                       value="<?php echo ($edit_mode && !empty($lab_data['lab_phone'])) ? htmlspecialchars($lab_data['lab_phone']) : ''; ?>">
                             </div>
 
                             <div class="form-group">
                                 <label class="form-label">Email Address</label>
                                 <input type="email" class="form-control-modern" name="lab_email"
                                        placeholder="lab@example.com"
-                                       value="<?php echo $edit_mode ? htmlspecialchars($lab_data['lab_email']) : ''; ?>">
+                                       value="<?php echo ($edit_mode && !empty($lab_data['lab_email'])) ? htmlspecialchars($lab_data['lab_email']) : ''; ?>">
                             </div>
 
                             <div class="form-group">
                                 <label class="form-label">Address</label>
                                 <textarea class="form-control-modern" name="lab_address" rows="3"
-                                          placeholder="Full address of laboratory"><?php echo $edit_mode ? htmlspecialchars($lab_data['lab_address']) : ''; ?></textarea>
+                                          placeholder="Full address of laboratory"><?php echo ($edit_mode && !empty($lab_data['lab_address'])) ? htmlspecialchars($lab_data['lab_address']) : ''; ?></textarea>
                             </div>
                         </div>
                     </div>
@@ -318,7 +322,7 @@ VALUES ('$username', '$lab_email', '$password', 3, 1, '$created_at')";
                                 </div>
                                 <div class="col-md-6 text-center">
                                     <?php if ($edit_mode && !empty($lab_data['lab_pic'])): ?>
-                                        <img src="<?php echo BASE_URL; ?>admin/inc/uploads/laboratories/<?php echo $lab_data['lab_pic']; ?>" 
+                                        <img src="<?php echo BASE_URL; ?>admin/inc/uploads/laboratories/<?php echo htmlspecialchars($lab_data['lab_pic']); ?>" 
                                              alt="Current Picture" class="img-preview">
                                     <?php endif; ?>
                                 </div>
@@ -329,7 +333,7 @@ VALUES ('$username', '$lab_email', '$password', 3, 1, '$created_at')";
                             <div class="form-group">
                                 <label class="custom-switch" style="vertical-align: middle;">
                                     <input type="checkbox" name="status" value="1"
-    <?php echo (!$edit_mode || (($lab_data['status'] ?? 0) == 1)) ? 'checked' : ''; ?>>
+                                    <?php echo (!$edit_mode || (isset($lab_data['status']) && $lab_data['status'] == 1)) ? 'checked' : ''; ?>>
                                     <span class="slider"></span>
                                 </label>
                                 <span class="ms-3 fw-bold">Active Status</span>
@@ -373,25 +377,18 @@ document.addEventListener('DOMContentLoaded', function() {
         if (toggle.checked) {
             // Independent Lab Mode
             hospitalSection.style.display = 'none';
-            
             hospitalId.removeAttribute('required');
-            
             labTypeInput.value = '2';
             modeBadge.className = 'badge-status clinic';
             modeBadge.innerHTML = '<i class="icofont icofont-building"></i> Independent Lab Mode';
         } else {
             // Hospital Lab Mode
-            // Only show hospital if city is selected
             if (citySelect.value) {
                 hospitalSection.style.display = 'block';
+                hospitalId.setAttribute('required', 'required');
             } else {
                 hospitalSection.style.display = 'none';
             }
-            
-            if (citySelect.value) {
-                hospitalId.setAttribute('required', 'required');
-            }
-            
             labTypeInput.value = '1';
             modeBadge.className = 'badge-status hospital';
             modeBadge.innerHTML = '<i class="icofont icofont-hospital"></i> Hospital Lab Mode';
@@ -401,7 +398,6 @@ document.addEventListener('DOMContentLoaded', function() {
     function filterHospitals() {
         const selectedCity = citySelect.value;
         const options = hospitalId.options;
-        let hasVisibleOptions = false;
         
         if (!selectedCity) {
             hospitalSection.style.display = 'none';
@@ -410,7 +406,6 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        // Show section if in Hospital Mode
         if (!toggle.checked) {
             hospitalSection.style.display = 'block';
             hospitalId.setAttribute('required', 'required');
@@ -418,18 +413,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
         for (let i = 0; i < options.length; i++) {
             const option = options[i];
-            if (option.value === "") continue; // Skip default option
+            if (option.value === "") continue;
 
             const hospitalCity = option.getAttribute('data-city');
             if (hospitalCity == selectedCity) {
                 option.style.display = 'block';
-                hasVisibleOptions = true;
             } else {
                 option.style.display = 'none';
             }
         }
         
-        // Reset selection if current selection is now hidden
         const currentOption = options[hospitalId.selectedIndex];
         if (currentOption && currentOption.style.display === 'none') {
             hospitalId.value = '';
