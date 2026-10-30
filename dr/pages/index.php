@@ -27,6 +27,27 @@ if ($categories_result) {
         }
     }
 }
+
+
+
+
+
+
+
+// Sirf specific types fetch karne ke liye query
+$specific_types = "'Cardiologist (Heart Specialist)', 'Neurologist', 'Pulmonologist', 'Nephrologist', 'Rheumatologist', 'ENT Specialist'";
+
+$categories_query = "SELECT dct.dr_cat_type_id, dct.type 
+                     FROM dr_cat_types dct 
+                     WHERE dct.type IN ($specific_types)
+                     ORDER BY dct.dr_cat_type_id ASC";
+
+$categories_result = mysqli_query($con, $categories_query);
+
+
+
+
+
 ?>
 
 <style>
@@ -199,106 +220,68 @@ if ($categories_result) {
     </section>
 
     <!-- Specialities Section -->
-    <section class="section-padding" style="background: linear-gradient(135deg, #e8f4fd 0%, #d4eafc 100%);">
-        <div class="container">
-            <div class="section-header" data-aos="fade-up">
-                <h2 class="section-title heading-color"><i class="fas fa-stethoscope me-3"></i>Specialities</h2>
-                <p class="section-subtitle normal-color">Explore our specialized medical departments</p>
-            </div>
-            <div class="row g-3 justify-content-center" data-aos="fade-up" data-aos-delay="200">
-                <div class="col-lg-2 col-md-4 col-6">
-                    <div class="speciality-card">
-                        <div class="speciality-card-body" style="background-color: #fce4ec;">
-                            <div class="speciality-icon">
-                                <span class="speciality-emoji">👴</span>
-                            </div>
-                            <h4 class="speciality-title">Pulmonologist (Lungs)</h4>
-                            <a href="<?=BASE_URL?>doctors?search=&city=<?=$city_id?>&hospital=&specialization=3" class="speciality-btn">
-                                <i class="fas fa-heart"></i>
-                                DEPARTMENT
-                            </a>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-2 col-md-4 col-6">
-                    <div class="speciality-card">
-                        <div class="speciality-card-body" style="background-color: #ffebee;">
-                            <div class="speciality-icon">
-                                <span class="speciality-emoji">❤️</span>
-                            </div>
-                            <h4 class="speciality-title">Cardiology</h4>
-                            <a href="<?=BASE_URL?>doctors?search=&city=<?=$city_id?>&hospital=&specialization=1" class="speciality-btn">
-                                <i class="fas fa-heart"></i>
-                                DEPARTMENT
-                            </a>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-2 col-md-4 col-6">
-                    <div class="speciality-card">
-                        <div class="speciality-card-body" style="background-color: #f3e5f5;">
-                            <div class="speciality-icon">
-                                <span class="speciality-emoji">🧠</span>
-                            </div>
-                            <h4 class="speciality-title">Nephrologist (Kidney)</h4>
-                            <a href="<?=BASE_URL?>doctors?search=&city=<?=$city_id?>&hospital=&specialization=5" class="speciality-btn">
-                                <i class="fas fa-heart"></i>
-                                DEPARTMENT
-                            </a>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-2 col-md-4 col-6">
-                    <div class="speciality-card">
-                        <div class="speciality-card-body" style="background-color: #fff9c4;">
-                            <div class="speciality-icon">
-                                <span class="speciality-emoji">🧪</span>
-                            </div>
-                            <h4 class="speciality-title">Gynecologist</h4>
-                            <a href="<?=BASE_URL?>doctors?search=&city=<?=$city_id?>&hospital=&specialization=20" class="speciality-btn">
-                                <i class="fas fa-heart"></i>
-                                DEPARTMENT
-                                        </a>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-2 col-md-4 col-6">
-                    <div class="speciality-card">
-                        <div class="speciality-card-body" style="background-color: #e1f5fe;">
-                            <div class="speciality-icon">
-                                <span class="speciality-emoji">🫁</span>
-                            </div>
-                            <h4 class="speciality-title">Psychiatrist</h4>
-                            <a href="<?=BASE_URL?>doctors?search=&city=<?=$city_id?>&hospital=&specialization=25" class="speciality-btn">
-                                <i class="fas fa-heart"></i>
-                                DEPARTMENT
-                                        </a>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-2 col-md-4 col-6">
-                    <div class="speciality-card">
-                        <div class="speciality-card-body" style="background-color: #e0f2f1;">
-                            <div class="speciality-icon">
-                                <span class="speciality-emoji">🫀</span>
-                            </div>
-                            <h4 class="speciality-title">ENT Specialist</h4>
-                            <a href="<?=BASE_URL?>doctors?search=&city=<?=$city_id?>&hospital=&specialization=66" class="speciality-btn">
-                                <i class="fas fa-heart"></i>
-                                DEPARTMENT
-                                        </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
+<section class="section-padding" style="background: linear-gradient(135deg, #e8f4fd 0%, #d4eafc 100%);">
+    <div class="container">
+        <div class="section-header" data-aos="fade-up">
+            <h2 class="section-title heading-color"><i class="fas fa-stethoscope me-3"></i>Specialities</h2>
+            <p class="section-subtitle normal-color">Explore our specialized medical departments</p>
         </div>
-        <div class="text-center mt-4" data-aos="fade-up">
-                <a href="doctors" class="btn-view-all btn-view-specialities">
-                    <i class="fas fa-stethoscope"></i>
-                    Explore All Specialities
-                </a>
-            </div>
-    </section>
+        <div class="row g-3 justify-content-center" data-aos="fade-up" data-aos-delay="200">
+            
+            <?php 
+            // Colors aur Emojis ka array (taake har card alag dikhe)
+            $bg_colors = ['#fce4ec', '#ffebee', '#f3e5f5', '#fff9c4', '#e1f5fe', '#e0f2f1', '#e8f5e9', '#fff3e0'];
+            $emojis = ['👴', '❤️', '🧠', '🧪', '🫁', '🫀', '🦴', '👁️', '🦷', '👶'];
+            
+            $index = 0;
+            // Check karein ke result empty to nahi
+            if ($categories_result && mysqli_num_rows($categories_result) > 0) {
+                // Agar pehle se fetch ho chuka hai to pointer reset karein (agar zaroorat ho)
+                // mysqli_data_seek($categories_result, 0); 
+                
+                while($spec = mysqli_fetch_assoc($categories_result)) {
+                    $cat_id = $spec['dr_cat_type_id'];
+                    $cat_name = $spec['type'];
+                    
+                    // Index ke hisaab se color aur emoji uthayen
+                    $bg_color = $bg_colors[$index % count($bg_colors)];
+                    $emoji = $emojis[$index % count($emojis)];
+                    $index++;
+            ?>
+                <div class="col-lg-2 col-md-4 col-6">
+                    <div class="speciality-card">
+                        <div class="speciality-card-body" style="background-color: <?= $bg_color ?>;">
+                            <div class="speciality-icon">
+                                <span class="speciality-emoji"><?= $emoji ?></span>
+                            </div>
+                            <!-- Title dynamically set ho raha hai -->
+                            <h4 class="speciality-title" title="<?= htmlspecialchars($cat_name) ?>">
+                                <?= htmlspecialchars($cat_name) ?>
+                            </h4>
+                            <!-- Link me ID dynamically ja rahi hai -->
+                            <a href="<?=BASE_URL?>doctors?search=&city=<?=$city_id?>&hospital=&specialization=<?= $cat_id ?>" class="speciality-btn">
+                                <i class="fas fa-heart"></i>
+                                DEPARTMENT
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            <?php 
+                } 
+            } else {
+                echo '<div class="col-12 text-center"><p>No Specialities Found</p></div>';
+            }
+            ?>
+            
+        </div>
+    </div>
+    <div class="text-center mt-4" data-aos="fade-up">
+        <a href="<?=BASE_URL?>all-specialities" class="btn-view-all btn-view-specialities">
+            <i class="fas fa-stethoscope"></i>
+            Explore All Specialities
+        </a>
+    </div>
+</section>
 
     <!-- Top Hospitals Section -->
     <section class="modern-cards section-padding" style="background-color: var(--light);">

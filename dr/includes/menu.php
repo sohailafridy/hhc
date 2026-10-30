@@ -33,6 +33,8 @@
         $active_menu = 'about';
     } elseif ($current_page === 'contact') {
         $active_menu = 'contact';
+    } elseif ($current_page === 'all-specialities') {
+        $active_menu = 'all-specialities';
     }
     
     // Function to add active class
@@ -70,6 +72,7 @@ position: relative;
                     <li class="nav-item"><a class="nav-link <?php echo is_active('hospitals', $active_menu); ?>" href="<?php echo clean_url('hospitals'); ?>">Hospitals</a></li>
                     <li class="nav-item"><a class="nav-link <?php echo is_active('labs', $active_menu); ?>" href="<?php echo clean_url('labs'); ?>">Laboratories</a></li>
                     <li class="nav-item"><a class="nav-link <?php echo is_active('blood-banks', $active_menu); ?>" href="<?php echo clean_url('blood-banks'); ?>">Blood Banks</a></li>
+                    <li class="nav-item"><a class="nav-link <?php echo is_active('all-specialities', $active_menu); ?>" href="<?php echo clean_url('all-specialities'); ?>">All Specialities</a></li>
                     <li class="nav-item"><a class="nav-link <?php echo is_active('about', $active_menu); ?>" href="<?php echo clean_url('about'); ?>">About</a></li>
                     <li class="nav-item"><a class="nav-link <?php echo is_active('contact', $active_menu); ?>" href="<?php echo clean_url('contact'); ?>">Contact</a></li>
                     <!-- <li class="nav-item ms-lg-3">

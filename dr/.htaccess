@@ -26,7 +26,7 @@ RewriteRule ^about$ pages/about.php [L]
 RewriteRule ^contact$ pages/contact.php [L]
 
 
-
+RewriteRule ^all-specialities$ pages/all-specialities.php [L]
 
 
 RewriteRule ^fixit/dashboard$ fixit/dashboard.php [L]
