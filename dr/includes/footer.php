@@ -1,4 +1,4 @@
- <footer class="footer">
+<footer class="footer">
         <div class="container">
             <div class="row">
                 <!-- Logo Section -->
@@ -80,6 +80,11 @@
         </div>
     </footer>
     
+    <!-- WhatsApp Help Button -->
+    <a href="https://wa.me/923049744263?text=Hello%2C%20I%20need%20help%20with%20DoctorApp" target="_blank" class="whatsapp-help" title="Need Help? Chat on WhatsApp">
+        <i class="fab fa-whatsapp"></i>
+    </a>
+
     <!-- Back to Top Button -->
     <button id="backToTop" class="back-to-top" onclick="scrollToTop()">
         <i class="fas fa-arrow-up"></i>
@@ -183,6 +188,40 @@
             color: var(--primary);
             font-size: 1.1rem;
         }
+
+        /* WhatsApp Help Button Styles */
+        .whatsapp-help {
+            position: fixed;
+            bottom: 95px; /* Back to top button se upar */
+            right: 30px;
+            width: 50px;
+            height: 50px;
+            background-color: #25D366; /* WhatsApp Color */
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            box-shadow: 0 4px 15px rgba(37, 211, 102, 0.4);
+            z-index: 1000;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            animation: pulse-wa 2s infinite;
+        }
+        
+        .whatsapp-help:hover {
+            background-color: #1ebe5d;
+            color: white;
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(37, 211, 102, 0.6);
+        }
+
+        @keyframes pulse-wa {
+            0% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.7); }
+            70% { box-shadow: 0 0 0 15px rgba(37, 211, 102, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0); }
+        }
         
         /* Back to Top Button */
         .back-to-top {
@@ -217,7 +256,7 @@
             box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
         }
         
-        /* Mobile Responsive Styles for Back to Top Button */
+        /* Mobile Responsive Styles for Back to Top & WhatsApp */
         @media (max-width: 768px) {
             .back-to-top {
                 bottom: 10px !important;
@@ -229,6 +268,14 @@
                 opacity: 1 !important;
                 visibility: visible !important;
                 transform: translateY(0) !important;
+            }
+            .whatsapp-help {
+                bottom: 70px !important;
+                right: 20px !important;
+                width: 45px !important;
+                height: 45px !important;
+                font-size: 24px !important;
+                z-index: 9999 !important;
             }
         }
         
@@ -243,6 +290,14 @@
                 opacity: 1 !important;
                 visibility: visible !important;
                 transform: translateY(0) !important;
+            }
+            .whatsapp-help {
+                bottom: 65px !important;
+                right: 15px !important;
+                width: 40px !important;
+                height: 40px !important;
+                font-size: 22px !important;
+                z-index: 9999 !important;
             }
         }
         
@@ -259,6 +314,14 @@
                 visibility: visible !important;
                 transform: translateY(0) !important;
                 display: block !important;
+            }
+            .whatsapp-help {
+                bottom: 55px !important;
+                right: 10px !important;
+                width: 38px !important;
+                height: 38px !important;
+                font-size: 20px !important;
+                z-index: 99999 !important;
             }
         }
     </style>
