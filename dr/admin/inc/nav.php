@@ -65,6 +65,8 @@ if (in_array('doctors', $url_parts)) {
         $active = 'import-doctors';
     } elseif (in_array('import-all', $url_parts)) {
         $active = 'import-all';
+    } elseif (in_array('import-cities', $url_parts)) {
+        $active = 'import-cities';
     }
 }
 
@@ -461,6 +463,12 @@ if (($current_page == 'admin' || $current_page == 'index' || $current_page == ''
                     <li class="<?php echo ($active == 'list') ? 'active' : ''; ?>">
                         <a class="waves-effect waves-dark" href="<?php echo BASE_URL; ?>admin/cities/list">
                             <i class="icon-arrow-right"></i> List
+                        </a>
+                    </li>
+                    <!-- ✅ NAYA LINK: Import Cities -->
+                    <li class="<?php echo ($active == 'import-cities') ? 'active' : ''; ?>">
+                        <a class="waves-effect waves-dark" href="<?php echo BASE_URL; ?>admin/import-cities">
+                            <i class="icon-cloud-upload"></i> Import Cities
                         </a>
                     </li>
                 </ul>

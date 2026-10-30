@@ -236,6 +236,7 @@ include BASE_PATH.'/admin/inc/nav.php';
                 <div class="col-md-5">
                     <label class="form-label fw-bold">Select File (.xlsx, .xls, .csv)</label>
                     <input type="file" name="excel_file" class="form-control" accept=".xlsx,.xls,.csv" required>
+                    <a href="<?=BASE_URL?>includes/all-sample.xlsx">Sample File</a>
                 </div>
                 <div class="col-md-3">
                     <button type="submit" class="btn btn-primary w-100">📄 Read Data</button>
