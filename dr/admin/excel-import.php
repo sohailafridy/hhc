@@ -211,8 +211,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_all'])) {
         $added_by      = (int)($_SESSION['user_id'] ?? 0);
         $if_clinic     = ($hospital_id == 0) ? 1 : 0;
 
+        // Pehle naam ko format karein
+        $formatted_name = mysqli_real_escape_string($con, ucwords(strtolower(trim($name))));
+
         $doc_q = "INSERT INTO doctors (user_id, city_id, doctor_name, short_detail, cat_type_id, gender, doctor_phone, doctor_email, doctor_type, clinic_status, clinic_address, approve, pmdc_no, added_by, created_at) 
-                  VALUES ($new_user_id, $city_id, '$name', '$qualification', $spec_id, '$gender', '$mobile', '$email', $doctor_type, $clinic_status, '$address', 1, '$pmdc_no', $added_by, NOW())";
+          VALUES ($new_user_id, $city_id, '$formatted_name', '$qualification', $spec_id, '$gender', '$mobile', '$email', $doctor_type, $clinic_status, '$address', 1, '$pmdc_no', $added_by, NOW())";
         if (!mysqli_query($con, $doc_q)) { $failed++; continue; }
         $new_doctor_id = mysqli_insert_id($con);
 

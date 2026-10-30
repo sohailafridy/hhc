@@ -471,7 +471,7 @@ $is_unavailable   = ($emergency_status === 1);
                                     <i class="fas fa-stethoscope"></i> <?php echo htmlspecialchars($doctor_specialization); ?>
                                 </span>
 
-                                <h4 class="dr-name">Dr. <?php echo htmlspecialchars($row['doctor_name']); ?></h4>
+                                <h4 class="dr-name">Dr. <?php echo htmlspecialchars(ucfirst(strtolower($row['doctor_name']))); ?></h4>
                                 <p class="dr-qual"><?php echo !empty($row['short_detail']) ? htmlspecialchars($row['short_detail']) : '&nbsp;'; ?></p>
 
                                 <ul class="dr-meta">
