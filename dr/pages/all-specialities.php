@@ -35,18 +35,17 @@ if ($result) {
 
 <style>
     .speciality-directory-section {
-        background: linear-gradient(135deg, #f8f9ff 0%, #e8f4fd 100%);
         padding: 40px 0 60px;
     }
     .search-wrapper {
         background: #fff;
         padding: 20px 30px;
         border-radius: 15px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+        box-shadow: 0 10px 30px rgba(28,63,143,0.1);
         margin-top: -40px;
         position: relative;
         z-index: 10;
-        border-bottom: 4px solid #2f80ed;
+        border-bottom: 4px solid #1C3F8F;
     }
     .search-input-group {
         position: relative;
@@ -56,66 +55,66 @@ if ($result) {
         left: 20px;
         top: 50%;
         transform: translateY(-50%);
-        color: #2f80ed;
+        color: #00A8CC;
         font-size: 1.2rem;
     }
     .search-input-group input {
         padding: 15px 20px 15px 50px;
         border-radius: 10px;
-        border: 2px solid #eef2f7;
+        border: 2px solid rgba(0,168,204,0.2);
         font-size: 1.1rem;
         transition: all 0.3s;
-        background: #f8f9fc;
+        background: #f0f9ff;
     }
     .search-input-group input:focus {
-        border-color: #2f80ed;
+        border-color: #00A8CC;
         background: #fff;
-        box-shadow: 0 0 0 4px rgba(47, 128, 237, 0.1);
+        box-shadow: 0 0 0 4px rgba(0,168,204,0.12);
         outline: none;
     }
     .category-title-box {
         background: #fff;
         padding: 15px 20px;
         border-radius: 10px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        box-shadow: 0 4px 12px rgba(28,63,143,0.07);
         margin-bottom: 20px;
         margin-top: 40px;
-        border-left: 5px solid #2f80ed;
+        border-left: 5px solid #1C3F8F;
         display: flex;
         align-items: center;
         gap: 15px;
     }
     .category-title-box i {
         font-size: 1.8rem;
-        color: #2f80ed;
+        color: #1C3F8F;
     }
     .category-title-box h3 {
         margin: 0;
         font-size: 1.5rem;
         font-weight: 700;
-        color: #333;
+        color: #0D2B6E;
     }
     .disease-card {
         background: #fff;
         border-radius: 10px;
         padding: 15px;
         height: 100%;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        box-shadow: 0 2px 8px rgba(28,63,143,0.06);
         transition: all 0.3s ease;
-        border: 1px solid #eef2f7;
+        border: 1px solid rgba(0,168,204,0.15);
         display: flex;
         flex-direction: column;
         justify-content: space-between;
     }
     .disease-card:hover {
         transform: translateY(-3px);
-        box-shadow: 0 8px 16px rgba(0,0,0,0.08);
-        border-color: #2f80ed;
+        box-shadow: 0 8px 20px rgba(28,63,143,0.14);
+        border-color: #00A8CC;
     }
     .disease-urdu {
         font-family: 'Jameel Noori Nastaleeq', 'Noto Nastaliq Urdu', 'Arial', sans-serif;
         font-size: 1.3rem;
-        color: #111;
+        color: #0D2B6E;
         text-align: right;
         direction: rtl;
         margin-bottom: 10px;
@@ -123,13 +122,13 @@ if ($result) {
     }
     .disease-eng {
         font-size: 0.85rem;
-        color: #666;
+        color: #1C3F8F;
         font-weight: 600;
         margin-bottom: 15px;
     }
     .btn-find-doc {
-        background: #eef6ff;
-        color: #2f80ed;
+        background: linear-gradient(135deg, #1C3F8F 0%, #00A8CC 100%);
+        color: #fff;
         border: none;
         padding: 8px 15px;
         border-radius: 6px;
@@ -141,8 +140,10 @@ if ($result) {
         text-align: center;
     }
     .btn-find-doc:hover {
-        background: #2f80ed;
+        background: linear-gradient(135deg, #27C96A 0%, #00C9A7 100%);
         color: #fff;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0,168,204,0.3);
     }
     .no-results {
         display: none;
@@ -150,17 +151,17 @@ if ($result) {
         padding: 50px 20px;
         background: #fff;
         border-radius: 15px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        box-shadow: 0 4px 15px rgba(28,63,143,0.07);
     }
     .no-results i {
         font-size: 4rem;
-        color: #ccc;
+        color: #00A8CC;
         margin-bottom: 20px;
     }
 </style>
 
 <!-- Page Header -->
-<section class="page-header py-5 text-white" style="background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('<?= BASE_URL ?>admin/inc/uploads/default/hosp.jpg') center/cover;">
+<section class="page-header py-5 text-white" style="background: linear-gradient(135deg, rgba(13,43,110,0.88) 0%, rgba(0,168,204,0.82) 100%), url('<?= BASE_URL ?>admin/inc/uploads/default/hosp.jpg') center/cover;">
     <div class="container text-center pb-4">
         <h1 class="display-4 fw-bold mb-3" data-aos="fade-up">All Specialities & Diseases</h1>
         <p class="lead mb-4" data-aos="fade-up" data-aos-delay="200">Find the right specialist for your disease or treatment</p>

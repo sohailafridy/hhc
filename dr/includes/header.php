@@ -146,6 +146,8 @@ $total_pages = ceil($total_doctors / $per_page);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Our Doctors - <?php echo SITE_TITLE; ?></title>
+    <link rel="icon" type="image/jpeg" href="<?php echo BASE_URL; ?>includes/fav.jpg">
+    <link rel="shortcut icon" type="image/jpeg" href="<?php echo BASE_URL; ?>includes/uploads/fav.jpg">
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- FontAwesome -->
@@ -171,24 +173,24 @@ $total_pages = ceil($total_doctors / $per_page);
             --hover-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
         } */
       :root {
-  /* Aapke existing colors */
-  --primary: #0D6EFD;
-  --primary-dark: #0B5ED7;
-  --secondary: #FFFFFF;
-  --light: #F8FAFC;
-  --accent: #198754;
-  --dark: #1E293B;
-  --dark-blue: #0B3C5D;
-  --gradient: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
-
-  /* New background suggestions */
-  --bg-primary-gradient: var(--gradient);
-  --bg-light: #E6F0FF;           /* Recommended light BG */
-  --bg-light-green: #E8F5E9;
-  --bg-medium: #0B5ED7;
-  --bg-dark: #0B3C5D;
-
-
+  /* SehatNexa Brand Colors */
+  --primary    : #1C3F8F;   /* deep navy */
+  --primary-dark: #0D2B6E;  /* dark navy */
+  --secondary  : #FFFFFF;
+  --accent     : #00A8CC;   /* sky teal */
+  --green      : #27C96A;   /* bright green */
+  --tgreen     : #00C9A7;   /* teal green */
+  --dark       : #0D2B6E;
+  --dark-blue  : #1C3F8F;
+  --light      : #E8F7FF;   /* light blue bg */
+  --light-green: #F0FFF8;   /* light green bg */
+  --gradient   : linear-gradient(135deg, #1C3F8F 0%, #00A8CC 100%);
+  --gradient-g : linear-gradient(135deg, #27C96A 0%, #00C9A7 100%);
+  --gradient-f : linear-gradient(135deg, #1C3F8F 0%, #00A8CC 50%, #27C96A 100%);
+  --bg-light   : #E8F7FF;
+  --bg-light-green: #F0FFF8;
+  --card-shadow : 0 4px 16px rgba(28,63,143,0.08), 0 2px 6px rgba(0,0,0,0.04);
+  --hover-shadow: 0 16px 32px rgba(28,63,143,0.14), 0 6px 12px rgba(0,168,204,0.1);
 }
 
         
@@ -198,7 +200,7 @@ $total_pages = ceil($total_doctors / $per_page);
 
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); 
+            background: #C8E6F5;
             min-height: 100vh;
             position: relative;
             overflow-x: hidden;
@@ -208,12 +210,11 @@ $total_pages = ceil($total_doctors / $per_page);
         body::before {
             content: '';
             position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320"><path fill="%23ffffff10" fill-opacity="1" d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,122.7C672,117,768,139,864,133.3C960,128,1056,96,1152,90.7C1248,85,1344,107,1392,117.3L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path></svg>') no-repeat bottom;
-            background-size: cover;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background:
+                radial-gradient(ellipse at top left,  rgba(28,63,143,0.18)  0%, transparent 55%),
+                radial-gradient(ellipse at top right, rgba(0,168,204,0.15)  0%, transparent 55%),
+                radial-gradient(ellipse at bottom,    rgba(39,201,106,0.10) 0%, transparent 60%);
             pointer-events: none;
             z-index: 0;
         }
@@ -483,7 +484,7 @@ $total_pages = ceil($total_doctors / $per_page);
             height: 180px;
             position: relative;
             overflow: hidden;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #1C3F8F 0%, #00A8CC 100%);
         }
         
         .doctor-img-wrapper::after {
@@ -657,7 +658,7 @@ $total_pages = ceil($total_doctors / $per_page);
             left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(135deg, var(--dark-blue) 0%, var(--light) 100%);
+            background: linear-gradient(135deg, #1C3F8F 0%, #00A8CC 60%, #27C96A 100%);
             z-index: 9999;
             display: flex;
             align-items: center;
@@ -758,8 +759,7 @@ $total_pages = ceil($total_doctors / $per_page);
                 <div class="spinner-circle"></div>
             </div>
             <div class="preloader-text">
-                <i class="fas fa-heartbeat"></i>
-                <span>DoctorApp</span>
+                <img src="<?php echo BASE_URL; ?>includes/uploads/logo.png" alt="SehatNexa" style="height:80px; width:auto; object-fit:contain;">
             </div>
         </div>
     </div>
