@@ -1,6 +1,10 @@
 <?php include '../includes/header.php'; 
 $city_id = (int)$city_id;
 
+// Brand colors from colors.php (already included in header)
+// $color1 = Deep Navy Blue, $color2 = Sky Teal, $color3 = Bright Green, $color4 = Teal Green
+
+
 // 1. QUERY UPDATE: treatment column add kiya gaya hai
 $categories_query = "SELECT dc.dr_cat_id, dc.cat_name, dct.dr_cat_type_id, dct.type, dct.treatment 
                    FROM dr_categories dc 
@@ -69,6 +73,22 @@ $categories_result = mysqli_query($con, $categories_query);
     <!-- Navbar -->
     <?php include BASE_PATH.'/includes/menu.php'; ?>
 <link rel="stylesheet" href="<?= BASE_URL ?>style/home.css">
+
+<style>
+/* SehatNexa Brand Colors — injected from colors.php */
+:root {
+    --brand-navy:       <?= $color1 ?>;
+    --brand-teal:       <?= $color2 ?>;
+    --brand-green:      <?= $color3 ?>;
+    --brand-teal-green: <?= $color4 ?>;
+    --brand-dark:       <?= $color5 ?>;
+    --brand-light-blue: <?= $color6 ?>;
+    --brand-light-green:<?= $color7 ?>;
+    --brand-gradient:   <?= $gradient_primary ?>;
+    --brand-gradient-green: <?= $gradient_green ?>;
+    --brand-gradient-full:  <?= $gradient_full ?>;
+}
+</style>
     <!-- Hero Section -->
     <div class="hero-section">
         <div class="hero-background">
@@ -152,7 +172,7 @@ $categories_result = mysqli_query($con, $categories_query);
     </div>
 
     <!-- Services Tabs Section -->
-    <section id="top-services" class="section-padding" style="background: linear-gradient(135deg, #f8f9ff 0%, #e8f4fd 100%);">
+    <section id="top-services" class="section-padding" style="background: var(--brand-light-blue);">
         <div class="container">
             <div class="section-header" data-aos="fade-up">
                 <h2 class="section-title heading-color">Our Healthcare Services</h2>
@@ -220,7 +240,7 @@ $categories_result = mysqli_query($con, $categories_query);
     </section>
 
     <!-- Specialities Section -->
-<section class="section-padding" style="background: linear-gradient(135deg, #e8f4fd 0%, #d4eafc 100%);">
+<section class="section-padding" style="background: var(--brand-light-blue);">
     <div class="container">
         <div class="section-header" data-aos="fade-up">
             <h2 class="section-title heading-color"><i class="fas fa-stethoscope me-3"></i>Specialities</h2>
@@ -284,7 +304,7 @@ $categories_result = mysqli_query($con, $categories_query);
 </section>
 
     <!-- Top Hospitals Section -->
-    <section class="modern-cards section-padding" style="background-color: var(--light);">
+    <section class="modern-cards section-padding" style="background: var(--brand-light-green);">
         <div class="container">
             <div class="section-header" data-aos="fade-up">
                 <h2 class="section-title heading-color"><i class="fas fa-hospital-alt me-3"></i>Top Hospitals</h2>
@@ -350,7 +370,7 @@ $categories_result = mysqli_query($con, $categories_query);
     </section>
 
     <!-- Top Doctors Section -->
-    <section class="modern-cards section-padding" style="background-color: var(--bg-light);">
+    <section class="modern-cards section-padding" style="background: var(--brand-light-blue);">
         <div class="container">
             <div class="section-header" data-aos="fade-up">
                 <h2 class="section-title heading-color">Top Doctors</h2>
@@ -429,7 +449,7 @@ $categories_result = mysqli_query($con, $categories_query);
     </section>
 
     <!-- Laboratories Section -->
-    <section class="modern-cards section-padding" style="background-color: var(--light);">
+    <section class="modern-cards section-padding" style="background: var(--brand-light-green);">
         <div class="container">
             <div class="section-header" data-aos="fade-up">
                 <h2 class="section-title heading-color">Laboratories</h2>
@@ -507,7 +527,7 @@ $categories_result = mysqli_query($con, $categories_query);
     </section>
 
     <!-- Blood Banks Section -->
-    <section class="modern-cards section-padding" style="background-color: var(--bg-light);">
+    <section class="modern-cards section-padding" style="background: var(--brand-light-blue);">
         <div class="container">
             <div class="section-header" data-aos="fade-up">
                 <h2 class="section-title heading-color">Blood Banks</h2>

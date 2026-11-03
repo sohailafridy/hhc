@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Info — HHC Healthcare Hub</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f0f4f8;
+            color: #2d3748;
+            line-height: 1.7;
+        }
+
+        /* HERO */
+        .hero {
+            background: linear-gradient(135deg, #1a73e8 0%, #0d47a1 100%);
+            color: white;
+            padding: 70px 20px;
+            text-align: center;
+        }
+        .hero h1 {
+            font-size: 2.8rem;
+            font-weight: 800;
+            margin-bottom: 12px;
+            letter-spacing: -0.5px;
+        }
+        .hero p {
+            font-size: 1.15rem;
+            opacity: 0.88;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .hero .badge {
+            display: inline-block;
+            background: rgba(255,255,255,0.18);
+            border: 1px solid rgba(255,255,255,0.35);
+            padding: 6px 18px;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            margin-bottom: 20px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        /* CONTAINER */
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* SECTION */
+        .section {
+            padding: 60px 0;
+        }
+        .section-title {
+            text-align: center;
+            font-size: 1.9rem;
+            font-weight: 700;
+            color: #1a73e8;
+            margin-bottom: 10px;
+        }
+        .section-subtitle {
+            text-align: center;
+            color: #718096;
+            font-size: 1rem;
+            margin-bottom: 40px;
+        }
+
+        /* AIM CARDS */
+        .aim-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+        }
+        .aim-card {
+            background: white;
+            border-radius: 14px;
+            padding: 28px 24px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+            border-left: 5px solid #1a73e8;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .aim-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.11);
+        }
+        .aim-card .icon {
+            font-size: 2rem;
+            margin-bottom: 12px;
+        }
+        .aim-card h3 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #1a202c;
+            margin-bottom: 8px;
+        }
+        .aim-card p {
+            font-size: 0.93rem;
+            color: #4a5568;
+        }
+
+        /* BENEFITS SECTION */
+        .benefits-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 30px;
+        }
+        .benefit-block {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 2px 14px rgba(0,0,0,0.08);
+        }
+        .benefit-block-header {
+            padding: 22px 26px;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+        .benefit-block-header .big-icon {
+            font-size: 2.2rem;
+        }
+        .benefit-block-header h2 {
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+        .benefit-block-header p {
+            font-size: 0.82rem;
+            opacity: 0.88;
+        }
+        .hospital-header { background: linear-gradient(135deg, #e53e3e, #c53030); }
+        .doctor-header   { background: linear-gradient(135deg, #38a169, #276749); }
+        .patient-header  { background: linear-gradient(135deg, #3182ce, #2b6cb0); }
+
+        .benefit-list {
+            list-style: none;
+            padding: 20px 26px 26px;
+        }
+        .benefit-list li {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 10px 0;
+            border-bottom: 1px solid #f0f4f8;
+            font-size: 0.93rem;
+            color: #2d3748;
+        }
+        .benefit-list li:last-child { border-bottom: none; }
+        .benefit-list li .check {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: bold;
+            flex-shrink: 0;
+            margin-top: 1px;
+            color: white;
+        }
+        .hospital-check { background: #e53e3e; }
+        .doctor-check   { background: #38a169; }
+        .patient-check  { background: #3182ce; }
+
+        /* STATS BAR */
+        .stats-bar {
+            background: linear-gradient(135deg, #1a73e8, #0d47a1);
+            color: white;
+            padding: 40px 20px;
+            text-align: center;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        .stat-item .number {
+            font-size: 2.2rem;
+            font-weight: 800;
+        }
+        .stat-item .label {
+            font-size: 0.88rem;
+            opacity: 0.82;
+            margin-top: 4px;
+        }
+
+        /* FOOTER NOTE */
+        .footer-note {
+            background: #1a202c;
+            color: #a0aec0;
+            text-align: center;
+            padding: 24px 20px;
+            font-size: 0.88rem;
+        }
+        .footer-note span { color: #68d391; }
+
+        @media (max-width: 600px) {
+            .hero h1 { font-size: 1.9rem; }
+            .section-title { font-size: 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero">
+    <div class="badge">🏥 HHC — Healthcare Hub</div>
+    <h1>Pakistan's Health Directory</h1>
+    <p>Connecting patients with the right doctors, hospitals, labs, and blood banks — all in one place.</p>
+</div>
+
+
+<!-- PROJECT AIM -->
+<section class="section" style="background: #f0f4f8;">
+    <div class="container">
+        <h2 class="section-title">🎯 Project Aim</h2>
+        <p class="section-subtitle">What HHC is built to achieve</p>
+
+        <div class="aim-grid">
+            <div class="aim-card">
+                <div class="icon">🔍</div>
+                <h3>Easy Health Discovery</h3>
+                <p>Allow patients to quickly find verified doctors, hospitals, labs, and blood banks in their city without confusion or wasted time.</p>
+            </div>
+            <div class="aim-card">
+                <div class="icon">📋</div>
+                <h3>Centralized Health Information</h3>
+                <p>Bring all healthcare-related information — timings, specializations, bed availability, facilities — into one organized platform.</p>
+            </div>
+            <div class="aim-card">
+                <div class="icon">⭐</div>
+                <h3>Transparent Reviews & Ratings</h3>
+                <p>Let real patients share their experiences so others can make informed decisions when choosing a doctor or hospital.</p>
+            </div>
+            <div class="aim-card">
+                <div class="icon">🩸</div>
+                <h3>Blood Bank Awareness</h3>
+                <p>Help people in emergencies locate the nearest blood bank instantly and connect them with life-saving resources.</p>
+            </div>
+            <div class="aim-card">
+                <div class="icon">🏥</div>
+                <h3>Digital Presence for Healthcare</h3>
+                <p>Give hospitals, clinics, and labs a digital identity so they can be found online easily by the public.</p>
+            </div>
+            <div class="aim-card">
+                <div class="icon">📱</div>
+                <h3>Accessible to Everyone</h3>
+                <p>Provide a simple, mobile-friendly experience so anyone — regardless of tech knowledge — can use this platform with ease.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+<!-- STATS -->
+<div class="stats-bar">
+    <div class="stats-grid">
+        <div class="stat-item">
+            <div class="number">4+</div>
+            <div class="label">Entity Types<br>(Doctor, Hospital, Lab, Blood Bank)</div>
+        </div>
+        <div class="stat-item">
+            <div class="number">⭐</div>
+            <div class="label">Real Patient<br>Reviews & Ratings</div>
+        </div>
+        <div class="stat-item">
+            <div class="number">🏙️</div>
+            <div class="label">City-Based<br>Search & Filter</div>
+        </div>
+        <div class="stat-item">
+            <div class="number">24/7</div>
+            <div class="label">Emergency Info<br>Always Available</div>
+        </div>
+    </div>
+</div>
+
+
+<!-- BENEFITS -->
+<section class="section" style="background: white;">
+    <div class="container">
+        <h2 class="section-title">💡 Who Benefits & How</h2>
+        <p class="section-subtitle">HHC creates value for every stakeholder in the healthcare ecosystem</p>
+
+        <div class="benefits-grid">
+
+            <!-- HOSPITAL -->
+            <div class="benefit-block">
+                <div class="benefit-block-header hospital-header">
+                    <div class="big-icon">🏥</div>
+                    <div>
+                        <h2>For Hospitals</h2>
+                        <p>Grow your reach and manage your online presence</p>
+                    </div>
+                </div>
+                <ul class="benefit-list">
+                    <li>
+                        <span class="check hospital-check">✓</span>
+                        <span><strong>Free Digital Presence</strong> — Hospital ka naam, address, phone aur facilities online visible hoti hain</span>
+                    </li>
+                    <li>
+                        <span class="check hospital-check">✓</span>
+                        <span><strong>Doctor Directory</strong> — Hospital mein kaam karne wale tamam doctors listed hote hain patients k liye</span>
+                    </li>
+                    <li>
+                        <span class="check hospital-check">✓</span>
+                        <span><strong>Bed Availability Display</strong> — Total, ICU, General aur Private beds ki real-time info show ho sakti hai</span>
+                    </li>
+                    <li>
+                        <span class="check hospital-check">✓</span>
+                        <span><strong>Facility Showcase</strong> — Emergency, OT, Pharmacy, ICU jesi facilities ka status publicly display hota hai</span>
+                    </li>
+                    <li>
+                        <span class="check hospital-check">✓</span>
+                        <span><strong>Patient Reviews</strong> — Positive reviews se hospital ki credibility aur trust build hoti hai</span>
+                    </li>
+                    <li>
+                        <span class="check hospital-check">✓</span>
+                        <span><strong>More Patient Walk-ins</strong> — Online visibility se new patients discover karke aate hain</span>
+                    </li>
+                    <li>
+                        <span class="check hospital-check">✓</span>
+                        <span><strong>Admin Control</strong> — Admin panel se apni info khud update kar saktay hain</span>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- DOCTOR -->
+            <div class="benefit-block">
+                <div class="benefit-block-header doctor-header">
+                    <div class="big-icon">👨‍⚕️</div>
+                    <div>
+                        <h2>For Doctors</h2>
+                        <p>Build your professional profile and attract patients</p>
+                    </div>
+                </div>
+                <ul class="benefit-list">
+                    <li>
+                        <span class="check doctor-check">✓</span>
+                        <span><strong>Professional Profile</strong> — Name, photo, specialization aur qualification publicly listed hoti hai</span>
+                    </li>
+                    <li>
+                        <span class="check doctor-check">✓</span>
+                        <span><strong>Multi-Hospital Listing</strong> — Ek doctor multiple hospitals mein listed ho sakta hai apni har shift k saath</span>
+                    </li>
+                    <li>
+                        <span class="check doctor-check">✓</span>
+                        <span><strong>Clinic Timing Display</strong> — Morning/Evening shifts, working days aur off days sab clearly show hote hain</span>
+                    </li>
+                    <li>
+                        <span class="check doctor-check">✓</span>
+                        <span><strong>Specialization Visibility</strong> — "ماہرِ امراض" category se patients sahi specialist tak pohonch saktay hain</span>
+                    </li>
+                    <li>
+                        <span class="check doctor-check">✓</span>
+                        <span><strong>Patient Reviews</strong> — Real feedback se doctor ki online reputation strong hoti hai</span>
+                    </li>
+                    <li>
+                        <span class="check doctor-check">✓</span>
+                        <span><strong>Emergency Status</strong> — Unavailability flag kar saktay hain taake patients alternate contact lein</span>
+                    </li>
+                    <li>
+                        <span class="check doctor-check">✓</span>
+                        <span><strong>Zero Extra Cost</strong> — Koi marketing ya advertisement pe paise kharch karne ki zaroorat nahi</span>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- PATIENT -->
+            <div class="benefit-block">
+                <div class="benefit-block-header patient-header">
+                    <div class="big-icon">🧑‍🤝‍🧑</div>
+                    <div>
+                        <h2>For Patients</h2>
+                        <p>Find the right healthcare, fast and easy</p>
+                    </div>
+                </div>
+                <ul class="benefit-list">
+                    <li>
+                        <span class="check patient-check">✓</span>
+                        <span><strong>Right Doctor, Right Time</strong> — Specialization aur city se filter karke apna doctor dhundh saktay hain</span>
+                    </li>
+                    <li>
+                        <span class="check patient-check">✓</span>
+                        <span><strong>Clinic Timings</strong> — Pehle se pata ho jata hai doctor kab aur kahan available hai — time waste nahi hota</span>
+                    </li>
+                    <li>
+                        <span class="check patient-check">✓</span>
+                        <span><strong>Trusted Reviews</strong> — Doosray patients ki reviews padh kar informed decision le saktay hain</span>
+                    </li>
+                    <li>
+                        <span class="check patient-check">✓</span>
+                        <span><strong>Hospital Info</strong> — Beds, facilities aur doctors ki info pehle se check kar saktay hain</span>
+                    </li>
+                    <li>
+                        <span class="check patient-check">✓</span>
+                        <span><strong>Lab Discovery</strong> — Nazdeeqi labs dhundh kar apne tests karwa saktay hain</span>
+                    </li>
+                    <li>
+                        <span class="check patient-check">✓</span>
+                        <span><strong>Emergency Blood Bank</strong> — Zaroorat ke waqt blood bank ka contact foran mil jata hai</span>
+                    </li>
+                    <li>
+                        <span class="check patient-check">✓</span>
+                        <span><strong>Free to Use</strong> — Koi registration ya fee nahi — sab kuch free aur accessible hai</span>
+                    </li>
+                </ul>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+
+<!-- FOOTER NOTE -->
+<div class="footer-note">
+    <p>HHC — Healthcare Hub &nbsp;|&nbsp; Built to make healthcare <span>accessible</span> for every Pakistani &nbsp;|&nbsp; Contact: <span>0337-1320001</span></p>
+</div>
+
+</body>
+</html>
+
+
+<!-- VLOG SCRIPT SECTION -->
+<section style="background: #1a202c; padding: 60px 20px;">
+    <div style="max-width: 860px; margin: 0 auto;">
+
+        <div style="text-align:center; margin-bottom: 40px;">
+            <span style="background: #e53e3e; color:white; padding: 6px 18px; border-radius:50px; font-size:0.82rem; letter-spacing:1px; text-transform:uppercase; font-weight:700;">🎬 Vlog Script</span>
+            <h2 style="color:white; font-size:2rem; font-weight:800; margin-top:16px;">2-Minute Pitch Script</h2>
+            <p style="color:#a0aec0; font-size:0.95rem; margin-top:8px;">Hospitals, Doctors aur Labs ko convince karne ke liye — Urdu/Hindi</p>
+        </div>
+
+        <!-- INTRO -->
+        <div style="background:#2d3748; border-radius:14px; padding:28px 30px; margin-bottom:20px; border-left:5px solid #ffd700;">
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:14px;">
+                <span style="background:#ffd700; color:#1a202c; padding:3px 12px; border-radius:20px; font-size:0.78rem; font-weight:800;">⏱ 0:00 – 0:15 · INTRO</span>
+            </div>
+            <p style="color:#e2e8f0; font-size:1.05rem; line-height:1.85;">
+                <em style="color:#ffd700;">"Assalam o Alaikum!</em> Dosto, aaj main aapko ek aisi website ke baare mein batane wala hoon jo Pakistan mein healthcare ko completely change karne ki potential rakhti hai — aur iska naam hai <strong style="color:#63b3ed;">HHC — Healthcare Hub."</strong>
+            </p>
+        </div>
+
+        <!-- PROBLEM -->
+        <div style="background:#2d3748; border-radius:14px; padding:28px 30px; margin-bottom:20px; border-left:5px solid #fc8181;">
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:14px;">
+                <span style="background:#fc8181; color:#1a202c; padding:3px 12px; border-radius:20px; font-size:0.78rem; font-weight:800;">⏱ 0:15 – 0:30 · PROBLEM</span>
+            </div>
+            <p style="color:#e2e8f0; font-size:1.05rem; line-height:1.85;">
+                <em style="color:#fc8181;">"Sochiye —</em> ek mareez raat ko beemar parta hai. Use nahi pata kaunsa doctor available hai, hospital mein bed hai ya nahi, nazdeeqi lab kahan hai, ya blood bank ka number kya hai. <strong style="color:#fc8181;">Yeh confusion dangerous hai.</strong> Aur yahi problem HHC solve karti hai."
+            </p>
+        </div>
+
+        <!-- SOLUTION -->
+        <div style="background:#2d3748; border-radius:14px; padding:28px 30px; margin-bottom:20px; border-left:5px solid #68d391;">
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:14px;">
+                <span style="background:#68d391; color:#1a202c; padding:3px 12px; border-radius:20px; font-size:0.78rem; font-weight:800;">⏱ 0:30 – 0:50 · SOLUTION</span>
+            </div>
+            <p style="color:#e2e8f0; font-size:1.05rem; line-height:1.85;">
+                <em style="color:#68d391;">"HHC ek free online directory hai</em> jahan aap doctors, hospitals, labs aur blood banks — sab ek jagah dhundh saktay hain. City ke hisaab se filter karein, doctor ki timing check karein, hospital ki facilities dekhein, aur patient reviews padh kar <strong style="color:#68d391;">bilkul confident decision lein.</strong>"
+            </p>
+        </div>
+
+        <!-- FOR HOSPITALS -->
+        <div style="background:#2d3748; border-radius:14px; padding:28px 30px; margin-bottom:20px; border-left:5px solid #fc8181;">
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:14px;">
+                <span style="background:#fc8181; color:#1a202c; padding:3px 12px; border-radius:20px; font-size:0.78rem; font-weight:800;">⏱ 0:50 – 1:05 · HOSPITALS KE LIYE</span>
+                <span style="color:#fc8181; font-size:0.82rem;">🏥 Camera: Hospital admin ki taraf dekho</span>
+            </div>
+            <p style="color:#e2e8f0; font-size:1.05rem; line-height:1.85;">
+                <em style="color:#fc8181;">"Hospital administrators —</em> aapka hospital HHC par list hoga toh aapki beds availability, ICU status, facilities aur doctors — sab online show honge. <strong style="color:#fc8181;">Naye patients khud aapko dhundh kar aayenge.</strong> Koi advertisement cost nahi, koi jhanjhat nahi — sirf apni info dein, baaki hum karein."
+            </p>
+        </div>
+
+        <!-- FOR DOCTORS -->
+        <div style="background:#2d3748; border-radius:14px; padding:28px 30px; margin-bottom:20px; border-left:5px solid #68d391;">
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:14px;">
+                <span style="background:#68d391; color:#1a202c; padding:3px 12px; border-radius:20px; font-size:0.78rem; font-weight:800;">⏱ 1:05 – 1:20 · DOCTORS KE LIYE</span>
+                <span style="color:#68d391; font-size:0.82rem;">👨‍⚕️ Camera: Doctor ki taraf dekho</span>
+            </div>
+            <p style="color:#e2e8f0; font-size:1.05rem; line-height:1.85;">
+                <em style="color:#68d391;">"Doctors — aapki profile,</em> aapki specialization, aapke clinic ki morning aur evening timings, multiple hospitals — sab ek jagah listed. Patients aapko pehle online dekhenge, timings check karenge, aur <strong style="color:#68d391;">prepared hokar aayenge.</strong> Aapka time waste nahi hoga, aur aapki reputation online build hoti rahegi."
+            </p>
+        </div>
+
+        <!-- FOR LABS -->
+        <div style="background:#2d3748; border-radius:14px; padding:28px 30px; margin-bottom:20px; border-left:5px solid #63b3ed;">
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:14px;">
+                <span style="background:#63b3ed; color:#1a202c; padding:3px 12px; border-radius:20px; font-size:0.78rem; font-weight:800;">⏱ 1:20 – 1:35 · LABS KE LIYE</span>
+                <span style="color:#63b3ed; font-size:0.82rem;">🔬 Camera: Lab assistant ki taraf dekho</span>
+            </div>
+            <p style="color:#e2e8f0; font-size:1.05rem; line-height:1.85;">
+                <em style="color:#63b3ed;">"Lab assistants aur lab owners —</em> aapki lab ka address, contact number aur city — HHC par free mein listed hogi. Jab bhi koi patient apne area mein lab dhundhe ga, <strong style="color:#63b3ed;">aapka naam sabse pehle aayega.</strong> Reviews ke zariye aapki lab ki trust value bhi barh ti rahegi."
+            </p>
+        </div>
+
+        <!-- CALL TO ACTION -->
+        <div style="background: linear-gradient(135deg, #1a73e8, #0d47a1); border-radius:14px; padding:30px 30px; margin-bottom:20px; text-align:center;">
+            <div style="margin-bottom:14px;">
+                <span style="background:rgba(255,255,255,0.2); color:white; padding:3px 12px; border-radius:20px; font-size:0.78rem; font-weight:800;">⏱ 1:35 – 2:00 · CALL TO ACTION</span>
+            </div>
+            <p style="color:white; font-size:1.08rem; line-height:1.85;">
+                <em style="color:#ffd700;">"Toh agar aap ek hospital admin hain, doctor hain, ya lab chalate hain —</em> aaj hi apni information hamein send karein. <strong style="color:#ffd700;">Bilkul free hai.</strong> Sirf ek WhatsApp message karein:
+                <br><br>
+                <strong style="font-size:1.4rem; color:#ffd700;">0337 - 1320001</strong>
+                <br><br>
+                <em>Apna naam, designation, aur facility ka naam bhejein — baki kaam HHC team karay gi.</em>
+                <br><br>
+                <strong style="color:white;">HHC — Kyunke Sehat Mein Deri Nahi Honi Chahiye۔</strong>"
+            </p>
+        </div>
+
+        <!-- TIPS BOX -->
+        <div style="background:#2d3748; border-radius:14px; padding:24px 28px;">
+            <h4 style="color:#ffd700; font-size:1rem; font-weight:700; margin-bottom:16px;">📌 Vlog Filming Tips</h4>
+            <ul style="list-style:none; display:grid; grid-template-columns: repeat(auto-fit, minmax(240px,1fr)); gap:12px;">
+                <li style="color:#a0aec0; font-size:0.88rem; display:flex; gap:8px;"><span style="color:#68d391;">✓</span> Hospital lobby ya clinic ke saamne shoot karein — background authentic lage</li>
+                <li style="color:#a0aec0; font-size:0.88rem; display:flex; gap:8px;"><span style="color:#68d391;">✓</span> Phone mein website open karke screen show karein jab features batayein</li>
+                <li style="color:#a0aec0; font-size:0.88rem; display:flex; gap:8px;"><span style="color:#68d391;">✓</span> WhatsApp number end mein screen pe bhi likhein (text overlay)</li>
+                <li style="color:#a0aec0; font-size:0.88rem; display:flex; gap:8px;"><span style="color:#68d391;">✓</span> Confident aur dheeray bolein — 2 minute ki video mein rush na karein</li>
+                <li style="color:#a0aec0; font-size:0.88rem; display:flex; gap:8px;"><span style="color:#68d391;">✓</span> Subscribe / Like ka reminder end mein zaroor dein</li>
+                <li style="color:#a0aec0; font-size:0.88rem; display:flex; gap:8px;"><span style="color:#68d391;">✓</span> Background mein soft nasheed ya neutral music rakhen</li>
+            </ul>
+        </div>
+
+    </div>
+</section>

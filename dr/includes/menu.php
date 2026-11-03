@@ -1,4 +1,5 @@
 <?php
+include 'colors.php'; 
     // Get current URL path
     $current_url = $_SERVER['REQUEST_URI'];
     $current_path = parse_url($current_url, PHP_URL_PATH);
@@ -48,21 +49,99 @@
         $path = str_replace('.php', '', $path);
         // Use BASE_URL if available, otherwise use relative path
         return defined('BASE_URL') && BASE_URL ? BASE_URL . $path : $path;
-    }
-?>
+    } ?>
 <style>
-    .nav-link.active{
-        padding-left: 10px;
-box-shadow: 0 10px 25px rgba(37, 99, 235, .35), 0 4px 10px rgba(0, 0, 0, .08);
-position: relative;
+    /* ── Navbar — SehatNexa Brand Colors ── */
+    :root {
+        --sn-navy  : #1C3F8F;
+        --sn-teal  : #00A8CC;
+        --sn-green : #27C96A;
+        --sn-tgreen: #00C9A7;
+        --sn-dark  : #0D2B6E;
+        --sn-grad  : linear-gradient(135deg, #1C3F8F 0%, #00A8CC 100%);
+        --sn-grad-g: linear-gradient(135deg, #27C96A 0%, #00C9A7 100%);
     }
+
+    .navbar {
+        background: rgba(255,255,255,0.97) !important;
+        backdrop-filter: blur(20px);
+        border-bottom: 2px solid rgba(0,168,204,0.12);
+        padding: 10px 0;
+        box-shadow: 0 2px 16px rgba(28,63,143,0.08);
+    }
+
+    .nav-link {
+        font-weight: 600;
+        color: var(--sn-dark) !important;
+        margin: 0 4px;
+        padding: 6px 12px !important;
+        border-radius: 8px;
+        transition: all 0.2s ease;
+        position: relative;
+    }
+
+    .nav-link:hover {
+        color: var(--sn-navy) !important;
+        background: rgba(0,168,204,0.08);
+    }
+
+    .nav-link.active {
+        color: var(--sn-navy) !important;
+        background: rgba(28,63,143,0.08);
+        box-shadow: 0 4px 12px rgba(28,63,143,0.12);
+    }
+
+    .nav-link.active::after {
+        content: '';
+        position: absolute;
+        bottom: 0; left: 50%;
+        transform: translateX(-50%);
+        width: 20px; height: 2px;
+        background: var(--sn-grad);
+        border-radius: 2px;
+    }
+
+    /* Toggler — brand colored */
+    .navbar-toggler {
+        border: 2px solid rgba(0,168,204,0.3) !important;
+        padding: 6px 10px;
+        border-radius: 8px;
+        transition: all 0.2s;
+    }
+
+    .navbar-toggler:focus { box-shadow: 0 0 0 3px rgba(0,168,204,0.2) !important; }
+
+    .navbar-toggler-icon {
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='%231C3F8F' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e") !important;
+    }
+
+    /* Mobile collapse menu */
+    @media (max-width: 991px) {
+        #navbarNav {
+            background: white;
+            border-radius: 12px;
+            padding: 12px;
+            margin-top: 10px;
+            box-shadow: 0 8px 24px rgba(28,63,143,0.1);
+            border: 1px solid rgba(0,168,204,0.1);
+        }
+
+        .nav-link {
+            padding: 10px 14px !important;
+            border-radius: 8px;
+            margin: 2px 0;
+        }
+
+        .nav-link.active::after { display: none; }
+    }
+</style>
 </style>
 <nav class="navbar navbar-expand-lg fixed-top">
         <div class="container">
-            <a class="navbar-brand fw-bold" href="<?php echo clean_url(''); ?>">
-                <i class="fas fa-heartbeat me-2"></i>DoctorApp
+            <a class="navbar-brand fw-bold me-auto" href="<?php echo clean_url(''); ?>">
+                <img src="<?php echo BASE_URL; ?>includes/uploads/logo.png" alt="HHC Logo" style="height:45px; width:auto; max-width:160px; object-fit:contain;">
             </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <button class="navbar-toggler ms-auto" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">

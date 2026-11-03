@@ -1,5 +1,6 @@
 <?php include '../config.php'; 
 include BASE_PATH.'/tracking.php'; 
+include 'colors.php'; 
 $city_id =0 ;
 ?>
 <script>
@@ -219,11 +220,11 @@ $total_pages = ceil($total_doctors / $per_page);
         
         /* Navbar */
         .navbar {
-            background: rgba(255, 255, 255, 0.95);
+            background: rgba(255, 255, 255, 0.97) !important;
             backdrop-filter: blur(20px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            border-bottom: 2px solid rgba(0,168,204,0.12);
             padding: 12px 0;
-            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+            box-shadow: 0 2px 16px rgba(28,63,143,0.08);
             position: relative;
             z-index: 1000;
         }
@@ -231,7 +232,7 @@ $total_pages = ceil($total_doctors / $per_page);
         .navbar-brand {
             font-size: 22px;
             font-weight: 800;
-            background: var(--gradient);
+            background: linear-gradient(135deg, #1C3F8F 0%, #00A8CC 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             letter-spacing: -0.5px;
@@ -239,34 +240,34 @@ $total_pages = ceil($total_doctors / $per_page);
         
         .nav-link {
             font-weight: 600;
-            color: var(--dark) !important;
+            color: #0D2B6E !important;
             margin: 0 8px;
             position: relative;
             transition: color 0.2s;
         }
         
         .nav-link:hover {
-            color: var(--primary) !important;
+            color: #1C3F8F !important;
         }
         
         .nav-link.active {
-            color: var(--primary) !important;
+            color: #1C3F8F !important;
         }
         
         .btn-login {
-            background: var(--gradient);
+            background: linear-gradient(135deg, #1C3F8F 0%, #00A8CC 100%);
             color: white !important;
             border-radius: 12px;
             padding: 10px 24px;
             font-weight: 600;
             font-size: 14px;
             transition: all 0.2s;
-            box-shadow: 0 4px 6px -1px rgba(99, 102, 241, 0.3);
+            box-shadow: 0 4px 6px -1px rgba(28,63,143,0.3);
         }
         
         .btn-login:hover {
             transform: translateY(-1px);
-            box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.4);
+            box-shadow: 0 10px 15px -3px rgba(28,63,143,0.4);
         }
         
         .fixit-btn {
