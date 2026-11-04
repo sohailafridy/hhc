@@ -56,10 +56,10 @@ $average_rating = $review_count > 0 ? number_format($total_stars / $review_count
             <h2 class="section-title">Meet the People Behind SehatNexa</h2>
         </div>
 
-        <div class="row g-4">
+        <div class="row g-4 flex-column flex-lg-row">
 
             <!-- ── FOUNDER ── -->
-            <div class="col-lg-6" data-aos="fade-right">
+            <div class="col-12" data-aos="fade-up">
                 <div class="team-shell about-parallax-card">
                     <div class="row g-4 align-items-center">
                         <div class="col-md-5">
@@ -76,7 +76,7 @@ $average_rating = $review_count > 0 ? number_format($total_stars / $review_count
                                     </div>
                                     <div>
                                         <span class="mini-label">Founder & Developer</span>
-                                        <h3>Sohail</h3>
+                                        <h3>Sohail Afridy</h3>
                                         <p>Full-stack Web Developer</p>
                                     </div>
                                 </div>
@@ -87,7 +87,7 @@ $average_rating = $review_count > 0 ? number_format($total_stars / $review_count
                                 <span class="section-chip section-chip-soft mb-3">
                                     <i class="fas fa-user-shield"></i> Founder spotlight
                                 </span>
-                                <h3 class="team-name">Sohail — Founder & Lead Developer</h3>
+                                <h3 class="team-name">Sohail Afridy — Founder & Lead Developer</h3>
                                 <p class="team-bio">
                                     Main ek software developer hoon. SehatNexa ko is vision ke saath build kiya ke patients aur unki families hospitals, doctors, labs aur blood banks ki maloomat ek hi platform par asaani se hasil kar saken.
                                 </p>
@@ -118,7 +118,7 @@ $average_rating = $review_count > 0 ? number_format($total_stars / $review_count
                                     <a href="mailto:sohail.it99@gmail.com" class="btn about-btn-primary">
                                         <i class="fas fa-envelope me-2"></i>Contact
                                     </a>
-                                    <a href="https://wa.me/+923371320001" class="btn about-btn-outline">
+                                    <a href="https://wa.me/+923049744263" class="btn about-btn-outline">
                                         <i class="fab fa-whatsapp me-2"></i>WhatsApp
                                     </a>
                                 </div>
@@ -129,7 +129,7 @@ $average_rating = $review_count > 0 ? number_format($total_stars / $review_count
             </div>
 
             <!-- ── CO-FOUNDER ── -->
-            <div class="col-lg-6" data-aos="fade-left">
+            <div class="col-12" data-aos="fade-up" data-aos-delay="100">
                 <div class="team-shell about-parallax-card">
                     <div class="row g-4 align-items-center">
                         <div class="col-md-5">
@@ -185,7 +185,7 @@ $average_rating = $review_count > 0 ? number_format($total_stars / $review_count
                                     </div>
                                 </div>
                                 <div class="team-actions mt-3">
-                                    <a href="https://wa.me/+923450333089" class="btn about-btn-primary" style="background:linear-gradient(135deg,#27C96A,#00C9A7); box-shadow:0 18px 45px rgba(39,201,106,0.28);">
+                                    <a href="https://wa.me/+923049744263" class="btn about-btn-primary" style="background:linear-gradient(135deg,#27C96A,#00C9A7); box-shadow:0 18px 45px rgba(39,201,106,0.28);">
                                         <i class="fab fa-whatsapp me-2"></i>WhatsApp
                                     </a>
                                 </div>
@@ -279,20 +279,20 @@ $average_rating = $review_count > 0 ? number_format($total_stars / $review_count
                 </div>
                 <div class="col-lg-5" data-aos="fade-up" data-aos-delay="150">
                     <div class="support-contact-grid">
-                        <a href="https://wa.me/+923371320001" class="contact-action-card about-parallax-card">
+                        <a href="https://wa.me/+923049744263" class="contact-action-card about-parallax-card">
                             <div class="contact-action-icon"><i class="fab fa-whatsapp"></i></div>
                             <span class="mini-label">Primary Support</span>
                             <h4>Healthcare Info bhejein</h4>
                             <p>Board photos aur listing details direct WhatsApp par bhejein.</p>
                             <strong>+92 337 1320001</strong>
                         </a>
-                        <a href="https://wa.me/+923450333089" class="contact-action-card about-parallax-card">
+                        <!-- <a href="https://wa.me/+923450333089" class="contact-action-card about-parallax-card">
                             <div class="contact-action-icon"><i class="fas fa-handshake-angle"></i></div>
                             <span class="mini-label">Community Support</span>
                             <h4>Support Fixit Kohat</h4>
                             <p>Collaboration aur local help ke liye alternate channel.</p>
                             <strong>+92 345 0333089</strong>
-                        </a>
+                        </a> -->
                     </div>
                 </div>
             </div>
@@ -439,7 +439,7 @@ $average_rating = $review_count > 0 ? number_format($total_stars / $review_count
             <p class="cta-description">Contact channels hamesha open hain — healthcare info, ideas ya direct support.</p>
             <div class="cta-buttons">
                 <a href="mailto:sohail.it99@gmail.com" class="btn about-btn-primary btn-lg"><i class="fas fa-envelope me-2"></i>Email Us</a>
-                <a href="tel:+923371320001" class="btn about-btn-outline-light btn-lg"><i class="fas fa-phone me-2"></i>Call Us</a>
+                <a href="tel:+923049744263" class="btn about-btn-outline-light btn-lg"><i class="fas fa-phone me-2"></i>Call Us</a>
             </div>
         </div>
     </div>
