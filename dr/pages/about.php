@@ -53,7 +53,7 @@ $average_rating = $review_count > 0 ? number_format($total_stars / $review_count
             <span class="section-chip section-chip-soft">
                 <i class="fas fa-users"></i> Our Team
             </span>
-            <h2 class="section-title">Meet the People Behind SehatNexa</h2>
+            <h2 class="section-title">MEET THE PEOPLE BEHINDE SEHATNEXA</h2>
         </div>
 
         <div class="row g-4 flex-column flex-lg-row">
