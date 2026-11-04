@@ -1,6 +1,33 @@
 <?php include '../includes/header.php'; ?>
 <?php include BASE_PATH.'/includes/menu.php'; ?>
 
+<?php
+$success_msg = '';
+$error_msg   = '';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $name    = trim(mysqli_real_escape_string($con, $_POST['name']    ?? ''));
+    $email   = trim(mysqli_real_escape_string($con, $_POST['email']   ?? ''));
+    $phone   = trim(mysqli_real_escape_string($con, $_POST['phone']   ?? ''));
+    $subject = trim(mysqli_real_escape_string($con, $_POST['subject'] ?? ''));
+    $msg     = trim(mysqli_real_escape_string($con, $_POST['message'] ?? ''));
+
+    if (empty($name) || empty($email) || empty($subject) || empty($msg)) {
+        $error_msg = 'Please fill all required fields.';
+    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $error_msg = 'Please enter a valid email address.';
+    } else {
+        $sql = "INSERT INTO contact (name, email, phone, subject, msg, created_at, updated_at)
+                VALUES ('$name', '$email', '$phone', '$subject', '$msg', NOW(), NOW())";
+        if (mysqli_query($con, $sql)) {
+            $success_msg = 'Your message has been sent successfully! We will get back to you soon.';
+        } else {
+            $error_msg = 'Something went wrong. Please try again.';
+        }
+    }
+}
+?>
+
 <link rel="stylesheet" href="<?= BASE_URL ?>style/contact-us.css">
 
 <!-- ======================================== -->
@@ -103,7 +130,18 @@
                     <h3>Let's Talk</h3>
                     <p class="form-desc">Fill out the form below and we'll get back to you as soon as possible</p>
 
-                    <form method="POST" action="submit-contact.php">
+                    <form method="POST" action="" id="contact">
+
+                        <?php if ($success_msg): ?>
+                            <div class="alert-sn alert-sn-success mb-4">
+                                <i class="fas fa-circle-check me-2"></i><?= htmlspecialchars($success_msg) ?>
+                            </div>
+                        <?php endif; ?>
+                        <?php if ($error_msg): ?>
+                            <div class="alert-sn alert-sn-danger mb-4">
+                                <i class="fas fa-triangle-exclamation me-2"></i><?= htmlspecialchars($error_msg) ?>
+                            </div>
+                        <?php endif; ?>
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Your Name *</label>
@@ -187,16 +225,16 @@
                         </div>
                     </div>
 
-                    <div style="margin-top:20px; padding-top:20px; border-top:1px solid rgba(255,255,255,0.04);">
+                    <div style="margin-top:20px; padding-top:20px; border-top:1px solid rgba(255,255,255,0.08);">
                         <div style="display:flex; gap:12px; flex-wrap:wrap;">
-                            <a href="https://wa.me/+923371320001" target="_blank" style="display:inline-flex; align-items:center; gap:8px; padding:8px 18px; background:rgba(255,255,255,0.04); border-radius:50px; color:rgba(255,255,255,0.5); text-decoration:none; transition:all 0.3s ease; font-size:0.85rem;">
+                            <a href="https://wa.me/+923371320001" target="_blank" class="sn-contact-pill">
                                 <i class="fab fa-whatsapp" style="color:#25D366;"></i> WhatsApp
                             </a>
-                            <a href="mailto:sohail.it99@gmail.com" style="display:inline-flex; align-items:center; gap:8px; padding:8px 18px; background:rgba(255,255,255,0.04); border-radius:50px; color:rgba(255,255,255,0.5); text-decoration:none; transition:all 0.3s ease; font-size:0.85rem;">
-                                <i class="fas fa-envelope" style="color:var(--primary-light);"></i> Email
+                            <a href="mailto:sohail.it99@gmail.com" class="sn-contact-pill">
+                                <i class="fas fa-envelope" style="color:#00A8CC;"></i> Email
                             </a>
-                            <a href="tel:+923371320001" style="display:inline-flex; align-items:center; gap:8px; padding:8px 18px; background:rgba(255,255,255,0.04); border-radius:50px; color:rgba(255,255,255,0.5); text-decoration:none; transition:all 0.3s ease; font-size:0.85rem;">
-                                <i class="fas fa-phone" style="color:var(--accent);"></i> Call
+                            <a href="tel:+923371320001" class="sn-contact-pill">
+                                <i class="fas fa-phone" style="color:#00C9A7;"></i> Call
                             </a>
                         </div>
                     </div>

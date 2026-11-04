@@ -133,8 +133,13 @@ if (in_array('delete-all-clinics', $url_parts)) {
 }
 
 // ============================================
-// DASHBOARD (Default — only when nothing else active)
+// CONTACTED USERS
 // ============================================
+$is_contacted = (strpos($current_url, 'contacted_users') !== false);
+if ($is_contacted) {
+    $open   = 'contacted';
+    $active = 'contacted';
+}
 $current_page = end($url_parts);
 $current_page = str_replace('.php', '', $current_page);
 
@@ -338,6 +343,47 @@ if (($current_page == 'admin' || $current_page == 'index' || $current_page == ''
     height: 55%;
     background: linear-gradient(180deg, #6366f1, #8b5cf6);
     border-radius: 0 4px 4px 0;
+}
+
+/* ============================================
+   CONTACTED USERS SPECIAL
+   ============================================ */
+.main-sidebar .sidebar-menu > li.contacted-item > a > i:first-child {
+    color: #00A8CC;
+}
+.main-sidebar .sidebar-menu > li.contacted-item > a:hover {
+    background: rgba(0,168,204,0.1);
+}
+.main-sidebar .sidebar-menu > li.contacted-item > a:hover > i:first-child {
+    color: #67e8f9;
+}
+.main-sidebar .sidebar-menu > li.contacted-item.active > a {
+    background: linear-gradient(90deg, rgba(0,168,204,0.18) 0%, rgba(0,168,204,0.05) 100%);
+    box-shadow: 0 4px 14px rgba(0,168,204,0.15);
+}
+.main-sidebar .sidebar-menu > li.contacted-item.active > a::before {
+    background: linear-gradient(180deg, #00A8CC, #27C96A);
+}
+
+/* Unread badge in nav */
+.nav-unread-badge {
+    margin-left: auto;
+    background: linear-gradient(135deg, #e74c3c, #ff6b6b);
+    color: white;
+    font-size: 10px;
+    font-weight: 800;
+    padding: 2px 7px;
+    border-radius: 20px;
+    min-width: 20px;
+    text-align: center;
+    line-height: 1.6;
+    box-shadow: 0 2px 8px rgba(231,76,60,0.4);
+    animation: badgePulse 2s ease-in-out infinite;
+}
+
+@keyframes badgePulse {
+    0%, 100% { transform: scale(1); }
+    50%       { transform: scale(1.1); }
 }
 
 /* ============================================
@@ -616,6 +662,24 @@ if (($current_page == 'admin' || $current_page == 'index' || $current_page == ''
                         </a>
                     </li>
                 </ul>
+            </li>
+
+            <!-- ========================================== -->
+            <!-- ===== CONTACTED USERS ===== -->
+            <!-- ========================================== -->
+            <li class="treeview contacted-item <?php echo $is_contacted ? 'active' : ''; ?>">
+                <a class="waves-effect waves-dark" href="<?php echo BASE_URL; ?>admin/contacted_users.php">
+                    <i class="fas fa-envelope-open-text"></i>
+                    <span>Contacted Users</span>
+                    <?php
+                    // Unread badge
+                    $unread_nav = mysqli_query($con, "SELECT COUNT(*) as c FROM contact WHERE status = 0");
+                    $unread_nav_cnt = mysqli_fetch_assoc($unread_nav)['c'] ?? 0;
+                    if ($unread_nav_cnt > 0):
+                    ?>
+                    <span class="nav-unread-badge"><?= $unread_nav_cnt ?></span>
+                    <?php endif; ?>
+                </a>
             </li>
 
             <!-- ========================================== -->
