@@ -43,6 +43,50 @@ if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
 $doctor_id = (int)$_GET['id'];
 
 // ============================================
+// AUTO-ADD emergency_detail column if missing
+// ============================================
+$col_check = mysqli_query($con, "SHOW COLUMNS FROM doctors LIKE 'emergency_detail'");
+if (mysqli_num_rows($col_check) == 0) {
+    mysqli_query($con, "ALTER TABLE doctors ADD COLUMN emergency_detail VARCHAR(500) DEFAULT NULL AFTER emergency_status");
+}
+
+// ============================================
+// AJAX: Toggle emergency / update detail
+// ============================================
+if (isset($_POST['ajax_emergency'])) {
+    $em_doctor_id = (int)$_POST['em_doctor_id'];
+    $em_status    = (int)$_POST['em_status'];   // 1 = not available, 0 = available
+
+    // Verify this doctor belongs to this hospital
+    $own = mysqli_query($con, "SELECT 1 FROM doctor_in_hospital
+                                WHERE doctor_id = $em_doctor_id AND hospital_id = $hospital_id LIMIT 1");
+    if (!$own || mysqli_num_rows($own) == 0) {
+        echo json_encode(['success' => false, 'msg' => 'Permission denied']);
+        exit();
+    }
+
+    if ($em_status === 1) {
+        // Mark not available — save reason
+        $em_detail = mysqli_real_escape_string($con, trim($_POST['em_detail'] ?? ''));
+        if (empty($em_detail)) {
+            echo json_encode(['success' => false, 'msg' => 'Please enter a reason.']);
+            exit();
+        }
+        $sql = "UPDATE doctors SET emergency_status = 1, emergency_detail = '$em_detail' WHERE doctor_id = $em_doctor_id";
+    } else {
+        // Mark available again — clear detail
+        $sql = "UPDATE doctors SET emergency_status = 0, emergency_detail = NULL WHERE doctor_id = $em_doctor_id";
+    }
+
+    if (mysqli_query($con, $sql)) {
+        echo json_encode(['success' => true, 'status' => $em_status]);
+    } else {
+        echo json_encode(['success' => false, 'msg' => mysqli_error($con)]);
+    }
+    exit();
+}
+
+// ============================================
 // FETCH DOCTOR DETAILS  (status / reference ab users table se)
 // ============================================
 $query = "SELECT d.*, 
@@ -51,7 +95,9 @@ $query = "SELECT d.*,
                  u.status as estatus,
                  u.reference as ref,
                  u.username,
-                 u.email as user_email
+                 u.email as user_email,
+                 d.emergency_status,
+                 IFNULL(d.emergency_detail,'') as emergency_detail
           FROM doctors d
           LEFT JOIN cities c ON d.city_id = c.city_id
           LEFT JOIN dr_cat_types dct ON d.cat_type_id = dct.dr_cat_type_id
@@ -390,6 +436,88 @@ $total_reviews_count = mysqli_num_rows($reviews_result);
                 </div>
             </div>
 
+            <!-- If Not Available -->
+            <div class="info-card" id="notAvailableCard">
+                <div class="info-card-header" style="background:<?= $doctor['emergency_status'] == 1 ? 'linear-gradient(135deg,#7f1d1d,#dc2626)' : 'linear-gradient(135deg,#f0f9ff,#e8f7ff)' ?>;">
+                    <h5 style="color:<?= $doctor['emergency_status'] == 1 ? 'white' : 'var(--text,#0D2B6E)' ?>;">
+                        <i class="fas fa-ban me-2" style="color:<?= $doctor['emergency_status'] == 1 ? '#fca5a5' : '#dc2626' ?>"></i>
+                        If Not Available
+                    </h5>
+                    <span id="statusPill" class="badge" style="
+                        background:<?= $doctor['emergency_status'] == 1 ? 'rgba(255,255,255,0.2)' : '#27C96A' ?>;
+                        color:white; padding:5px 14px; border-radius:20px;">
+                        <?= $doctor['emergency_status'] == 1 ? '🔴 Currently Unavailable' : '🟢 Available' ?>
+                    </span>
+                </div>
+                <div class="info-card-body">
+
+                    <?php if ($doctor['emergency_status'] == 1 && !empty($doctor['emergency_detail'])): ?>
+                    <div id="currentReasonBox" style="background:#fef2f2; border:1px solid #fca5a5; border-radius:10px; padding:14px 18px; margin-bottom:16px; display:flex; align-items:flex-start; gap:12px;">
+                        <i class="fas fa-exclamation-circle" style="color:#dc2626; font-size:1.2rem; margin-top:2px; flex-shrink:0;"></i>
+                        <div>
+                            <div style="font-size:0.78rem; font-weight:700; text-transform:uppercase; color:#dc2626; letter-spacing:0.5px; margin-bottom:4px;">Current Reason</div>
+                            <div id="currentReasonText" style="color:#7f1d1d; font-weight:600; font-size:0.95rem;"><?= htmlspecialchars($doctor['emergency_detail']) ?></div>
+                        </div>
+                    </div>
+                    <?php else: ?>
+                    <div id="currentReasonBox" style="display:none;">
+                        <div style="background:#fef2f2; border:1px solid #fca5a5; border-radius:10px; padding:14px 18px; margin-bottom:16px; display:flex; align-items:flex-start; gap:12px;">
+                            <i class="fas fa-exclamation-circle" style="color:#dc2626; font-size:1.2rem; margin-top:2px; flex-shrink:0;"></i>
+                            <div>
+                                <div style="font-size:0.78rem; font-weight:700; text-transform:uppercase; color:#dc2626; letter-spacing:0.5px; margin-bottom:4px;">Current Reason</div>
+                                <div id="currentReasonText" style="color:#7f1d1d; font-weight:600; font-size:0.95rem;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <?php endif; ?>
+
+                    <?php if ($doctor['emergency_status'] == 0): ?>
+                    <!-- MARK NOT AVAILABLE form -->
+                    <div id="notAvailableForm">
+                        <p style="color:#64748b; font-size:0.88rem; margin-bottom:14px;">
+                            <i class="fas fa-info-circle me-1" style="color:#00A8CC;"></i>
+                            Doctor ko temporarily unavailable mark karne ke liye reason darj karein. Yeh public profile pe show hoga.
+                        </p>
+                        <div style="margin-bottom:12px;">
+                            <label style="font-size:0.82rem; font-weight:700; color:#0D2B6E; display:block; margin-bottom:6px;">
+                                <i class="fas fa-comment-alt me-1"></i> Reason <span style="color:#dc2626;">*</span>
+                            </label>
+                            <input type="text" id="emReasonInput"
+                                   placeholder="e.g. Out of city, On leave, Emergency duty..."
+                                   style="width:100%; padding:10px 14px; border:2px solid rgba(0,168,204,0.2); border-radius:10px; font-size:0.9rem; outline:none; transition:border-color 0.2s;"
+                                   onfocus="this.style.borderColor='#00A8CC'"
+                                   onblur="this.style.borderColor='rgba(0,168,204,0.2)'">
+                            <div id="emReasonError" style="color:#dc2626; font-size:0.8rem; margin-top:4px; display:none;">
+                                <i class="fas fa-exclamation-triangle me-1"></i> Reason required.
+                            </div>
+                        </div>
+                        <button onclick="submitEmergency(1)"
+                                style="background:linear-gradient(135deg,#dc2626,#b91c1c); color:white; border:none; padding:10px 24px; border-radius:10px; font-weight:700; font-size:0.88rem; cursor:pointer; transition:all 0.2s; display:inline-flex; align-items:center; gap:8px;"
+                                onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 18px rgba(220,38,38,0.35)'"
+                                onmouseout="this.style.transform=''; this.style.boxShadow=''">
+                            <i class="fas fa-ban"></i> Mark as Not Available
+                        </button>
+                    </div>
+                    <?php else: ?>
+                    <!-- MARK AVAILABLE button -->
+                    <div id="notAvailableForm" style="display:none;"></div>
+                    <div id="markAvailableBox">
+                        <p style="color:#64748b; font-size:0.88rem; margin-bottom:14px;">
+                            <i class="fas fa-check-circle me-1" style="color:#27C96A;"></i>
+                            Doctor abhi unavailable hai. Available karne ke liye button dabayein.
+                        </p>
+                        <button onclick="submitEmergency(0)"
+                                style="background:linear-gradient(135deg,#27C96A,#00C9A7); color:white; border:none; padding:10px 24px; border-radius:10px; font-weight:700; font-size:0.88rem; cursor:pointer; transition:all 0.2s; display:inline-flex; align-items:center; gap:8px;"
+                                onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 18px rgba(39,201,106,0.35)'"
+                                onmouseout="this.style.transform=''; this.style.boxShadow=''">
+                            <i class="fas fa-check-circle"></i> Mark as Available Again
+                        </button>
+                    </div>
+                    <?php endif; ?>
+
+                </div>
+            </div>
+
             <!-- Reviews -->
             <div class="info-card">
                 <div class="info-card-header">
@@ -433,3 +561,127 @@ $total_reviews_count = mysqli_num_rows($reviews_result);
 </div>
 
 <?php include BASE_PATH . '/admin/inc/footer.php'; ?>
+
+<script>
+var DOCTOR_ID   = <?= (int)$doctor['doctor_id'] ?>;
+var AJAX_URL    = '<?= BASE_URL ?>hospital/doctor-detail.php?id=<?= (int)$doctor['doctor_id'] ?>';
+var currentStatus = <?= (int)$doctor['emergency_status'] ?>;
+
+function submitEmergency(newStatus) {
+
+    // Validate reason if marking unavailable
+    if (newStatus === 1) {
+        var reason = document.getElementById('emReasonInput').value.trim();
+        if (reason === '') {
+            document.getElementById('emReasonError').style.display = 'block';
+            document.getElementById('emReasonInput').focus();
+            return;
+        }
+        document.getElementById('emReasonError').style.display = 'none';
+    } else {
+        var reason = '';
+    }
+
+    // Disable button
+    var btn = event.currentTarget;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Saving...';
+
+    var formData = new FormData();
+    formData.append('ajax_emergency', '1');
+    formData.append('em_doctor_id', DOCTOR_ID);
+    formData.append('em_status',    newStatus);
+    formData.append('em_detail',    reason);
+
+    fetch(AJAX_URL, { method: 'POST', body: formData })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.success) {
+                currentStatus = data.status;
+
+                var card        = document.getElementById('notAvailableCard');
+                var header      = card.querySelector('.info-card-header');
+                var pill        = document.getElementById('statusPill');
+                var reasonBox   = document.getElementById('currentReasonBox');
+                var reasonText  = document.getElementById('currentReasonText');
+                var naForm      = document.getElementById('notAvailableForm');
+                var avBox       = document.getElementById('markAvailableBox');
+
+                if (data.status === 1) {
+                    // — NOW UNAVAILABLE —
+                    header.style.background = 'linear-gradient(135deg,#7f1d1d,#dc2626)';
+                    header.querySelector('h5').style.color = 'white';
+                    pill.style.background = 'rgba(255,255,255,0.2)';
+                    pill.textContent = '🔴 Currently Unavailable';
+
+                    reasonText.textContent = reason;
+                    reasonBox.style.display = 'flex';
+
+                    naForm.style.display = 'none';
+                    if (avBox) avBox.style.display = 'block';
+                    if (!avBox) {
+                        naForm.insertAdjacentHTML('afterend',
+                            '<div id="markAvailableBox">' +
+                            '<p style="color:#64748b;font-size:0.88rem;margin-bottom:14px;">' +
+                            '<i class="fas fa-check-circle me-1" style="color:#27C96A;"></i>' +
+                            'Doctor abhi unavailable hai. Available karne ke liye button dabayein.</p>' +
+                            '<button onclick="submitEmergency(0)" ' +
+                            'style="background:linear-gradient(135deg,#27C96A,#00C9A7);color:white;border:none;padding:10px 24px;border-radius:10px;font-weight:700;font-size:0.88rem;cursor:pointer;display:inline-flex;align-items:center;gap:8px;">' +
+                            '<i class="fas fa-check-circle"></i> Mark as Available Again</button></div>'
+                        );
+                    }
+
+                } else {
+                    // — NOW AVAILABLE —
+                    header.style.background = 'linear-gradient(135deg,#f0f9ff,#e8f7ff)';
+                    header.querySelector('h5').style.color = '#0D2B6E';
+                    pill.style.background = '#27C96A';
+                    pill.textContent = '🟢 Available';
+
+                    reasonBox.style.display = 'none';
+
+                    var avBoxEl = document.getElementById('markAvailableBox');
+                    if (avBoxEl) avBoxEl.style.display = 'none';
+
+                    naForm.style.display = 'block';
+                    naForm.innerHTML =
+                        '<p style="color:#64748b;font-size:0.88rem;margin-bottom:14px;">' +
+                        '<i class="fas fa-info-circle me-1" style="color:#00A8CC;"></i>' +
+                        'Doctor ko temporarily unavailable mark karne ke liye reason darj karein.</p>' +
+                        '<div style="margin-bottom:12px;">' +
+                        '<label style="font-size:0.82rem;font-weight:700;color:#0D2B6E;display:block;margin-bottom:6px;">' +
+                        '<i class="fas fa-comment-alt me-1"></i> Reason <span style="color:#dc2626;">*</span></label>' +
+                        '<input type="text" id="emReasonInput" placeholder="e.g. Out of city, On leave..." ' +
+                        'style="width:100%;padding:10px 14px;border:2px solid rgba(0,168,204,0.2);border-radius:10px;font-size:0.9rem;outline:none;"' +
+                        'onfocus="this.style.borderColor=\'#00A8CC\'" onblur="this.style.borderColor=\'rgba(0,168,204,0.2)\'">' +
+                        '<div id="emReasonError" style="color:#dc2626;font-size:0.8rem;margin-top:4px;display:none;">' +
+                        '<i class="fas fa-exclamation-triangle me-1"></i> Reason required.</div></div>' +
+                        '<button onclick="submitEmergency(1)" ' +
+                        'style="background:linear-gradient(135deg,#dc2626,#b91c1c);color:white;border:none;padding:10px 24px;border-radius:10px;font-weight:700;font-size:0.88rem;cursor:pointer;display:inline-flex;align-items:center;gap:8px;">' +
+                        '<i class="fas fa-ban"></i> Mark as Not Available</button>';
+                }
+
+                // Toast
+                showToast(data.status === 1 ? 'Doctor marked as unavailable.' : 'Doctor marked as available.', data.status === 1 ? 'danger' : 'success');
+
+            } else {
+                btn.disabled = false;
+                btn.innerHTML = newStatus === 1 ? '<i class="fas fa-ban"></i> Mark as Not Available' : '<i class="fas fa-check-circle"></i> Mark as Available Again';
+                showToast(data.msg || 'Error occurred.', 'danger');
+            }
+        })
+        .catch(function() {
+            btn.disabled = false;
+            showToast('Network error. Try again.', 'danger');
+        });
+}
+
+function showToast(msg, type) {
+    var bg = type === 'success' ? 'linear-gradient(135deg,#27C96A,#00C9A7)' : 'linear-gradient(135deg,#dc2626,#b91c1c)';
+    var toast = document.createElement('div');
+    toast.style.cssText = 'position:fixed;top:20px;right:20px;z-index:9999;padding:12px 20px;border-radius:10px;color:white;font-weight:600;font-size:0.9rem;box-shadow:0 8px 20px rgba(0,0,0,0.2);background:' + bg + ';transition:opacity 0.4s;display:flex;align-items:center;gap:8px;';
+    toast.innerHTML = '<i class="fas fa-' + (type === 'success' ? 'check-circle' : 'exclamation-circle') + '"></i> ' + msg;
+    document.body.appendChild(toast);
+    setTimeout(function() { toast.style.opacity = '0'; setTimeout(function() { toast.remove(); }, 400); }, 3000);
+}
+</script>

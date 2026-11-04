@@ -133,7 +133,11 @@ if (isset($_POST['user_id']) && (int)$_POST['user_id'] != 0) {
                         <!-- Availability -->
                         <?php if (!empty($doctor['emergency_status']) && $doctor['emergency_status'] != 0): ?>
                             <div class="experience-badge" style="background-color: red;font-weight: bold;">
-                                <i class="fas fa-briefcase"></i>Unavailable, Please contact 03371320001
+                                <i class="fas fa-briefcase"></i>Not Available: 
+                                <?php if(!empty($doctor['emergency_detail'])){echo $doctor['emergency_detail']." , Please contact 03371320001";}else{ ?>
+                                    Unavailable, Please contact 03371320001
+                                <?php } ?>
+                                
                             </div>
                         <?php endif; ?>
 

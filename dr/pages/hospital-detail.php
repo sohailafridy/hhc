@@ -77,6 +77,15 @@ $rating_result = mysqli_query($con, $rating_query);
 $rating_data = mysqli_fetch_assoc($rating_result);
 $avg_rating = $rating_data['avg_rating'] ? round($rating_data['avg_rating'], 1) : 0;
 $total_reviews = $rating_data['total_reviews'] ? $rating_data['total_reviews'] : 0;
+
+// ============================================
+// FETCH HOSPITAL NOTES (from notes table)
+// ============================================
+$notes_query = "SELECT * FROM notes WHERE user_id = $user_id LIMIT 1";
+$notes_result = mysqli_query($con, $notes_query);
+$hospital_note = ($notes_result && mysqli_num_rows($notes_result) > 0)
+    ? mysqli_fetch_assoc($notes_result)
+    : null;
 ?>
 
 <!-- Navbar -->
@@ -155,6 +164,27 @@ $total_reviews = $rating_data['total_reviews'] ? $rating_data['total_reviews'] :
                         <p><?php echo nl2br(htmlspecialchars($hospital['hospital_address'])); ?></p>
                     </div>
                 </div>
+
+                <!-- ===== NOTES (NEW SECTION) ===== -->
+                <?php if ($hospital_note && !empty(trim($hospital_note['notes']))): ?>
+                    <div class="info-card notes-card">
+                        <div class="info-card-header">
+                            <h5><i class="fas fa-sticky-note"></i> Notes</h5>
+                            <?php if (!empty($hospital_note['updated_at'])): ?>
+                                <small class="notes-updated">
+                                    <i class="fas fa-clock me-1"></i>
+                                    Updated: <?php echo date('d M Y, h:i A', strtotime($hospital_note['updated_at'])); ?>
+                                </small>
+                            <?php endif; ?>
+                        </div>
+                        <div class="info-card-body">
+                            <div class="notes-content">
+                                <?php echo nl2br(htmlspecialchars($hospital_note['notes'])); ?>
+                            </div>
+                        </div>
+                    </div>
+                <?php endif; ?>
+                <!-- ===== END NOTES ===== -->
 
                 <!-- Beds -->
                 <div class="info-card">

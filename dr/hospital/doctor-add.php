@@ -327,6 +327,41 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         $last_insert_id = mysqli_insert_id($con);
                         sync_doctor_workplace($con, $last_insert_id, $hospital_id);
 
+                        // ── Clinical info save (ADD mode) ──────────────────
+                        if (!empty($_POST['new_clinical']) && is_array($_POST['new_clinical'])) {
+                            // Get the doctor_in_hosp_id just created
+                            $dih_row = mysqli_fetch_assoc(mysqli_query($con,
+                                "SELECT doctor_in_hosp_id FROM doctor_in_hospital
+                                 WHERE doctor_id = $last_insert_id AND hospital_id = $hospital_id
+                                 ORDER BY doctor_in_hosp_id DESC LIMIT 1"));
+                            if ($dih_row) {
+                                $new_dih_id = (int)$dih_row['doctor_in_hosp_id'];
+                                $nc = $_POST['new_clinical'];
+                                $f  = [];
+                                foreach (['morning_opening_time','morning_closing_time','evening_opening_time',
+                                          'evening_closing_time','season','contact','days','off_days','detail'] as $k) {
+                                    $f[$k] = mysqli_real_escape_string($con, trim($nc[$k] ?? ''));
+                                }
+                                $m_ok = ($f['morning_opening_time'] !== '' && $f['morning_closing_time'] !== '');
+                                $e_ok = ($f['evening_opening_time'] !== '' && $f['evening_closing_time'] !== '');
+                                $f['shift'] = ($m_ok && $e_ok) ? 'Both' : ($m_ok ? 'Morning' : ($e_ok ? 'Evening' : ''));
+
+                                if ($m_ok || $e_ok || $f['days'] !== '') {
+                                    mysqli_query($con, "INSERT INTO clinical_info
+                                        (doctor_in_hosp_id, morning_opening_time, morning_closing_time,
+                                         evening_opening_time, evening_closing_time, season, contact,
+                                         days, off_days, shift, detail, created_at)
+                                        VALUES ($new_dih_id,
+                                        '{$f['morning_opening_time']}', '{$f['morning_closing_time']}',
+                                        '{$f['evening_opening_time']}', '{$f['evening_closing_time']}',
+                                        '{$f['season']}', '{$f['contact']}',
+                                        '{$f['days']}', '{$f['off_days']}', '{$f['shift']}',
+                                        '{$f['detail']}', NOW())");
+                                }
+                            }
+                        }
+                        // ─────────────────────────────────────────────────
+
                         $_SESSION['success_msg'] = "Doctor added successfully!";
                         header("Location: " . BASE_URL . "hospital/doctors.php");
                         exit();
@@ -731,13 +766,13 @@ function ci_options(array $options, $selected) {
             </div>
 
             <!-- ===== CLINICAL INFO SECTION ===== -->
-            <?php if ($edit_mode && !empty($dih_rows)): ?>
-            <?php
-            $working_days  = ["Monday to Friday", "Monday to Saturday", "Monday to Sunday",
-                              "Tuesday to Sunday", "Friday to Sunday", "Saturday & Sunday", "Sunday Only", "24/7"];
-            $off_days_list = ["None", "Monday", "Tuesday", "Wednesday", "Thursday",
-                              "Friday", "Saturday", "Sunday", "Saturday & Sunday", "Friday & Saturday"];
+            <?php 
+            $working_days  = ["Monday to Friday","Monday to Saturday","Monday to Sunday",
+                              "Tuesday to Sunday","Friday to Sunday","Saturday & Sunday","Sunday Only","24/7"];
+            $off_days_list = ["None","Monday","Tuesday","Wednesday","Thursday",
+                              "Friday","Saturday","Sunday","Saturday & Sunday","Friday & Saturday"];
             ?>
+            <?php if ($edit_mode && !empty($dih_rows)): ?>
             <div class="modern-card">
                 <div class="card-header-custom">
                     <h5><i class="fas fa-clock me-2"></i> Clinical Information</h5>
@@ -849,6 +884,116 @@ function ci_options(array $options, $selected) {
                             </div>
                         </div>
                     <?php endforeach; ?>
+                </div>
+            </div>
+            <?php endif; ?>
+
+            <!-- ===== CLINICAL INFO (ADD MODE) ===== -->
+            <?php if (!$edit_mode): ?>
+            <div class="modern-card">
+                <div class="card-header-custom">
+                    <h5><i class="fas fa-clock me-2"></i> Clinical Information <span style="font-size:0.8rem; font-weight:500; opacity:0.7;">(Optional)</span></h5>
+                    <span class="badge" style="background:linear-gradient(135deg,#1C3F8F,#00A8CC); color:white; padding:5px 12px; border-radius:20px;">
+                        <?php echo htmlspecialchars($hospital_name); ?>
+                    </span>
+                </div>
+                <div class="card-body-custom">
+                    <div class="hospital-clinical-card">
+                        <div class="hospital-name">
+                            <i class="fas fa-hospital me-2"></i>
+                            <?php echo htmlspecialchars($hospital_name); ?>
+                            <small style="font-weight:400; opacity:0.7; margin-left:8px;">— aap naya doctor add kar rahe hain is hospital ke liye</small>
+                        </div>
+
+                        <div class="clinical-grid">
+
+                            <!-- Morning -->
+                            <div class="full-width">
+                                <div class="shift-label">
+                                    <i class="fas fa-sun text-warning"></i> Morning Shift
+                                    <span class="hint">(Leave empty if not available)</span>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Opening Time</label>
+                                <input type="text" class="form-control-modern timepicker" autocomplete="off"
+                                       placeholder="09:00 AM"
+                                       name="new_clinical[morning_opening_time]"
+                                       value="<?php echo htmlspecialchars($_POST['new_clinical']['morning_opening_time'] ?? ''); ?>">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Closing Time</label>
+                                <input type="text" class="form-control-modern timepicker" autocomplete="off"
+                                       placeholder="01:00 PM"
+                                       name="new_clinical[morning_closing_time]"
+                                       value="<?php echo htmlspecialchars($_POST['new_clinical']['morning_closing_time'] ?? ''); ?>">
+                            </div>
+
+                            <!-- Evening -->
+                            <div class="full-width">
+                                <hr class="clinical-divider">
+                                <div class="shift-label">
+                                    <i class="fas fa-moon text-primary"></i> Evening Shift
+                                    <span class="hint">(Leave empty if not available)</span>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Opening Time</label>
+                                <input type="text" class="form-control-modern timepicker" autocomplete="off"
+                                       placeholder="05:00 PM"
+                                       name="new_clinical[evening_opening_time]"
+                                       value="<?php echo htmlspecialchars($_POST['new_clinical']['evening_opening_time'] ?? ''); ?>">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Closing Time</label>
+                                <input type="text" class="form-control-modern timepicker" autocomplete="off"
+                                       placeholder="09:00 PM"
+                                       name="new_clinical[evening_closing_time]"
+                                       value="<?php echo htmlspecialchars($_POST['new_clinical']['evening_closing_time'] ?? ''); ?>">
+                            </div>
+
+                            <!-- Other fields -->
+                            <div class="form-group">
+                                <label class="form-label">Season</label>
+                                <select class="form-control-modern" name="new_clinical[season]">
+                                    <option value="">Select Season</option>
+                                    <?php ci_options(["Summer","Winter"], $_POST['new_clinical']['season'] ?? ''); ?>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Contact</label>
+                                <input type="text" class="form-control-modern"
+                                       placeholder="0300-1234567"
+                                       name="new_clinical[contact]"
+                                       value="<?php echo htmlspecialchars($_POST['new_clinical']['contact'] ?? ''); ?>">
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Working Days</label>
+                                <select class="form-control-modern" name="new_clinical[days]">
+                                    <option value="">Select Working Days</option>
+                                    <?php ci_options($working_days, $_POST['new_clinical']['days'] ?? ''); ?>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Off Days</label>
+                                <select class="form-control-modern" name="new_clinical[off_days]">
+                                    <option value="">Select Off Days</option>
+                                    <?php ci_options($off_days_list, $_POST['new_clinical']['off_days'] ?? ''); ?>
+                                </select>
+                            </div>
+
+                            <div class="form-group full-width">
+                                <label class="form-label">Additional Detail</label>
+                                <textarea class="form-control-modern" rows="2"
+                                          placeholder="Additional clinical notes..."
+                                          name="new_clinical[detail]"><?php echo htmlspecialchars($_POST['new_clinical']['detail'] ?? ''); ?></textarea>
+                            </div>
+
+                        </div>
+                    </div>
                 </div>
             </div>
             <?php endif; ?>

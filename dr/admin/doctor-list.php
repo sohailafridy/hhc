@@ -54,6 +54,7 @@ $filter_city_id = isset($_GET['filter_city_id']) ? mysqli_real_escape_string($co
 $filter_specialization = isset($_GET['filter_specialization']) ? mysqli_real_escape_string($con, $_GET['filter_specialization']) : '';
 $filter_emergency = isset($_GET['filter_emergency']) ? mysqli_real_escape_string($con, $_GET['filter_emergency']) : '';
 $gender = isset($_GET['gender']) ? mysqli_real_escape_string($con, $_GET['gender']) : '';
+$filter_pmdc = isset($_GET['filter_pmdc']) ? mysqli_real_escape_string($con, $_GET['filter_pmdc']) : ''; // NEW
 
 // Build WHERE clause
 $where_conditions = [];
@@ -71,6 +72,10 @@ if ($filter_emergency == '1') {
 }
 if ($gender != '') {
     $where_conditions[] = "d.gender = '$gender'";
+}
+// NEW: PMDC number filter (partial match)
+if (!empty($filter_pmdc)) {
+    $where_conditions[] = "d.pmdc_no LIKE '%$filter_pmdc%'";
 }
 $where_conditions[] = "d.approve = 1";
 $where_conditions[] = "u.status = 1";
@@ -115,6 +120,20 @@ $query = "SELECT d.*,
           ORDER BY d.created_at DESC 
           LIMIT $offset, $records_per_page";
 $result = mysqli_query($con, $query);
+
+// Helper to build query string for pagination (preserves all filters)
+$query_params = [
+    'search_doctor'        => $search_doctor,
+    'filter_city_id'       => $filter_city_id,
+    'filter_specialization'=> $filter_specialization,
+    'filter_emergency'     => $filter_emergency,
+    'gender'               => $gender,
+    'filter_pmdc'          => $filter_pmdc, // NEW
+];
+function build_page_url($page_num, $params) {
+    $params['page'] = $page_num;
+    return '?' . http_build_query($params);
+}
 ?>
 
 <link rel="stylesheet" href="<?= BASE_URL ?>style/doctor-list-admin.css">
@@ -159,7 +178,7 @@ $result = mysqli_query($con, $query);
                 </div>
                 <div class="filter-group">
                     <label><i class="fas fa-city"></i> City</label>
-                    <select class="form-select" name="filter_city_id">
+                    <select class="form-select" name="filter_city_id" id="filter_city_id">
                         <option value="">All Cities</option>
                         <?php 
                         mysqli_data_seek($cities_result, 0);
@@ -173,7 +192,7 @@ $result = mysqli_query($con, $query);
                 </div>
                 <div class="filter-group">
                     <label><i class="fas fa-stethoscope"></i> Specialization</label>
-                    <select class="form-select" name="filter_specialization">
+                    <select class="form-select" name="filter_specialization" id="filter_specialization">
                         <option value="">All Specializations</option>
                         <?php 
                         while ($spec = mysqli_fetch_assoc($specializations_result)): ?>
@@ -183,6 +202,12 @@ $result = mysqli_query($con, $query);
                             </option>
                         <?php endwhile; ?>
                     </select>
+                </div>
+                <div class="filter-group">
+                    <label><i class="fas fa-id-card"></i> PMDC No.</label>
+                    <input type="text" class="form-control" name="filter_pmdc" 
+                           value="<?php echo htmlspecialchars($filter_pmdc); ?>" 
+                           placeholder="Enter PMDC number...">
                 </div>
                 <div class="filter-group" style="flex:0 0 auto;">
                     <label>&nbsp;</label>
@@ -286,6 +311,14 @@ $result = mysqli_query($con, $query);
                             <?php endif; ?>
                         </div>
 
+                        <?php if (!empty($doctor['pmdc_no'])): ?>
+                            <div class="doctor-meta">
+                                <span class="meta-item">
+                                    <i class="fas fa-id-card"></i> PMDC: <?php echo htmlspecialchars($doctor['pmdc_no']); ?>
+                                </span>
+                            </div>
+                        <?php endif; ?>
+
                         <?php if ($avg_rating > 0): ?>
                             <div class="doctor-rating">
                                 <span class="stars">
@@ -329,7 +362,7 @@ $result = mysqli_query($con, $query);
                     <ul class="pagination">
                         <?php if ($page > 1): ?>
                             <li class="page-item">
-                                <a class="page-link" href="?page=<?php echo $page - 1; ?>&search_doctor=<?php echo urlencode($search_doctor); ?>&filter_city_id=<?php echo $filter_city_id; ?>&filter_specialization=<?php echo $filter_specialization; ?>&filter_emergency=<?php echo $filter_emergency; ?>&gender=<?php echo $gender; ?>">
+                                <a class="page-link" href="<?php echo build_page_url($page - 1, $query_params); ?>">
                                     <i class="fas fa-chevron-left"></i>
                                 </a>
                             </li>
@@ -339,7 +372,7 @@ $result = mysqli_query($con, $query);
 
                         <?php for ($i = 1; $i <= $total_pages; $i++): ?>
                             <li class="page-item <?php echo ($i == $page) ? 'active' : ''; ?>">
-                                <a class="page-link" href="?page=<?php echo $i; ?>&search_doctor=<?php echo urlencode($search_doctor); ?>&filter_city_id=<?php echo $filter_city_id; ?>&filter_specialization=<?php echo $filter_specialization; ?>&filter_emergency=<?php echo $filter_emergency; ?>&gender=<?php echo $gender; ?>">
+                                <a class="page-link" href="<?php echo build_page_url($i, $query_params); ?>">
                                     <?php echo $i; ?>
                                 </a>
                             </li>
@@ -347,7 +380,7 @@ $result = mysqli_query($con, $query);
 
                         <?php if ($page < $total_pages): ?>
                             <li class="page-item">
-                                <a class="page-link" href="?page=<?php echo $page + 1; ?>&search_doctor=<?php echo urlencode($search_doctor); ?>&filter_city_id=<?php echo $filter_city_id; ?>&filter_specialization=<?php echo $filter_specialization; ?>&filter_emergency=<?php echo $filter_emergency; ?>&gender=<?php echo $gender; ?>">
+                                <a class="page-link" href="<?php echo build_page_url($page + 1, $query_params); ?>">
                                     <i class="fas fa-chevron-right"></i>
                                 </a>
                             </li>
@@ -377,6 +410,7 @@ $result = mysqli_query($con, $query);
 
 <script>
 $(document).ready(function() {
+    // City & Specialization dropdowns now support live search (Select2)
     $('#filter_city_id, #filter_specialization').select2({
         theme: 'bootstrap-5',
         placeholder: 'Search...',

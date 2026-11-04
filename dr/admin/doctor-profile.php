@@ -126,7 +126,7 @@ $ids = $ids['ids'];
 if (isset($_POST['toggle_emergency']) && is_numeric($_POST['toggle_emergency']) && isset($_POST['status'])) {
     $doctor_id = (int)$_POST['toggle_emergency'];
     $new_status = $_POST['status'] == 1 ? 1 : 0;
-    $update_query = "UPDATE doctors SET emergency_status = $new_status WHERE doctor_id = $doctor_id";
+    $update_query = "UPDATE doctors SET emergency_status = $new_status, emergency_detail='Mazrat k sat aj doctor available nahi hai.' WHERE doctor_id = $doctor_id";
     if (mysqli_query($con, $update_query)) {
         echo "success";
     } else {

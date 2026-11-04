@@ -2,8 +2,6 @@
 // ============================================
 // START SESSION & INCLUDE CONFIG
 // ============================================
-
-
 include '../config.php';
 
 // ============================================
@@ -31,7 +29,7 @@ if (!$hospital_data) {
 }
 
 $hospital_id = $hospital_data['hospital_id'];
-$entity_id = $hospital_data['entity_id'];
+$entity_id   = $hospital_data['entity_id'];
 
 // ============================================
 // STATISTICS
@@ -63,13 +61,56 @@ $rating_result = mysqli_query($con, $rating_query);
 $rating_data = mysqli_fetch_assoc($rating_result);
 $avg_rating = $rating_data['avg_rating'] ? round($rating_data['avg_rating'], 1) : 0;
 
-// Recent Doctors
-$recent_doctors_query = "SELECT d.*, dct.type as specialization 
-                         FROM doctors d
+// Recent Doctors (only one query — duplicate line removed)
+$recent_doctors_query = "SELECT d.*, dct.type as specialization, u.status as ustatus
+                         FROM doctor_in_hospital dih
+                         INNER JOIN doctors d ON dih.doctor_id = d.doctor_id
                          LEFT JOIN dr_cat_types dct ON d.cat_type_id = dct.dr_cat_type_id
-                         WHERE d.hospital_id = $hospital_id AND d.approve = 1
+                         LEFT JOIN users u ON u.user_id = d.user_id
+                         WHERE dih.hospital_id = $hospital_id AND dih.inactive = 0 AND d.approve = 1 AND u.status = 1
                          ORDER BY d.created_at DESC LIMIT 5";
 $recent_doctors_result = mysqli_query($con, $recent_doctors_query);
+
+// ============================================
+// NOTES BOARD — auto-create table if needed
+// ============================================
+$notes_tbl = mysqli_query($con, "SHOW TABLES LIKE 'notes'");
+if (mysqli_num_rows($notes_tbl) == 0) {
+    mysqli_query($con, "CREATE TABLE notes (
+        note_id    INT(11) AUTO_INCREMENT PRIMARY KEY,
+        user_id    INT(11) NOT NULL,
+        notes      TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+}
+
+// AJAX: save note
+if (isset($_POST['save_note'])) {
+    $note_text = mysqli_real_escape_string($con, trim($_POST['note_text'] ?? ''));
+    if ($note_text === '') {
+        echo json_encode(['success' => false, 'msg' => 'Note cannot be empty.']);
+        exit();
+    }
+    $exists = mysqli_query($con, "SELECT note_id FROM notes WHERE user_id = $user_id LIMIT 1");
+    if (mysqli_num_rows($exists) > 0) {
+        $row = mysqli_fetch_assoc($exists);
+        mysqli_query($con, "UPDATE notes SET notes = '$note_text', updated_at = NOW() WHERE note_id = {$row['note_id']}");
+        $action = 'updated';
+    } else {
+        mysqli_query($con, "INSERT INTO notes (user_id, notes, created_at, updated_at) VALUES ($user_id, '$note_text', NOW(), NOW())");
+        $action = 'added';
+    }
+    echo json_encode(['success' => true, 'action' => $action, 'time' => date('d M Y, h:i A')]);
+    exit();
+}
+
+// Fetch existing note
+$note_row = null;
+$note_result = mysqli_query($con, "SELECT * FROM notes WHERE user_id = $user_id LIMIT 1");
+if (mysqli_num_rows($note_result) > 0) {
+    $note_row = mysqli_fetch_assoc($note_result);
+}
 
 // Recent Reviews
 $recent_reviews_query = "SELECT * FROM feedback 
@@ -84,9 +125,38 @@ $recent_reviews_result = mysqli_query($con, $recent_reviews_query);
 
 <link rel="stylesheet" href="<?= BASE_URL ?>style/doctor-hospital-admin.css">
 
+<style>
+/* ── 2-Column Dashboard Grid ────────────────────────── */
+.two-col-dashboard {
+    display: grid;
+    grid-template-columns: 1fr 1fr;      /* 2 equal columns */
+    gap: 24px;
+    align-items: start;                  /* don't stretch cards */
+    margin-top: 24px;
+}
+
+.two-col-dashboard .col-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;                           /* vertical gap between cards in same column */
+}
+
+/* Remove the old margin hack on notes card since gap handles spacing */
+.two-col-dashboard .info-card {
+    margin-top: 0 !important;
+}
+
+/* Responsive: 1 column on mobile/tablet */
+@media (max-width: 992px) {
+    .two-col-dashboard {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+
 <div class="content-wrapper">
 
-    <!-- ===== WELCOME SECTION - FIXED ===== -->
+    <!-- ===== WELCOME SECTION ===== -->
     <div class="welcome-section">
         <div class="welcome-content">
             <h1>👋 Welcome, <?php echo htmlspecialchars($hospital_data['hospital_name']); ?></h1>
@@ -144,11 +214,11 @@ $recent_reviews_result = mysqli_query($con, $recent_reviews_query);
         </div>
     </div>
 
-    <!-- ===== DASHBOARD GRID ===== -->
-    <div class="dashboard-grid">
+    <!-- ===== 2-COLUMN DASHBOARD ===== -->
+    <div class="two-col-dashboard">
 
-        <!-- ===== LEFT COLUMN ===== -->
-        <div class="left-column">
+        <!-- ============ LEFT COLUMN ============ -->
+        <div class="col-stack">
 
             <!-- Recent Doctors -->
             <div class="info-card">
@@ -176,14 +246,65 @@ $recent_reviews_result = mysqli_query($con, $recent_reviews_query);
                         <p class="text-muted text-center py-2">No doctors registered yet.</p>
                     <?php endif; ?>
                 </div>
-            </div>
+            </div><!-- end Recent Doctors -->
 
-        </div>
+            <!-- Notes Board -->
+            <div class="info-card">
+                <div class="info-card-header">
+                    <h5><i class="fas fa-sticky-note"></i> Notes Board</h5>
+                    <?php if ($note_row): ?>
+                        <small id="noteLastSaved" style="color:#00A8CC; font-size:0.78rem; font-weight:600;">
+                            <i class="fas fa-clock me-1"></i>
+                            Last saved: <?= date('d M Y, h:i A', strtotime($note_row['updated_at'])) ?>
+                        </small>
+                    <?php else: ?>
+                        <small id="noteLastSaved" style="color:#94a3b8; font-size:0.78rem;"></small>
+                    <?php endif; ?>
+                </div>
+                <div class="info-card-body">
+                    <textarea id="noteTextarea"
+                              placeholder="Write your notes, reminders, or important info here..."
+                              style="width:100%; min-height:140px; padding:14px 16px;
+                                     border:2px solid rgba(0,168,204,0.2); border-radius:12px;
+                                     font-size:0.92rem; color:#0D2B6E; line-height:1.7;
+                                     resize:vertical; outline:none; transition:border-color 0.2s;
+                                     font-family:inherit; background:#f0f9ff;"
+                              onfocus="this.style.borderColor='#00A8CC'; this.style.background='#fff';"
+                              onblur="this.style.borderColor='rgba(0,168,204,0.2)'; this.style.background='#f0f9ff';"
+                    ><?= htmlspecialchars($note_row['notes'] ?? '') ?></textarea>
 
-        <!-- ===== RIGHT COLUMN ===== -->
-        <div class="right-column">
+                    <div id="noteError" style="color:#dc2626; font-size:0.8rem; margin:6px 0 0; display:none;">
+                        <i class="fas fa-exclamation-triangle me-1"></i> Note cannot be empty.
+                    </div>
 
-            <!-- Quick Links -->
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-top:12px; flex-wrap:wrap; gap:8px;">
+                        <button id="saveNoteBtn" onclick="saveNote()"
+                                style="background:linear-gradient(135deg,#1C3F8F,#00A8CC); color:white;
+                                       border:none; padding:10px 24px; border-radius:10px;
+                                       font-weight:700; font-size:0.88rem; cursor:pointer;
+                                       display:inline-flex; align-items:center; gap:8px;
+                                       transition:all 0.2s;"
+                                onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 18px rgba(28,63,143,0.3)'"
+                                onmouseout="this.style.transform=''; this.style.boxShadow=''">
+                            <i class="fas fa-save"></i> Save Note
+                        </button>
+
+                        <div id="noteSavedBadge" style="display:none; align-items:center; gap:6px;
+                             background:rgba(39,201,106,0.12); border:1px solid rgba(39,201,106,0.3);
+                             border-radius:20px; padding:5px 14px; font-size:0.82rem;
+                             font-weight:700; color:#27C96A;">
+                            <i class="fas fa-check-circle"></i> <span id="noteSavedText">Saved!</span>
+                        </div>
+                    </div>
+                </div>
+            </div><!-- end Notes Board -->
+
+        </div><!-- end LEFT column -->
+
+        <!-- ============ RIGHT COLUMN ============ -->
+        <div class="col-stack">
+
+            <!-- Quick Actions -->
             <div class="info-card">
                 <div class="info-card-header">
                     <h5><i class="fas fa-bolt"></i> Quick Actions</h5>
@@ -252,9 +373,72 @@ $recent_reviews_result = mysqli_query($con, $recent_reviews_query);
                 </div>
             </div>
 
-        </div>
-    </div>
+        </div><!-- end RIGHT column -->
 
-</div>
+    </div><!-- end 2-col dashboard -->
+
+</div><!-- end content-wrapper -->
 
 <?php include BASE_PATH . '/admin/inc/footer.php'; ?>
+
+<script>
+function saveNote() {
+    var text = document.getElementById('noteTextarea').value.trim();
+    var errBox  = document.getElementById('noteError');
+    var btn     = document.getElementById('saveNoteBtn');
+    var badge   = document.getElementById('noteSavedBadge');
+    var badgeTxt = document.getElementById('noteSavedText');
+    var lastSaved = document.getElementById('noteLastSaved');
+
+    if (text === '') {
+        errBox.style.display = 'block';
+        document.getElementById('noteTextarea').focus();
+        return;
+    }
+    errBox.style.display = 'none';
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Saving...';
+    badge.style.display = 'none';
+
+    var formData = new FormData();
+    formData.append('save_note', '1');
+    formData.append('note_text', text);
+
+    fetch('<?= BASE_URL ?>hospital/index.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-save"></i> Save Note';
+
+        if (data.success) {
+            badgeTxt.textContent = data.action === 'updated' ? 'Updated!' : 'Saved!';
+            badge.style.display = 'flex';
+            lastSaved.innerHTML = '<i class="fas fa-clock me-1"></i> Last saved: ' + data.time;
+            lastSaved.style.color = '#00A8CC';
+
+            setTimeout(function() { badge.style.display = 'none'; }, 3000);
+        } else {
+            errBox.textContent = data.msg || 'Error occurred.';
+            errBox.style.display = 'block';
+        }
+    })
+    .catch(function() {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-save"></i> Save Note';
+        errBox.textContent = 'Network error. Try again.';
+        errBox.style.display = 'block';
+    });
+}
+
+// Ctrl+S shortcut
+document.getElementById('noteTextarea').addEventListener('keydown', function(e) {
+    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        saveNote();
+    }
+});
+</script>
