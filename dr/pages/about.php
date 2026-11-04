@@ -284,7 +284,7 @@ $average_rating = $review_count > 0 ? number_format($total_stars / $review_count
                             <span class="mini-label">Primary Support</span>
                             <h4>Healthcare Info bhejein</h4>
                             <p>Board photos aur listing details direct WhatsApp par bhejein.</p>
-                            <strong>+92 337 1320001</strong>
+                            <strong>+92 304 9744263</strong>
                         </a>
                         <!-- <a href="https://wa.me/+923450333089" class="contact-action-card about-parallax-card">
                             <div class="contact-action-icon"><i class="fas fa-handshake-angle"></i></div>
