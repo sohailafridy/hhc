@@ -43,7 +43,8 @@ include(__DIR__ . '/includes/colors.php');
         }
     </style>
 
-    <link rel="stylesheet" href="<?= BASE_URL ?>style/login.css">
+    
+    <link rel="stylesheet" href="<?= BASE_URL ?>style/login.css?v=<?= @filemtime(__DIR__ . '/style/login.css') ?: time() ?>">
 </head>
 <body>
     <!-- Animated Background -->
