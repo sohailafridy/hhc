@@ -28,7 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 ?>
 
-<link rel="stylesheet" href="<?= BASE_URL ?>style/contact-us.css">
+<link rel="stylesheet" href="<?= BASE_URL ?>style/contact-us.css?v=<?= @filemtime(__DIR__ . '/style/contact-us.css') ?: time() ?>">
 
 <!-- ======================================== -->
 <!-- HERO SECTION -->

@@ -534,3 +534,68 @@
     .doctor-notes-box { max-width: 100%; }
     .review-header { flex-direction: column; }
 }
+
+
+/* ── DOCTOR MESSAGE SECTION ───────────────────────────────── */
+.doctor-message-section {
+    margin-top: 30px;
+}
+
+.doctor-message-card {
+    background: white;
+    border-radius: var(--radius);
+    padding: 28px 32px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+}
+
+.doctor-message-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 4px;
+    background: linear-gradient(90deg, #1C3F8F 0%, #00A8CC 50%, #27C96A 100%);
+}
+
+.doctor-message-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 18px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+}
+
+.dm-icon-wrap {
+    width: 50px; height: 50px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #1C3F8F, #00A8CC);
+    display: flex; align-items: center; justify-content: center;
+    color: white; font-size: 1.3rem;
+    flex-shrink: 0;
+    box-shadow: 0 6px 16px rgba(28,63,143,0.25);
+}
+
+.dm-title {
+    margin: 0 0 4px;
+    font-size: 1.05rem; font-weight: 700;
+    color: #0D2B6E;
+}
+
+.dm-date {
+    font-size: 0.78rem; color: #94a3b8;
+    font-weight: 500;
+}
+
+.doctor-message-body {
+    font-size: 0.95rem;
+    color: #334155;
+    line-height: 1.85;
+    background: #f0f9ff;
+    border-radius: 12px;
+    padding: 16px 20px;
+    border-left: 4px solid #00A8CC;
+    white-space: pre-wrap;
+}

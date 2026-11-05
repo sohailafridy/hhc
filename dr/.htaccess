@@ -29,24 +29,8 @@ RewriteRule ^contact$ pages/contact.php [L]
 RewriteRule ^all-specialities$ pages/all-specialities.php [L]
 
 
-RewriteRule ^fixit/dashboard$ fixit/dashboard.php [L]
-RewriteRule ^fixit/login$ fixit/login.php [L]
-RewriteRule ^fixit/logout$ fixit/logout.php [L]
-RewriteRule ^fixit$ fixit/index.php [L]
-RewriteRule ^fixit-hangu$ fixit/fixit-hangu.php [L]
-RewriteRule ^fixit/kohat$ fixit/fixit-kohat.php [L]
 
-RewriteRule ^fixit/donors/add$ fixit/pages/donor_add.php [L]
-RewriteRule ^fixit/donors/list$ fixit/pages/donor_list.php [L]
-
-RewriteRule ^fixit/activities/add$ fixit/pages/activity_add.php [L]
-RewriteRule ^fixit/activities/list$ fixit/pages/activity_list.php [L]
-
-RewriteRule ^fixit/expenses/add$ fixit/pages/expense_add.php [L]
-RewriteRule ^fixit/expenses/list$ fixit/pages/expense_list.php [L]
-
-RewriteRule ^fixit/donations/add$ fixit/pages/donation_add.php [L]
-RewriteRule ^fixit/donations/list$ fixit/pages/donation_list.php [L]
-
+RewriteRule ^terms-of-service$ pages/terms-of-service.php [L]
+RewriteRule ^privacy-policy$ pages/privacy-policy.php [L]
 
 

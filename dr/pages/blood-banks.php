@@ -43,8 +43,12 @@
 ?>
 
 <body>
-<link rel="stylesheet" href="<?= BASE_URL ?>style/blood-banks.css">
-<link rel="stylesheet" href="<?= BASE_URL ?>style/entity-card.css">
+
+<link rel="stylesheet" href="<?= BASE_URL ?>style/blood-banks.css?v=<?= @filemtime(__DIR__ . '/style/blood-banks.css') ?: time() ?>">
+<link rel="stylesheet" href="<?= BASE_URL ?>style/entity-card.css?v=<?= @filemtime(__DIR__ . '/style/entity-card.css') ?: time() ?>">
+
+
+
     <!-- Navbar -->
     <?php include BASE_PATH.'/includes/menu.php'; ?>
 

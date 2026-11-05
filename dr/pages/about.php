@@ -32,7 +32,7 @@ $average_rating = $review_count > 0 ? number_format($total_stars / $review_count
 ?>
 
 <?php include BASE_PATH.'/includes/menu.php'; ?>
-<link rel="stylesheet" href="<?= BASE_URL ?>style/about-us.css">
+<link rel="stylesheet" href="<?= BASE_URL ?>style/about-us.css?v=<?= @filemtime(__DIR__ . '/style/about-us.css') ?: time() ?>">
 
 <!-- ══ PAGE HEADER ══════════════════════════════════════════ -->
 <section class="about-page-header">

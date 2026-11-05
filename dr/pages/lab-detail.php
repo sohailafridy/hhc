@@ -268,7 +268,7 @@ $total_reviews = $rating_data['total_reviews'] ? $rating_data['total_reviews'] :
     </div>
 </section>
 
-<link rel="stylesheet" href="<?= BASE_URL ?>style/lab-detail.css">
+<link rel="stylesheet" href="<?= BASE_URL ?>style/lab-detail.css?v=<?= @filemtime(__DIR__ . '/style/lab-detail.css') ?: time() ?>">
 
 <!-- Footer -->
 <?php include BASE_PATH.'/includes/footer.php';?>

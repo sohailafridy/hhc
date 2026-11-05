@@ -44,7 +44,9 @@ if ($categories_result) {
 }
 
 ?>
-<link rel="stylesheet" href="<?= BASE_URL ?>style/doctor-list.css">
+<link rel="stylesheet" href="<?= BASE_URL ?>style/doctor-list.css?v=<?= @filemtime(__DIR__ . '/style/doctor-list.css') ?: time() ?>">
+
+
 <style>
     /* Urdu dropdown styling for better readability */
     .urdu-text {

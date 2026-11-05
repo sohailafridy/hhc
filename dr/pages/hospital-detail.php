@@ -90,7 +90,9 @@ $hospital_note = ($notes_result && mysqli_num_rows($notes_result) > 0)
 
 <!-- Navbar -->
 <?php include BASE_PATH . '/includes/menu.php'; ?>
-<link rel="stylesheet" href="<?= BASE_URL ?>style/hospital-detail.css">
+<link rel="stylesheet" href="<?= BASE_URL ?>style/hospital-detail.css?v=<?= @filemtime(__DIR__ . '/style/hospital-detail.css') ?: time() ?>">
+
+
 <!-- ===== HERO SECTION ===== -->
 <section class="hospital-hero">
     <div class="container">

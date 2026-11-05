@@ -44,8 +44,12 @@
     
     $result = mysqli_query($con, $query);
 ?>
-<link rel="stylesheet" href="<?= BASE_URL ?>style/lab-list.css">
-<link rel="stylesheet" href="<?= BASE_URL ?>style/entity-card.css">
+
+
+<link rel="stylesheet" href="<?= BASE_URL ?>style/lab-list.css?v=<?= @filemtime(__DIR__ . '/style/lab-list.css') ?: time() ?>">
+<link rel="stylesheet" href="<?= BASE_URL ?>style/entity-card.css?v=<?= @filemtime(__DIR__ . '/style/entity-card.css') ?: time() ?>">
+
+
 <body>
 
     <!-- Navbar -->

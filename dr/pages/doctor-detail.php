@@ -34,7 +34,7 @@ if (isset($_POST['user_id']) && (int)$_POST['user_id'] != 0) {
 }
 ?>
 
-<link rel="stylesheet" href="<?= BASE_URL ?>style/doctor-detail.css">
+<link rel="stylesheet" href="<?= BASE_URL ?>style/doctor-detail.css?v=<?= @filemtime(__DIR__ . '/style/doctor-detail.css') ?: time() ?>">
 
 <!-- Navbar -->
 <?php include BASE_PATH . '/includes/menu.php'; ?>
@@ -392,6 +392,30 @@ if (isset($_POST['user_id']) && (int)$_POST['user_id'] != 0) {
                     </div>
                 </div>
             </div>
+
+            <!-- ===== DOCTOR MESSAGE SECTION ===== -->
+            <?php
+            
+            $note_q = mysqli_query($con, "SELECT notes, updated_at FROM notes WHERE user_id = " . (int)$doctor['user_id'] . " LIMIT 1");
+            $note_row = $note_q ? mysqli_fetch_assoc($note_q) : null;
+            if ($note_row && !empty(trim($note_row['notes']))): ?>
+            <div class="doctor-message-section" data-aos="fade-up" data-aos-delay="180">
+                <div class="doctor-message-card">
+                    <div class="doctor-message-header">
+                        <div class="dm-icon-wrap">
+                            <i class="fas fa-comment-medical"></i>
+                        </div>
+                        <div>
+                            <h4 class="dm-title">Doctor's Message</h4>
+                            <span class="dm-date"><i class="fas fa-clock me-1"></i><?= date('d M Y', strtotime($note_row['updated_at'])) ?></span>
+                        </div>
+                    </div>
+                    <div class="doctor-message-body">
+                        <?= nl2br(htmlspecialchars($note_row['notes'])) ?>
+                    </div>
+                </div>
+            </div>
+            <?php endif; ?>
 
             <!-- ===== REVIEWS SECTION ===== -->
             <div class="reviews-section" data-aos="fade-up" data-aos-delay="200">

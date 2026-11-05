@@ -80,7 +80,8 @@ $blood_result = mysqli_query($con, $blood_query);
 $available_blood_bags = mysqli_query($con, "SELECT * FROM bb_available_blood WHERE bb_id = $bb_id");
 ?>
 
-<link rel="stylesheet" href="<?= BASE_URL ?>style/blood-bank-detail-admin.css">
+
+<link rel="stylesheet" href="<?= BASE_URL ?>style/blood-bank-detail-admin.css?v=<?= @filemtime(__DIR__ . '/style/login.css') ?: time() ?>">
 
 <div class="content-wrapper">
    <!-- Container-fluid starts -->

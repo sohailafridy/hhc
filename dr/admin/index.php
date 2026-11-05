@@ -157,7 +157,7 @@ $dashboard_chart_data = [
                 <div class="stat-icon blue"><i class="fas fa-map-marker-alt"></i></div>
                 <div class="stat-number"><?php echo $city_count; ?></div>
                 <div class="stat-label">Total Cities</div>
-                <span class="stat-change up"><i class="fas fa-arrow-up"></i> Active</span>
+                <span class="stat-change up"><i class="fas fa-check-circle"></i> Active</span>
             </div>
         </a>
         <a href="<?=BASE_URL?>admin/hospitals/list">
@@ -165,47 +165,47 @@ $dashboard_chart_data = [
                 <div class="stat-icon green"><i class="fas fa-hospital"></i></div>
                 <div class="stat-number"><?php echo $hospitals_count; ?></div>
                 <div class="stat-label">Total Hospitals</div>
-                <span class="stat-change up"><i class="fas fa-arrow-up"></i> Active</span>
+                <span class="stat-change up"><i class="fas fa-check-circle"></i> Active</span>
             </div>
         </a>
-        <a href="<?=BASE_URL?>admin/doctors/list">    
+        <a href="<?=BASE_URL?>admin/doctors/list">
             <div class="stat-card">
                 <div class="stat-icon blue"><i class="fas fa-user-md"></i></div>
                 <div class="stat-number"><?php echo $doctors_count; ?></div>
                 <div class="stat-label">Total Doctors</div>
-                <span class="stat-change up"><i class="fas fa-arrow-up"></i> Active</span>
+                <span class="stat-change up"><i class="fas fa-check-circle"></i> Active</span>
             </div>
         </a>
-        <a href="<?=BASE_URL?>admin/laboratories/list">    
+        <a href="<?=BASE_URL?>admin/laboratories/list">
             <div class="stat-card">
                 <div class="stat-icon orange"><i class="fas fa-flask"></i></div>
                 <div class="stat-number"><?php echo $labs_count; ?></div>
                 <div class="stat-label">Total Laboratories</div>
-                <span class="stat-change up"><i class="fas fa-arrow-up"></i> Active</span>
+                <span class="stat-change up"><i class="fas fa-check-circle"></i> Active</span>
             </div>
         </a>
-        <a href="<?=BASE_URL?>admin/blood-banks/list">   
+        <a href="<?=BASE_URL?>admin/blood-banks/list">
             <div class="stat-card">
                 <div class="stat-icon red"><i class="fas fa-tint"></i></div>
                 <div class="stat-number"><?php echo $blood_banks_count; ?></div>
                 <div class="stat-label">Blood Banks</div>
-                <span class="stat-change up"><i class="fas fa-arrow-up"></i> Active</span>
+                <span class="stat-change up"><i class="fas fa-check-circle"></i> Active</span>
             </div>
         </a>
-        <a href="<?=BASE_URL?>admin/users">    
+        <a href="<?=BASE_URL?>admin/users">
             <div class="stat-card">
-                <div class="stat-icon purple"><i class="fas fa-users"></i></div>
+                <div class="stat-icon teal"><i class="fas fa-users"></i></div>
                 <div class="stat-number"><?php echo $users_count; ?></div>
                 <div class="stat-label">Total Users</div>
-                <span class="stat-change up"><i class="fas fa-arrow-up"></i> Registered</span>
+                <span class="stat-change up"><i class="fas fa-check-circle"></i> Registered</span>
             </div>
         </a>
-        <a href="#">    
+        <a href="#">
             <div class="stat-card">
                 <div class="stat-icon cyan"><i class="fas fa-star"></i></div>
                 <div class="stat-number"><?php echo $feedbacks_count; ?></div>
                 <div class="stat-label">Total Feedbacks</div>
-                <span class="stat-change up"><i class="fas fa-arrow-up"></i> Reviews</span>
+                <span class="stat-change up"><i class="fas fa-check-circle"></i> Reviews</span>
             </div>
         </a>
     </div>
@@ -299,45 +299,27 @@ $dashboard_chart_data = [
                     <div class="quick-actions-grid">
                         <a href="<?php echo BASE_URL; ?>admin/doctors/add" class="quick-action-btn">
                             <span class="qa-icon blue"><i class="fas fa-user-md"></i></span>
-                            <span class="qa-text">
-                                <span class="qa-title">Add Doctor</span>
-                                <span class="qa-desc">New doctor profile</span>
-                            </span>
+                            <span class="qa-text"><span class="qa-title">Add Doctor</span><span class="qa-desc">New doctor profile</span></span>
                         </a>
                         <a href="<?php echo BASE_URL; ?>admin/hospitals/add" class="quick-action-btn">
                             <span class="qa-icon green"><i class="fas fa-hospital"></i></span>
-                            <span class="qa-text">
-                                <span class="qa-title">Add Hospital</span>
-                                <span class="qa-desc">New hospital listing</span>
-                            </span>
+                            <span class="qa-text"><span class="qa-title">Add Hospital</span><span class="qa-desc">New hospital listing</span></span>
                         </a>
                         <a href="<?php echo BASE_URL; ?>admin/laboratories/add" class="quick-action-btn">
-                            <span class="qa-icon orange"><i class="fas fa-flask"></i></span>
-                            <span class="qa-text">
-                                <span class="qa-title">Add Lab</span>
-                                <span class="qa-desc">New laboratory</span>
-                            </span>
+                            <span class="qa-icon teal"><i class="fas fa-flask"></i></span>
+                            <span class="qa-text"><span class="qa-title">Add Lab</span><span class="qa-desc">New laboratory</span></span>
                         </a>
                         <a href="<?php echo BASE_URL; ?>admin/blood-banks/add" class="quick-action-btn">
                             <span class="qa-icon red"><i class="fas fa-tint"></i></span>
-                            <span class="qa-text">
-                                <span class="qa-title">Add Blood Bank</span>
-                                <span class="qa-desc">New blood bank</span>
-                            </span>
+                            <span class="qa-text"><span class="qa-title">Add Blood Bank</span><span class="qa-desc">New blood bank</span></span>
                         </a>
                         <a href="<?php echo BASE_URL; ?>admin/users" class="quick-action-btn">
-                            <span class="qa-icon purple"><i class="fas fa-users"></i></span>
-                            <span class="qa-text">
-                                <span class="qa-title">Manage Users</span>
-                                <span class="qa-desc">View all users</span>
-                            </span>
+                            <span class="qa-icon blue"><i class="fas fa-users"></i></span>
+                            <span class="qa-text"><span class="qa-title">Manage Users</span><span class="qa-desc">View all users</span></span>
                         </a>
                         <a href="<?php echo BASE_URL; ?>admin/recycle" class="quick-action-btn">
-                            <span class="qa-icon cyan"><i class="fas fa-trash"></i></span>
-                            <span class="qa-text">
-                                <span class="qa-title">Recycle Bin</span>
-                                <span class="qa-desc">Deleted items</span>
-                            </span>
+                            <span class="qa-icon orange"><i class="fas fa-trash"></i></span>
+                            <span class="qa-text"><span class="qa-title">Recycle Bin</span><span class="qa-desc">Deleted items</span></span>
                         </a>
                     </div>
                 </div>

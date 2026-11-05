@@ -54,7 +54,9 @@ $total_reviews = $rating_data['total_reviews'] ? $rating_data['total_reviews'] :
  <!-- Navbar -->
     <?php include BASE_PATH.'/includes/menu.php'; ?>
 <!-- Blood Bank Profile Section -->
-<link rel="stylesheet" href="<?= BASE_URL ?>style/blood-bank-detail.css">
+
+<link rel="stylesheet" href="<?= BASE_URL ?>style/blood-bank-detail.css?v=<?= @filemtime(__DIR__ . '/style/blood-bank-detail.css') ?: time() ?>">
+
 <section class="bb-profile-section">
     <div class="container">
         <div class="bb-profile-card">

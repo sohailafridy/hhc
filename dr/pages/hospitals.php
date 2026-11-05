@@ -42,7 +42,10 @@
 ?>
 
 <body>
-<link rel="stylesheet" href="<?= BASE_URL ?>style/hospitals.css">
+<link rel="stylesheet" href="<?= BASE_URL ?>style/hospitals.css?v=<?= @filemtime(__DIR__ . '/style/hospitals.css') ?: time() ?>">
+
+
+
     <!-- Navbar -->
    <?php include BASE_PATH.'/includes/menu.php'; ?>
 

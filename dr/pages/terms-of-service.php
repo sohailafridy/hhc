@@ -24,7 +24,8 @@ $toc = [
     'contact'        => 'Contact Us',
 ];
 ?>
-<link rel="stylesheet" href="<?= BASE_URL ?>style/legal-pages.css">
+
+<link rel="stylesheet" href="<?= BASE_URL ?>style/legal-pages.css?v=<?= @filemtime(__DIR__ . '/style/legal-pages.css') ?: time() ?>">
 <script>document.title = <?php echo json_encode($page_title . ' | ' . $site_name); ?>;</script>
 <body>
 

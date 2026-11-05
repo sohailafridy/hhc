@@ -72,7 +72,9 @@ $categories_result = mysqli_query($con, $categories_query);
 
     <!-- Navbar -->
     <?php include BASE_PATH.'/includes/menu.php'; ?>
-<link rel="stylesheet" href="<?= BASE_URL ?>style/home.css">
+
+<link rel="stylesheet" href="<?= BASE_URL ?>style/home.css?v=<?= @filemtime(__DIR__ . '/style/home.css') ?: time() ?>">
+
 
 <style>
 /* SehatNexa Brand Colors — injected from colors.php */
