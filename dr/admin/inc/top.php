@@ -224,13 +224,17 @@ if ($sl) {
 $display_name = isset($_SESSION['username']) ? $_SESSION['username'] : 'Guest';
 $display_type = isset($_SESSION['type']) ? ucfirst($_SESSION['type']) : '';
 
+// User avatar (fixed: no longer depends on the last $note from the notifications loop)
+$top_user_pic = BASE_URL . 'includes/uploads/avatar.jpg';
+
 if (isset($_SESSION['type']) && $_SESSION['type'] == 'hospital' && isset($_SESSION['user_id'])) {
     $user_id = (int) $_SESSION['user_id'];
-    $hosp_query = "SELECT hospital_name FROM hospitals WHERE user_id = $user_id AND approve = 1";
+    $hosp_query = "SELECT hospital_name, hospital_pic FROM hospitals WHERE user_id = $user_id AND approve = 1";
     $hosp_result = mysqli_query($con, $hosp_query);
     if ($hosp_result && mysqli_num_rows($hosp_result) > 0) {
         $hosp_data = mysqli_fetch_assoc($hosp_result);
         $display_name = $hosp_data['hospital_name'];
+        $top_user_pic = admin_top_pic('hospitals', $hosp_data['hospital_pic']);
     }
 }
 ?>
@@ -259,7 +263,7 @@ if (isset($_SESSION['type']) && $_SESSION['type'] == 'hospital' && isset($_SESSI
 
 /* Navbar bg */
 .main-header-top .navbar {
-    background: transparent !important;
+    background: linear-gradient(135deg, #071124 0%, #0D2B6E 50%, #1C3F8F 100%) !important;
 }
 
 /* All top nav links */
@@ -457,25 +461,199 @@ if (isset($_SESSION['type']) && $_SESSION['type'] == 'hospital' && isset($_SESSI
 }
 .morphsearch-close:hover { color: #00A8CC !important; }
 
-/* Sidebar toggle (hamburger) */
-.sidebar-toggle:before,
-.sidebar-toggle:after,
-.main-header-top .sidebar-toggle span {
-    background: rgba(255,255,255,0.75) !important;
+/* ── Desktop: right menu laid out in one row, no overlap ──── */
+@media (min-width: 769px) {
+
+    /* Mobile-only logo (inside navbar) is hidden on desktop */
+    .main-header-top .navbar > a#mobileNavLogo {
+        display: none !important;
+    }
+
+    .main-header-top .rgt-nav {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: 8px !important;
+        float: right !important;
+        margin: 0 10px 0 0 !important;
+        padding: 0 !important;
+        list-style: none !important;
+    }
+
+    .main-header-top .rgt-nav > li {
+        float: none !important;
+        position: relative !important;
+        display: flex !important;
+        align-items: center !important;
+    }
+
+    .main-header-top .rgt-nav > li > a {
+        display: flex !important;
+        align-items: center !important;
+        gap: 8px !important;
+        position: relative !important;
+        padding: 8px 12px !important;
+        white-space: nowrap !important;
+    }
+
+    /* user name + type stacked/inline, avatar beside it */
+    .main-header-top .rgt-nav .drop-image > span {
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+    }
+
+    .main-header-top .rgt-nav .drop-image .img-circle {
+        width: 34px !important;
+        height: 34px !important;
+        object-fit: cover !important;
+    }
+
+    /* dropdowns open to the left so they don't go off-screen */
+    .main-header-top .rgt-nav .dropdown-menu {
+        right: 0 !important;
+        left: auto !important;
+    }
 }
 
-.sidebar-toggle:hover:before,
-.sidebar-toggle:hover:after {
-    background: #00A8CC !important;
+/* ── Mobile Top Header Fix ────────────────────────────────── */
+@media (max-width: 768px) {
+
+    /* Hide the outer desktop logo */
+    .main-header-top > a.logo {
+        display: none !important;
+    }
+
+    /* Navbar becomes a single flex row */
+    .main-header-top .navbar {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        width: 100% !important;
+        padding: 0 12px !important;
+        min-height: 56px !important;
+    }
+
+    /* Logo inside navbar on the LEFT */
+    .main-header-top .navbar > a.logo {
+        display: flex !important;
+        align-items: center !important;
+        order: 0 !important;
+        padding: 0 8px 0 0 !important;
+        background: transparent !important;
+        border: none !important;
+    }
+
+    .main-header-top .navbar > a.logo img {
+        height: 36px !important;
+        width: auto !important;
+        filter: brightness(0) invert(1) !important;
+    }
+
+    /* LEFT nav (home only on mobile) */
+    .main-header-top .lft-nav {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 4px !important;
+        flex: 1 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    /* Hide Quick Lists & search on mobile, keep only home */
+    .main-header-top .lft-nav > li:not(:first-child) {
+        display: none !important;
+    }
+
+    /* Right nav: keep bell only */
+    .main-header-top .rgt-nav {
+        display: flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+        float: none !important;
+        margin: 0 8px !important;
+        padding: 0 !important;
+        list-style: none !important;
+    }
+
+    .main-header-top .rgt-nav > li:not(.notification-menu),
+    .main-header-top .hide-mobile {
+        display: none !important;
+    }
+
+    .main-header-top .rgt-nav > li.notification-menu > a {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        position: relative !important;
+        padding: 8px 10px !important;
+    }
+
+    /* Notification dropdown must stay inside the screen */
+    .main-header-top .notification-menu .dropdown-menu {
+        position: fixed !important;
+        top: 58px !important;
+        left: 10px !important;
+        right: 10px !important;
+        width: auto !important;
+        max-width: calc(100vw - 20px) !important;
+    }
+
+    /* Sidebar toggle (hamburger) on the RIGHT */
+    .main-header-top .navbar .sidebar-toggle {
+        order: 99 !important;
+        margin-left: 0 !important;
+        flex-shrink: 0 !important;
+        background: rgba(255,255,255,0.1) !important;
+        border: 1px solid rgba(0,168,204,0.3) !important;
+        border-radius: 8px !important;
+        padding: 8px 10px !important;
+        width: 40px !important;
+        height: 40px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+
+    /* Home icon button */
+    .main-header-top .lft-nav > li:first-child > a {
+        background: rgba(255,255,255,0.1) !important;
+        border: 1px solid rgba(0,168,204,0.25) !important;
+        border-radius: 8px !important;
+        padding: 8px 10px !important;
+        color: white !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 0 !important;
+    }
+
+    .main-header-top .lft-nav > li:first-child > a span {
+        display: none !important; /* hide "Dashboard" text, keep icon */
+    }
+
+    .main-header-top .lft-nav > li:first-child > a i {
+        font-size: 1rem !important;
+        color: white !important;
+    }
 }
+
 </style>
 
 <div class="wrapper">
 
 <header class="main-header-top hidden-print">
-         <a href="<?php echo BASE_URL; ?>admin" class="logo"><img class="img-fluid able-logo" src="<?php echo BASE_URL; ?>includes/uploads/logo.png" alt="Theme-logo"></a>
+         <!-- Desktop logo (left panel) -->
+         <a href="<?php echo BASE_URL; ?>" class="logo">
+             <img class="img-fluid able-logo" src="<?php echo BASE_URL; ?>includes/uploads/logo.png" alt="SehatNexa" style="filter:brightness(0) invert(1); height:42px; width:auto;">
+         </a>
          <nav class="navbar navbar-static-top">
-            <!-- Sidebar toggle button-->
+            <!-- Mobile: logo shows inside navbar on LEFT -->
+            <a href="<?php echo BASE_URL; ?>" class="logo" id="mobileNavLogo">
+               <img src="<?php echo BASE_URL; ?>includes/uploads/logo.png" alt="SehatNexa">
+            </a>
+            <!-- Sidebar toggle — CSS moves it to RIGHT on mobile -->
             <a href="#!" data-toggle="offcanvas" class="sidebar-toggle"></a>
             <ul class="top-nav lft-nav">
                <li>
@@ -502,11 +680,10 @@ if (isset($_SESSION['type']) && $_SESSION['type'] == 'hospital' && isset($_SESSI
                   </a>
                </li>
             </ul>
-            <!-- Navbar Right Menu-->
-           
-               <ul class="top-nav">
+
+            <!-- Navbar Right Menu (fixed: was a broken <ul"> tag) -->
+            <ul class="top-nav rgt-nav">
                   <!--Notification Menu-->
-                    
                   <li class="dropdown notification-menu">
                      <a href="#!" data-toggle="dropdown" aria-expanded="false" class="dropdown-toggle">
                         <i class="icon-bell"></i>
@@ -527,9 +704,8 @@ if (isset($_SESSION['type']) && $_SESSION['type'] == 'hospital' && isset($_SESSI
                         <li class="bell-notification">
                            <a href="<?php echo htmlspecialchars($note['url']); ?>" class="media">
                               <span class="media-left media-icon">
-                   
-<img class="img-circle" src="<?php echo htmlspecialchars($note['pic']); ?>" alt="User Image">        
-                  </span>
+                                 <img class="img-circle" src="<?php echo htmlspecialchars($note['pic']); ?>" alt="User Image">
+                              </span>
                               <div class="media-body"><span class="block"><?php echo htmlspecialchars($note['title']); ?> — <?php echo htmlspecialchars($note['text']); ?></span><span class="text-muted block-time"><?php echo htmlspecialchars(admin_top_time_ago($note['time'])); ?></span></div>
                            </a>
                         </li>
@@ -540,27 +716,28 @@ if (isset($_SESSION['type']) && $_SESSION['type'] == 'hospital' && isset($_SESSI
                         </li>
                      </ul>
                   </li>
-                  <!-- recycle -->
-                  <li class="pc-rheader-submenu ">
+
+                  <!-- recycle (desktop only) -->
+                  <li class="pc-rheader-submenu hide-mobile">
                      <a href="<?php echo BASE_URL; ?>admin/recycle" class="drop icon-circle" title="Recycle Bin">
                         <i class="icon-trash"></i>
                         <?php if ($top_recycle_count > 0): ?>
                         <span class="badge badge-danger header-badge"><?php echo $top_recycle_count; ?></span>
                         <?php endif; ?>
                      </a>
-
                   </li>
-                  <!-- window screen -->
-                  <li class="pc-rheader-submenu">
+
+                  <!-- window screen (desktop only) -->
+                  <li class="pc-rheader-submenu hide-mobile">
                      <a href="#!" class="drop icon-circle" onclick="javascript:toggleFullScreen()">
                         <i class="icon-size-fullscreen"></i>
                      </a>
-
                   </li>
-                  <!-- User Menu - DYNAMIC -->
-                  <li class="dropdown">
+
+                  <!-- User Menu - DYNAMIC (desktop only) -->
+                  <li class="dropdown hide-mobile">
                      <a href="#!" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false" class="dropdown-toggle drop icon-circle drop-image">
-                        <span><img class="img-circle" src="<?php echo $note['pic']; ?>" style="width:40px;" alt="User Image"></span>
+                        <span><img class="img-circle" src="<?php echo htmlspecialchars($top_user_pic); ?>" style="width:40px;" alt="User Image"></span>
                         <span>
                             <strong><?php echo htmlspecialchars($display_name); ?></strong>
                             <span class="text-muted small">(<?php echo htmlspecialchars($display_type); ?>)</span>
@@ -582,62 +759,62 @@ if (isset($_SESSION['type']) && $_SESSION['type'] == 'hospital' && isset($_SESSI
                         <li><a href="<?php echo BASE_URL; ?>logout"><i class="icon-logout"></i> Logout</a></li>
                      </ul>
                   </li>
-               </ul>
+            </ul>
 
-               <!-- search -->
-               <div id="morphsearch" class="morphsearch">
-                  <form class="morphsearch-form" action="<?php echo BASE_URL; ?>admin/doctors/list" method="get">
+            <!-- search -->
+            <div id="morphsearch" class="morphsearch">
+               <form class="morphsearch-form" action="<?php echo BASE_URL; ?>admin/doctors/list" method="get">
 
-                     <input class="morphsearch-input" type="search" name="search_doctor" placeholder="Search doctors..." />
+                  <input class="morphsearch-input" type="search" name="search_doctor" placeholder="Search doctors..." />
 
-                     <button class="morphsearch-submit" type="submit">Search</button>
+                  <button class="morphsearch-submit" type="submit">Search</button>
 
-                  </form>
-                  <div class="morphsearch-content">
-                     <div class="dummy-column">
-                        <h2>Doctors</h2>
-                        <?php if (empty($top_search_doctors)): ?>
-                        <p>No doctors found</p>
-                        <?php else: ?>
-                        <?php foreach ($top_search_doctors as $doc): ?>
-                        <a class="dummy-media-object" href="<?php echo BASE_URL; ?>admin/doctors/profile?id=<?php echo (int) $doc['doctor_id']; ?>">
-                           <img class="round" src="<?php echo htmlspecialchars(admin_top_pic('doctors', $doc['doctor_pic'])); ?>" alt="<?php echo htmlspecialchars($doc['doctor_name']); ?>" />
-                           <h3><?php echo htmlspecialchars($doc['doctor_name']); ?></h3>
-                        </a>
-                        <?php endforeach; ?>
-                        <?php endif; ?>
-                     </div>
-                     <div class="dummy-column">
-                        <h2>Hospitals</h2>
-                        <?php if (empty($top_search_hospitals)): ?>
-                        <p>No hospitals found</p>
-                        <?php else: ?>
-                        <?php foreach ($top_search_hospitals as $hosp): ?>
-                        <a class="dummy-media-object" href="<?php echo BASE_URL; ?>admin/hospitals/detail?id=<?php echo (int) $hosp['hospital_id']; ?>&user_id=<?php echo (int) $hosp['user_id']; ?>">
-                           <img src="<?php echo htmlspecialchars(admin_top_pic('hospitals', $hosp['hospital_pic'])); ?>" alt="<?php echo htmlspecialchars($hosp['hospital_name']); ?>" />
-                           <h3><?php echo htmlspecialchars($hosp['hospital_name']); ?></h3>
-                        </a>
-                        <?php endforeach; ?>
-                        <?php endif; ?>
-                     </div>
-                     <div class="dummy-column">
-                        <h2>Laboratories</h2>
-                        <?php if (empty($top_search_labs)): ?>
-                        <p>No laboratories found</p>
-                        <?php else: ?>
-                        <?php foreach ($top_search_labs as $lab): ?>
-                        <a class="dummy-media-object" href="<?php echo BASE_URL; ?>admin/laboratories/detail?id=<?php echo (int) $lab['lab_id']; ?>">
-                           <img src="<?php echo htmlspecialchars(admin_top_pic('laboratories', $lab['lab_pic'])); ?>" alt="<?php echo htmlspecialchars($lab['lab_name']); ?>" />
-                           <h3><?php echo htmlspecialchars($lab['lab_name']); ?></h3>
-                        </a>
-                        <?php endforeach; ?>
-                        <?php endif; ?>
-                     </div>
+               </form>
+               <div class="morphsearch-content">
+                  <div class="dummy-column">
+                     <h2>Doctors</h2>
+                     <?php if (empty($top_search_doctors)): ?>
+                     <p>No doctors found</p>
+                     <?php else: ?>
+                     <?php foreach ($top_search_doctors as $doc): ?>
+                     <a class="dummy-media-object" href="<?php echo BASE_URL; ?>admin/doctors/profile?id=<?php echo (int) $doc['doctor_id']; ?>">
+                        <img class="round" src="<?php echo htmlspecialchars(admin_top_pic('doctors', $doc['doctor_pic'])); ?>" alt="<?php echo htmlspecialchars($doc['doctor_name']); ?>" />
+                        <h3><?php echo htmlspecialchars($doc['doctor_name']); ?></h3>
+                     </a>
+                     <?php endforeach; ?>
+                     <?php endif; ?>
                   </div>
-                  <!-- /morphsearch-content -->
-                  <span class="morphsearch-close"><i class="icofont icofont-search-alt-1"></i></span>
+                  <div class="dummy-column">
+                     <h2>Hospitals</h2>
+                     <?php if (empty($top_search_hospitals)): ?>
+                     <p>No hospitals found</p>
+                     <?php else: ?>
+                     <?php foreach ($top_search_hospitals as $hosp): ?>
+                     <a class="dummy-media-object" href="<?php echo BASE_URL; ?>admin/hospitals/detail?id=<?php echo (int) $hosp['hospital_id']; ?>&user_id=<?php echo (int) $hosp['user_id']; ?>">
+                        <img src="<?php echo htmlspecialchars(admin_top_pic('hospitals', $hosp['hospital_pic'])); ?>" alt="<?php echo htmlspecialchars($hosp['hospital_name']); ?>" />
+                        <h3><?php echo htmlspecialchars($hosp['hospital_name']); ?></h3>
+                     </a>
+                     <?php endforeach; ?>
+                     <?php endif; ?>
+                  </div>
+                  <div class="dummy-column">
+                     <h2>Laboratories</h2>
+                     <?php if (empty($top_search_labs)): ?>
+                     <p>No laboratories found</p>
+                     <?php else: ?>
+                     <?php foreach ($top_search_labs as $lab): ?>
+                     <a class="dummy-media-object" href="<?php echo BASE_URL; ?>admin/laboratories/detail?id=<?php echo (int) $lab['lab_id']; ?>">
+                        <img src="<?php echo htmlspecialchars(admin_top_pic('laboratories', $lab['lab_pic'])); ?>" alt="<?php echo htmlspecialchars($lab['lab_name']); ?>" />
+                        <h3><?php echo htmlspecialchars($lab['lab_name']); ?></h3>
+                     </a>
+                     <?php endforeach; ?>
+                     <?php endif; ?>
+                  </div>
                </div>
-               <!-- search end -->
+               <!-- /morphsearch-content -->
+               <span class="morphsearch-close"><i class="icofont icofont-search-alt-1"></i></span>
             </div>
+            <!-- search end -->
+            <!-- (extra stray </div> removed from here) -->
          </nav>
       </header>

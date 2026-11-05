@@ -28,8 +28,6 @@ $users_count_query = "SELECT COUNT(*) as total FROM users WHERE status = 1";
 $users_count_result = mysqli_query($con, $users_count_query);
 $users_count = (int) mysqli_fetch_assoc($users_count_result)['total'];
 
-
-
 // cities count
 $city_count_query = "SELECT COUNT(*) as total FROM cities WHERE status = 1 AND approve=1";
 $city_count_result = mysqli_query($con, $city_count_query);
@@ -146,7 +144,7 @@ $dashboard_chart_data = [
             <p>Welcome to the world of technology</p>
             <div class="header-badges">
                 <span class="header-badge"><i class="fas fa-circle" style="color: #4ade80;"></i> System Online</span>
-                <span class="header-badge"><i class="fas fa-calendar-alt"></i> <?php echo date('l, F j, Y'); ?></span>
+                <span class="header-badge"><i class="fas fa-calendar-alt"></i> <?php echo date('l, F j, Y'); ?></span><br>
                 <span class="header-badge"><i class="fas fa-clock"></i> <?php echo date('h:i A'); ?></span>
             </div>
         </div>
