@@ -14,7 +14,7 @@
                 </p>
                 <div class="sn-social-links">
                     <a href="https://www.facebook.com/sohail.fixit" target="_blank" title="Facebook"><i class="fab fa-facebook-f"></i></a>
-                    <a href="https://www.tiktok.com/@sohail_fixit" target="_blank" title="TikTok"><i class="fab fa-tiktok"></i></a>
+                    <a href="https://www.tiktok.com/@sehatnexa.official" target="_blank" title="TikTok"><i class="fab fa-tiktok"></i></a>
                     <a href="https://wa.me/923371320001" target="_blank" title="WhatsApp"><i class="fab fa-whatsapp"></i></a>
                 </div>
             </div>
