@@ -1,5 +1,14 @@
+.page-header h1,
+.page-header p {
+    background: linear-gradient(135deg, #1C3F8F 0%, #00A8CC 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    color: transparent;           /* fallback */
+    display: inline-block;        /* gradient ko text ke size tak rakhne ke liye */
+}
 .btn-style {
-    background: linear-gradient(135deg, var(--primary) 50%, var(--accent) 50%);
+    background: linear-gradient(135deg, #1C3F8F 0%, #00A8CC 100%);
     border: none;
     border-radius: 25px;
     padding: 8px 20px;
@@ -16,28 +25,25 @@
 .btn-style::before {
     content: '';
     position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
+    top: 0; left: -100%;
+    width: 100%; height: 100%;
     background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.1) 100%);
     transition: left 0.3s ease;
 }
 
 .btn-style:hover {
+    background: linear-gradient(135deg, #27C96A 0%, #00C9A7 100%);
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(79, 172, 254, 0.4);
+    box-shadow: 0 8px 25px rgba(0,168,204,0.35);
     color: white;
     text-decoration: none;
 }
 
-.btn-style:hover::before {
-    left: 100%;
-}
+.btn-style:hover::before { left: 100%; }
 
 .btn-style:active {
     transform: translateY(0);
-    box-shadow: 0 4px 15px rgba(79, 172, 254, 0.3);
+    box-shadow: 0 4px 15px rgba(28,63,143,0.25);
 }
 .txt-color{
     color: var(--dark-blue);

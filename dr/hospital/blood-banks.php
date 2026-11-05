@@ -87,7 +87,7 @@ $query = "SELECT bb.*, c.city_name, u.status as ustatus,
           ORDER BY bb.bb_name ASC
           LIMIT $offset, $per_page";
 
-$result = mysqli_query($con, $query);
+$bbank_result = mysqli_query($con, $query);
 ?>
 
 <?php include BASE_PATH . '/admin/inc/header.php'; ?>
@@ -143,9 +143,9 @@ $result = mysqli_query($con, $query);
     </div>
 
     <!-- ===== BLOOD BANKS GRID ===== -->
-    <?php if (mysqli_num_rows($result) > 0): ?>
+    <?php if (mysqli_num_rows($bbank_result) > 0): ?>
         <div class="blood-bank-grid">
-            <?php while ($bb = mysqli_fetch_assoc($result)): 
+            <?php while ($bb = mysqli_fetch_assoc($bbank_result)): 
                 $avg_rating = $bb['avg_rating'] ? round($bb['avg_rating'], 1) : 0;
             ?>
                 <div class="blood-bank-card">

@@ -52,11 +52,11 @@ $available_facilities_query = "SELECT COUNT(*) as total FROM hospital_facilities
 $available_facilities_result = mysqli_query($con, $available_facilities_query);
 $available_facilities = mysqli_fetch_assoc($available_facilities_result)['total'];
 
-$reviews_query = "SELECT COUNT(*) as total FROM feedback WHERE entity_id = $entity_id AND status = 1";
+$reviews_query = "SELECT COUNT(*) as total FROM feedback WHERE user_id = $user_id AND status = 1";
 $reviews_result = mysqli_query($con, $reviews_query);
 $total_reviews = mysqli_fetch_assoc($reviews_result)['total'];
 
-$rating_query = "SELECT AVG(stars) as avg_rating FROM feedback WHERE entity_id = $entity_id AND status = 1";
+$rating_query = "SELECT AVG(stars) as avg_rating FROM feedback WHERE user_id = $user_id AND status = 1";
 $rating_result = mysqli_query($con, $rating_query);
 $rating_data = mysqli_fetch_assoc($rating_result);
 $avg_rating = $rating_data['avg_rating'] ? round($rating_data['avg_rating'], 1) : 0;
@@ -89,8 +89,8 @@ if (mysqli_num_rows($notes_tbl) == 0) {
 if (isset($_POST['save_note'])) {
     $note_text = mysqli_real_escape_string($con, trim($_POST['note_text'] ?? ''));
     if ($note_text === '') {
-        echo json_encode(['success' => false, 'msg' => 'Note cannot be empty.']);
-        exit();
+        // echo json_encode(['success' => false, 'msg' => 'Note cannot be empty.']);
+        // exit();
     }
     $exists = mysqli_query($con, "SELECT note_id FROM notes WHERE user_id = $user_id LIMIT 1");
     if (mysqli_num_rows($exists) > 0) {
@@ -114,7 +114,7 @@ if (mysqli_num_rows($note_result) > 0) {
 
 // Recent Reviews
 $recent_reviews_query = "SELECT * FROM feedback 
-                         WHERE entity_id = $entity_id AND status = 1
+                         WHERE user_id = $user_id AND status = 1
                          ORDER BY created_at DESC LIMIT 5";
 $recent_reviews_result = mysqli_query($con, $recent_reviews_query);
 ?>
@@ -273,9 +273,7 @@ $recent_reviews_result = mysqli_query($con, $recent_reviews_query);
                               onblur="this.style.borderColor='rgba(0,168,204,0.2)'; this.style.background='#f0f9ff';"
                     ><?= htmlspecialchars($note_row['notes'] ?? '') ?></textarea>
 
-                    <div id="noteError" style="color:#dc2626; font-size:0.8rem; margin:6px 0 0; display:none;">
-                        <i class="fas fa-exclamation-triangle me-1"></i> Note cannot be empty.
-                    </div>
+                    <div id="noteError" style="display:none;"></div>
 
                     <div style="display:flex; align-items:center; justify-content:space-between; margin-top:12px; flex-wrap:wrap; gap:8px;">
                         <button id="saveNoteBtn" onclick="saveNote()"
@@ -390,11 +388,6 @@ function saveNote() {
     var badgeTxt = document.getElementById('noteSavedText');
     var lastSaved = document.getElementById('noteLastSaved');
 
-    if (text === '') {
-        errBox.style.display = 'block';
-        document.getElementById('noteTextarea').focus();
-        return;
-    }
     errBox.style.display = 'none';
 
     btn.disabled = true;

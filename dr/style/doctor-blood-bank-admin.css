@@ -1,9 +1,15 @@
+/*
+ * SehatNexa — doctor-blood-bank-admin.css
+ * Brand: #1C3F8F navy | #00A8CC teal | #27C96A green | #00C9A7 teal-green
+ */
+
 .content-wrapper {
-    background: #f8fafc;
+    background: #C8E6F5;
     min-height: 100vh;
     padding: 24px 32px 60px;
 }
 
+/* ── PAGE HEADER ──────────────────────────────────────────── */
 .page-header {
     display: flex;
     justify-content: space-between;
@@ -16,16 +22,14 @@
 .page-header h4 {
     font-size: 1.5rem;
     font-weight: 700;
-    color: #1e293b;
+    color: #0D2B6E;
     margin: 0;
 }
 
-.page-header h4 i {
-    color: #4facfe;
-}
+.page-header h4 i { color: #00A8CC; }
 
 .badge-hospital {
-    background: linear-gradient(135deg, #4facfe, #0d6efd);
+    background: linear-gradient(135deg, #1C3F8F, #00A8CC);
     color: white;
     padding: 6px 16px;
     border-radius: 50px;
@@ -33,13 +37,13 @@
     font-weight: 600;
 }
 
-/* ===== FILTER SECTION ===== */
+/* ── FILTER SECTION ───────────────────────────────────────── */
 .filter-section {
     background: white;
     border-radius: 16px;
     padding: 20px 24px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-    border: 1px solid #e2e8f0;
+    box-shadow: 0 2px 12px rgba(28,63,143,0.08);
+    border: 1px solid rgba(0,168,204,0.15);
     margin-bottom: 24px;
 }
 
@@ -50,10 +54,7 @@
     align-items: flex-end;
 }
 
-.filter-group {
-    flex: 1;
-    min-width: 180px;
-}
+.filter-group { flex: 1; min-width: 180px; }
 
 .filter-group label {
     font-size: 0.75rem;
@@ -67,7 +68,7 @@
 .filter-group .form-control,
 .filter-group .form-select {
     border-radius: 10px;
-    border: 2px solid #e2e8f0;
+    border: 2px solid rgba(0,168,204,0.2);
     padding: 8px 14px;
     font-size: 0.9rem;
     transition: all 0.3s ease;
@@ -75,42 +76,46 @@
 
 .filter-group .form-control:focus,
 .filter-group .form-select:focus {
-    border-color: #4facfe;
-    box-shadow: 0 0 0 3px rgba(79,172,254,0.12);
+    border-color: #00A8CC;
+    box-shadow: 0 0 0 3px rgba(0,168,204,0.12);
+    outline: none;
 }
 
 .btn-filter {
-    background: linear-gradient(135deg, #4facfe, #0d6efd);
+    background: linear-gradient(135deg, #1C3F8F, #00A8CC);
     color: white;
     border: none;
     padding: 9px 24px;
     border-radius: 10px;
     font-weight: 600;
     transition: all 0.3s ease;
+    cursor: pointer;
 }
-
 .btn-filter:hover {
+    background: linear-gradient(135deg, #27C96A, #00C9A7);
     transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(13,110,253,0.3);
+    box-shadow: 0 4px 15px rgba(0,168,204,0.3);
     color: white;
 }
 
 .btn-reset {
-    background: #f1f5f9;
+    background: #f0f9ff;
     color: #64748b;
-    border: 2px solid #e2e8f0;
+    border: 2px solid rgba(0,168,204,0.2);
     padding: 9px 20px;
     border-radius: 10px;
     font-weight: 600;
     transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-block;
 }
-
 .btn-reset:hover {
-    background: #e2e8f0;
-    color: #1e293b;
+    background: #e8f7ff;
+    color: #0D2B6E;
+    border-color: rgba(0,168,204,0.4);
 }
 
-/* ===== BLOOD BANK CARD ===== */
+/* ── BLOOD BANK GRID & CARD ───────────────────────────────── */
 .blood-bank-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -121,83 +126,60 @@
     background: white;
     border-radius: 16px;
     overflow: hidden;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-    border: 1px solid #e2e8f0;
+    box-shadow: 0 2px 12px rgba(28,63,143,0.07);
+    border: 1px solid rgba(0,168,204,0.12);
     transition: all 0.3s ease;
 }
 
 .blood-bank-card:hover {
     transform: translateY(-4px);
-    box-shadow: 0 8px 25px rgba(0,0,0,0.12);
-    border-color: #4facfe;
+    box-shadow: 0 8px 25px rgba(28,63,143,0.14);
+    border-color: #00A8CC;
 }
 
-.blood-bank-card .card-body {
-    padding: 20px;
-}
+.blood-bank-card .card-body { padding: 20px; }
 
 .blood-bank-card .bb-icon {
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #fee2e2, #fecaca);
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    width: 52px; height: 52px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #E8F7FF, #F0FFF8);
+    border: 2px solid rgba(0,168,204,0.2);
+    display: flex; align-items: center; justify-content: center;
     font-size: 1.5rem;
-    color: #dc2626;
-    margin-bottom: 12px;
+    color: #00A8CC;
+    margin-bottom: 14px;
+    transition: all 0.3s;
+}
+.blood-bank-card:hover .bb-icon {
+    background: linear-gradient(135deg, #1C3F8F, #00A8CC);
+    color: white; border-color: transparent;
+    box-shadow: 0 4px 12px rgba(0,168,204,0.3);
 }
 
-.blood-bank-card .bb-name {
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: #1e293b;
-    margin-bottom: 4px;
-}
-
-.blood-bank-card .bb-city {
-    font-size: 0.85rem;
-    color: #64748b;
-    margin-bottom: 8px;
-}
-
-.blood-bank-card .bb-contact {
-    font-size: 0.85rem;
-    color: #1e293b;
-}
+.blood-bank-card .bb-name { font-size: 1.05rem; font-weight: 700; color: #0D2B6E; margin-bottom: 6px; }
+.blood-bank-card .bb-city { font-size: 0.85rem; color: #64748b; margin-bottom: 6px; }
+.blood-bank-card .bb-city i { color: #00A8CC; }
+.blood-bank-card .bb-contact { font-size: 0.85rem; color: #475569; }
+.blood-bank-card .bb-contact i { color: #00A8CC; }
 
 .blood-bank-card .bb-rating {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    margin-top: 10px;
-    padding-top: 10px;
-    border-top: 1px solid #f1f5f9;
+    display: flex; align-items: center; gap: 6px;
+    margin-top: 10px; padding-top: 10px;
+    border-top: 1px solid #E8F7FF;
 }
-
-.blood-bank-card .bb-rating .stars {
-    color: #f59e0b;
-    font-size: 0.85rem;
-}
-
-.blood-bank-card .bb-rating .count {
-    color: #64748b;
-    font-size: 0.8rem;
-}
+.blood-bank-card .bb-rating .stars { color: #f59e0b; font-size: 0.85rem; }
+.blood-bank-card .bb-rating .count { color: #64748b; font-size: 0.8rem; }
 
 .blood-bank-card .bb-status {
     display: inline-block;
-    padding: 2px 12px;
-    border-radius: 50px;
-    font-size: 0.7rem;
-    font-weight: 600;
+    padding: 3px 12px; border-radius: 50px;
+    font-size: 0.7rem; font-weight: 700;
 }
 
-.bb-status.active { background: #d1fae5; color: #065f46; }
+.bb-status.active   { background: rgba(0,168,204,0.1); color: #00A8CC; }
 .bb-status.inactive { background: #fee2e2; color: #991b1b; }
 
-/* ===== PAGINATION ===== */
+/* ── PAGINATION ───────────────────────────────────────────── */
 .pagination-container {
     display: flex;
     justify-content: space-between;
@@ -208,50 +190,39 @@
     padding: 16px 20px;
     background: white;
     border-radius: 12px;
-    border: 1px solid #e2e8f0;
+    border: 1px solid rgba(0,168,204,0.12);
+    box-shadow: 0 2px 8px rgba(28,63,143,0.06);
 }
 
-.pagination {
-    margin: 0;
-    gap: 4px;
-}
+.pagination { margin: 0; gap: 4px; }
 
 .pagination .page-link {
-    border: none;
-    border-radius: 8px;
-    color: #1e293b;
+    border: 1px solid rgba(0,168,204,0.2) !important;
+    border-radius: 8px !important;
+    color: #1C3F8F !important;
     padding: 8px 14px;
     font-weight: 600;
     transition: all 0.3s ease;
 }
-
 .pagination .page-link:hover {
-    background: #4facfe;
-    color: white;
+    background: linear-gradient(135deg, #1C3F8F, #00A8CC) !important;
+    color: white !important;
+    border-color: transparent !important;
 }
-
 .pagination .page-item.active .page-link {
-    background: linear-gradient(135deg, #4facfe, #0d6efd);
-    color: white;
+    background: linear-gradient(135deg, #1C3F8F, #00A8CC) !important;
+    color: white !important;
+    border-color: transparent !important;
 }
 
-.pagination-info {
-    color: #64748b;
-    font-size: 0.85rem;
-}
+.pagination-info { color: #64748b; font-size: 0.85rem; }
 
-.no-records {
-    text-align: center;
-    padding: 40px 20px;
-    color: #64748b;
-}
+/* ── NO RECORDS ───────────────────────────────────────────── */
+.no-records { text-align: center; padding: 40px 20px; color: #64748b; }
+.no-records i { font-size: 3rem; color: #00A8CC; opacity: 0.5; margin-bottom: 12px; display: block; }
+.no-records h5 { color: #0D2B6E; font-weight: 700; margin-bottom: 6px; }
 
-.no-records i {
-    font-size: 3rem;
-    color: #cbd5e1;
-    margin-bottom: 12px;
-}
-
+/* ── RESPONSIVE ───────────────────────────────────────────── */
 @media (max-width: 768px) {
     .content-wrapper { padding: 16px; }
     .filter-row { flex-direction: column; }

@@ -44,9 +44,9 @@ if (!function_exists('admin_top_count')) {
 if (!function_exists('admin_top_pic')) {
     function admin_top_pic($folder, $filename)
     {
-        $fallback = BASE_URL . 'admin/inc/assets/images/avatar-1.png';
+        $fallback_url = BASE_URL . 'includes/uploads/avatar.jpg';
         if (empty($filename)) {
-            return $fallback;
+            return $fallback_url;
         }
         return BASE_URL . 'admin/inc/uploads/' . $folder . '/' . rawurlencode($filename);
     }
@@ -238,10 +238,242 @@ if (isset($_SESSION['type']) && $_SESSION['type'] == 'hospital' && isset($_SESSI
       <div class="loader-bar">
       </div>
 </div> -->
+
+<style>
+/* ── SehatNexa Top Bar ────────────────────────────────────────
+   Brand: #1C3F8F navy | #00A8CC teal | #27C96A green | #0D2B6E dark
+──────────────────────────────────────────────────────────── */
+
+/* Main header */
+.main-header-top {
+    background: linear-gradient(135deg, #071124 0%, #0D2B6E 50%, #1C3F8F 100%) !important;
+    border-bottom: 2px solid rgba(0,168,204,0.25) !important;
+    box-shadow: 0 2px 20px rgba(13,43,110,0.35) !important;
+}
+
+/* Logo area */
+.main-header-top .logo {
+    background: rgba(0,0,0,0.25) !important;
+    border-right: 1px solid rgba(0,168,204,0.2) !important;
+}
+
+/* Navbar bg */
+.main-header-top .navbar {
+    background: transparent !important;
+}
+
+/* All top nav links */
+.main-header-top .top-nav > li > a {
+    color: rgba(255,255,255,0.78) !important;
+    transition: all 0.25s ease !important;
+}
+
+.main-header-top .top-nav > li > a:hover {
+    color: #00A8CC !important;
+    background: rgba(0,168,204,0.1) !important;
+}
+
+/* icon-circle buttons */
+.main-header-top .icon-circle {
+    background: rgba(255,255,255,0.08) !important;
+    border: 1px solid rgba(0,168,204,0.2) !important;
+    color: rgba(255,255,255,0.78) !important;
+    border-radius: 10px !important;
+    transition: all 0.25s ease !important;
+}
+
+.main-header-top .icon-circle:hover {
+    background: rgba(0,168,204,0.2) !important;
+    border-color: rgba(0,168,204,0.45) !important;
+    color: white !important;
+}
+
+/* Notification badge */
+.main-header-top .header-badge {
+    background: #ef4444 !important;
+    border: 2px solid #0D2B6E !important;
+}
+
+/* Notification dropdown */
+.main-header-top .notification-menu .dropdown-menu,
+.main-header-top .dropdown-menu.settings-menu {
+    background: white !important;
+    border: 1px solid rgba(0,168,204,0.15) !important;
+    border-radius: 14px !important;
+    box-shadow: 0 10px 35px rgba(13,43,110,0.18) !important;
+    overflow: hidden !important;
+}
+
+/* Dropdown header */
+.main-header-top .not-head {
+    background: linear-gradient(135deg, #f0f9ff, #e8f7ff) !important;
+    border-bottom: 1px solid rgba(0,168,204,0.15) !important;
+    color: #0D2B6E !important;
+    font-weight: 600 !important;
+    padding: 12px 16px !important;
+}
+
+.main-header-top .not-head b { color: #1C3F8F !important; }
+
+/* Notification items */
+.main-header-top .bell-notification a {
+    color: #0D2B6E !important;
+    padding: 10px 14px !important;
+    transition: background 0.2s !important;
+}
+
+.main-header-top .bell-notification a:hover {
+    background: #f0f9ff !important;
+}
+
+.main-header-top .bell-notification .block {
+    color: #0D2B6E !important;
+    font-weight: 600 !important;
+    font-size: 0.84rem !important;
+}
+
+.main-header-top .bell-notification .block-time {
+    color: #94a3b8 !important;
+    font-size: 0.75rem !important;
+}
+
+/* Notification footer */
+.main-header-top .not-footer {
+    border-top: 1px solid rgba(0,168,204,0.12) !important;
+    background: #f0f9ff !important;
+}
+
+.main-header-top .not-footer a {
+    color: #1C3F8F !important;
+    font-weight: 700 !important;
+    text-align: center !important;
+    display: block !important;
+    padding: 10px !important;
+    transition: color 0.2s !important;
+}
+
+.main-header-top .not-footer a:hover { color: #00A8CC !important; }
+
+/* Settings dropdown items */
+.main-header-top .settings-menu > li > a {
+    color: #0D2B6E !important;
+    font-size: 0.88rem !important;
+    padding: 10px 16px !important;
+    transition: all 0.2s !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+}
+
+.main-header-top .settings-menu > li > a:hover {
+    background: #f0f9ff !important;
+    color: #1C3F8F !important;
+}
+
+.main-header-top .settings-menu > li > a i {
+    color: #00A8CC !important;
+    width: 16px !important;
+}
+
+.main-header-top .dropdown-divider {
+    border-color: rgba(0,168,204,0.12) !important;
+}
+
+/* Quick lists items */
+.main-header-top .lft-nav .dropdown-menu > li > a {
+    color: #0D2B6E !important;
+    font-size: 0.88rem !important;
+    padding: 9px 16px !important;
+    font-weight: 600 !important;
+    transition: all 0.2s !important;
+}
+
+.main-header-top .lft-nav .dropdown-menu > li > a:hover {
+    background: #f0f9ff !important;
+    color: #1C3F8F !important;
+    padding-left: 20px !important;
+}
+
+/* User avatar wrapper */
+.main-header-top .drop-image span strong {
+    color: white !important;
+    font-size: 0.88rem !important;
+    font-weight: 700 !important;
+}
+
+.main-header-top .drop-image span .text-muted.small {
+    color: rgba(255,255,255,0.55) !important;
+}
+
+/* User avatar image border */
+.main-header-top .drop-image .img-circle {
+    border: 2px solid rgba(0,168,204,0.4) !important;
+}
+
+/* Search bar */
+.morphsearch {
+    background: linear-gradient(135deg, #071124, #0D2B6E) !important;
+}
+
+.morphsearch-form {
+    border-bottom: 1px solid rgba(0,168,204,0.2) !important;
+}
+
+.morphsearch-input {
+    background: transparent !important;
+    color: white !important;
+}
+
+.morphsearch-input::placeholder { color: rgba(255,255,255,0.4) !important; }
+
+.morphsearch-submit {
+    background: linear-gradient(135deg, #1C3F8F, #00A8CC) !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 8px !important;
+    transition: all 0.25s !important;
+}
+
+.morphsearch-submit:hover {
+    background: linear-gradient(135deg, #27C96A, #00C9A7) !important;
+}
+
+.morphsearch-content { background: rgba(13,43,110,0.95) !important; }
+
+.morphsearch-content h2 {
+    color: #00A8CC !important;
+    border-bottom: 1px solid rgba(0,168,204,0.2) !important;
+    font-size: 0.85rem !important;
+    letter-spacing: 1px !important;
+    text-transform: uppercase !important;
+}
+
+.morphsearch-content .dummy-media-object h3 { color: rgba(255,255,255,0.85) !important; }
+.morphsearch-content .dummy-media-object:hover h3 { color: #00A8CC !important; }
+
+.morphsearch-close {
+    color: rgba(255,255,255,0.5) !important;
+    transition: color 0.2s !important;
+}
+.morphsearch-close:hover { color: #00A8CC !important; }
+
+/* Sidebar toggle (hamburger) */
+.sidebar-toggle:before,
+.sidebar-toggle:after,
+.main-header-top .sidebar-toggle span {
+    background: rgba(255,255,255,0.75) !important;
+}
+
+.sidebar-toggle:hover:before,
+.sidebar-toggle:hover:after {
+    background: #00A8CC !important;
+}
+</style>
+
 <div class="wrapper">
 
 <header class="main-header-top hidden-print">
-         <a href="<?php echo BASE_URL; ?>admin" class="logo"><img class="img-fluid able-logo" src="<?php echo BASE_URL; ?>admin/inc/assets/images/logo.png" alt="Theme-logo"></a>
+         <a href="<?php echo BASE_URL; ?>admin" class="logo"><img class="img-fluid able-logo" src="<?php echo BASE_URL; ?>includes/uploads/logo.png" alt="Theme-logo"></a>
          <nav class="navbar navbar-static-top">
             <!-- Sidebar toggle button-->
             <a href="#!" data-toggle="offcanvas" class="sidebar-toggle"></a>
@@ -295,7 +527,8 @@ if (isset($_SESSION['type']) && $_SESSION['type'] == 'hospital' && isset($_SESSI
                         <li class="bell-notification">
                            <a href="<?php echo htmlspecialchars($note['url']); ?>" class="media">
                               <span class="media-left media-icon">
-                    <img class="img-circle" src="<?php echo htmlspecialchars($note['pic']); ?>" alt="User Image">
+                   
+<img class="img-circle" src="<?php echo htmlspecialchars($note['pic']); ?>" alt="User Image">        
                   </span>
                               <div class="media-body"><span class="block"><?php echo htmlspecialchars($note['title']); ?> — <?php echo htmlspecialchars($note['text']); ?></span><span class="text-muted block-time"><?php echo htmlspecialchars(admin_top_time_ago($note['time'])); ?></span></div>
                            </a>
@@ -327,7 +560,7 @@ if (isset($_SESSION['type']) && $_SESSION['type'] == 'hospital' && isset($_SESSI
                   <!-- User Menu - DYNAMIC -->
                   <li class="dropdown">
                      <a href="#!" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false" class="dropdown-toggle drop icon-circle drop-image">
-                        <span><img class="img-circle" src="<?php echo BASE_URL; ?>admin/inc/assets/images/avatar-1.png" style="width:40px;" alt="User Image"></span>
+                        <span><img class="img-circle" src="<?php echo $note['pic']; ?>" style="width:40px;" alt="User Image"></span>
                         <span>
                             <strong><?php echo htmlspecialchars($display_name); ?></strong>
                             <span class="text-muted small">(<?php echo htmlspecialchars($display_type); ?>)</span>

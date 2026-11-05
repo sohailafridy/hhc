@@ -71,9 +71,18 @@ if ($categories_result) {
         <div class="container position-relative">
             <div class="row">
                 <div class="col-lg-12 text-center">
-                    <h1 class="display-4 fw-bold mb-3" data-aos="fade-up">Our Expert Doctors</h1>
-                    <p class="lead mb-0" data-aos="fade-up" data-aos-delay="200">Meet our team of qualified medical professionals</p>
-                    <a href="<?php echo BASE_URL; ?>/pages/outside/add-doctor.php" class="btn btn-primary btn-lg add-new-doctor" style='display: none;'>Add New Doctor</a>
+                    <!-- Page Header -->
+                    <section class="page-header">
+                        <div class="container position-relative">
+                            <div class="row">
+                                <div class="col-lg-12 text-center">
+                                    <h1 class="display-4 fw-bold mb-3" data-aos="fade-up">Our Expert Doctors</h1><br>
+                                    <p class="lead mb-0" data-aos="fade-up" data-aos-delay="200">Meet our team of qualified medical professionals</p>
+                                    <a href="<?php echo BASE_URL; ?>/pages/outside/add-doctor.php" class="btn btn-primary btn-lg add-new-doctor" style='display: none;'>Add New Doctor</a>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
                 </div>
             </div>
         </div>
@@ -147,7 +156,14 @@ if ($categories_result) {
                             <label class="form-label text-muted small">Filter by Disease / Treatment</label>
                             <div class="input-with-icon position-relative">
                                 <i class="fas fa-stethoscope input-icon"></i>
-                                <input type="text" class="form-control" id="specializationSearch" placeholder="Search disease (e.g., دل)..." autocomplete="off" dir="auto">
+                                <input type="text" class="form-control" id="specializationSearch" placeholder="Search disease (e.g., دل)..." autocomplete="off" dir="auto" style="padding-right:36px;">
+                                <i class="fas fa-times" id="specializationClear"
+                                   title="Clear"
+                                   style="position:absolute; right:12px; top:50%; transform:translateY(-50%);
+                                          cursor:pointer; color:#94a3b8; font-size:0.85rem; z-index:10;
+                                          display:none; transition:color 0.2s;"
+                                   onmouseover="this.style.color='#ef4444'"
+                                   onmouseout="this.style.color='#94a3b8'"></i>
                                 <input type="hidden" name="specialization" id="specializationValue" value="<?php echo $specialization; ?>">
                                 <div class="position-absolute w-100 bg-white border border-top-0 shadow-sm" id="specializationDropdown" style="display: none; z-index: 1000; max-height: 250px; overflow-y: auto;">
                                 </div>
@@ -263,6 +279,8 @@ if ($categories_result) {
                 // Handle search input
                 specializationSearch.addEventListener('input', function() {
                     filterSpecializations(this.value);
+                    // cross icon show/hide
+                    document.getElementById('specializationClear').style.display = this.value ? 'block' : 'none';
                 });
 
                 // Handle dropdown item click
@@ -288,6 +306,21 @@ if ($categories_result) {
                 // Initialize on page load
                 document.addEventListener('DOMContentLoaded', function() {
                     initializeSpecializationOptions();
+
+                    // Show cross if value already filled (e.g. page reload with filter)
+                    var clearBtn = document.getElementById('specializationClear');
+                    if (specializationSearch.value) {
+                        clearBtn.style.display = 'block';
+                    }
+
+                    // Cross button click — clear input + hidden value
+                    clearBtn.addEventListener('click', function() {
+                        specializationSearch.value  = '';
+                        specializationValue.value   = '';
+                        specializationDropdown.style.display = 'none';
+                        clearBtn.style.display      = 'none';
+                        specializationSearch.focus();
+                    });
                 });
             </script>
 

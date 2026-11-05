@@ -22,7 +22,6 @@ if (!$hospital_data) {
 }
 
 $hospital_id = $hospital_data['hospital_id'];
-$entity_id = $hospital_data['entity_id'];
 
 // ============================================
 // GET FEEDBACK
@@ -31,20 +30,22 @@ $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
 $per_page = 10;
 $offset = ($page - 1) * $per_page;
 
-$count_query = "SELECT COUNT(*) as total FROM feedback WHERE entity_id = $entity_id AND status = 1";
+// Total records
+$count_query = "SELECT COUNT(*) as total FROM feedback WHERE user_id = $user_id AND status = 1";
 $count_result = mysqli_query($con, $count_query);
 $total_records = mysqli_fetch_assoc($count_result)['total'];
 $total_pages = ceil($total_records / $per_page);
 
+// Fetch reviews (NO extra fetch_assoc BEFORE loop)
 $query = "SELECT * FROM feedback 
-          WHERE entity_id = $entity_id AND status = 1
+          WHERE user_id = $user_id AND status = 1
           ORDER BY created_at DESC
           LIMIT $offset, $per_page";
-$result = mysqli_query($con, $query);
+$result2 = mysqli_query($con, $query);
 
 // Rating stats
 $rating_query = "SELECT AVG(stars) as avg_rating, COUNT(*) as total 
-                 FROM feedback WHERE entity_id = $entity_id AND status = 1";
+                 FROM feedback WHERE user_id = $user_id AND status = 1";
 $rating_result = mysqli_query($con, $rating_query);
 $rating_data = mysqli_fetch_assoc($rating_result);
 $avg_rating = $rating_data['avg_rating'] ? round($rating_data['avg_rating'], 1) : 0;
@@ -54,7 +55,7 @@ $total_reviews = $rating_data['total'] ?? 0;
 $rating_distribution = [];
 for ($i = 1; $i <= 5; $i++) {
     $dist_query = "SELECT COUNT(*) as count FROM feedback 
-                   WHERE entity_id = $entity_id AND status = 1 AND stars = $i";
+                   WHERE user_id = $user_id AND status = 1 AND stars = $i";
     $dist_result = mysqli_query($con, $dist_query);
     $dist_data = mysqli_fetch_assoc($dist_result);
     $rating_distribution[$i] = $dist_data['count'];
@@ -117,12 +118,13 @@ for ($i = 1; $i <= 5; $i++) {
                 </tr>
             </thead>
             <tbody>
-                <?php if (mysqli_num_rows($result) > 0): ?>
+                <?php if (mysqli_num_rows($result2) > 0): ?>
                     <?php $serial = $offset + 1; ?>
-                    <?php while ($review = mysqli_fetch_assoc($result)): ?>
+                    <?php while ($review = mysqli_fetch_assoc($result2)): ?>
                         <tr>
                             <td><?php echo $serial++; ?></td>
-                            <td><strong><?php echo htmlspecialchars($review['commenter_name']); ?></strong><br>
+                            <td>
+                                <strong><?php echo htmlspecialchars($review['commenter_name']); ?></strong><br>
                                 <small class="text-muted"><?php echo htmlspecialchars($review['commenter_gmail']); ?></small>
                             </td>
                             <td>

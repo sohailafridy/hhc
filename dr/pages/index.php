@@ -152,7 +152,14 @@ $categories_result = mysqli_query($con, $categories_query);
                                     <div class="col-12">
                                         <label class="form-label">Filter by Disease / Treatment</label>
                                         <div class="input-with-icon position-relative">
-                                            <input type="text" class="form-control" id="specializationSearch" placeholder="Search disease (e.g., دل)..." autocomplete="off" dir="auto">
+                                            <input type="text" class="form-control" id="specializationSearch" placeholder="Search disease (e.g., دل)..." autocomplete="off" dir="auto" style="padding-right:36px;">
+                                            <i class="fas fa-times" id="specializationClear"
+                                               title="Clear"
+                                               style="position:absolute; right:12px; top:50%; transform:translateY(-50%);
+                                                      cursor:pointer; color:#94a3b8; font-size:0.85rem; z-index:10;
+                                                      display:none; transition:color 0.2s;"
+                                               onmouseover="this.style.color='#ef4444'"
+                                               onmouseout="this.style.color='#94a3b8'"></i>
                                             <input type="hidden" name="specialization" id="specializationValue" value="<?php echo $specialization; ?>">
                                             <div class="position-absolute w-100 bg-white border border-top-0 shadow-sm" id="specializationDropdown" style="display: none; z-index: 1000; max-height: 250px; overflow-y: auto;">
                                             </div>
@@ -250,7 +257,7 @@ $categories_result = mysqli_query($con, $categories_query);
             
             <?php 
             // Colors aur Emojis ka array (taake har card alag dikhe)
-            $bg_colors = ['#fce4ec', '#ffebee', '#f3e5f5', '#fff9c4', '#e1f5fe', '#e0f2f1', '#e8f5e9', '#fff3e0'];
+            $bg_colors = ['#E8F7FF', '#F0FFF8', '#EFF6FF', '#F0FDFA', '#EEF2FF', '#E8F7FF', '#F0FFF8', '#EFF6FF'];
             $emojis = ['👴', '❤️', '🧠', '🧪', '🫁', '🫀', '🦴', '👁️', '🦷', '👶'];
             
             $index = 0;
@@ -312,7 +319,7 @@ $categories_result = mysqli_query($con, $categories_query);
             </div>
             <div class="row g-3 justify-content-center">
                 <?php
-                $hospital_card_colors = ['#fce4ec', '#ffebee', '#f3e5f5', '#fff9c4', '#e1f5fe', '#e0f2f1'];
+                $hospital_card_colors = ['#E8F7FF', '#F0FFF8', '#EFF6FF', '#F0FDFA', '#E8F7FF', '#F0FFF8'];
                 if($city_id > 0){
                     $hospitals_query = "SELECT h.*, c.city_name FROM hospitals h LEFT JOIN cities c ON h.city_id = c.city_id LEFT JOIN users u ON u.user_id = h.user_id WHERE u.status = 1 AND h.approve = 1 AND h.city_id = $city_id ORDER BY h.hospital_id DESC LIMIT 6";
                 }else{
@@ -378,7 +385,7 @@ $categories_result = mysqli_query($con, $categories_query);
             </div>
             <div class="row g-3 justify-content-center">
                 <?php
-                $doctor_card_colors = ['#eef6ff', '#f3efff', '#eefbf5', '#fff6e8', '#fceef3', '#edf8ff'];
+                $doctor_card_colors = ['#E8F7FF', '#F0FFF8', '#EFF6FF', '#F0FDFA', '#EEF2FF', '#F0F9FF'];
                 if($city_id > 0){
                      $doctors_query = "SELECT d.*, c.city_name, dct.type as specialization FROM doctors d LEFT JOIN cities c ON d.city_id = c.city_id LEFT JOIN dr_cat_types dct ON d.cat_type_id = dct.dr_cat_id LEFT JOIN users u ON d.user_id = u.user_id WHERE u.status = 1 AND d.approve=1 AND d.city_id=$city_id ORDER BY d.doctor_id DESC LIMIT 4";
                 }else{
@@ -457,7 +464,7 @@ $categories_result = mysqli_query($con, $categories_query);
             </div>
             <div class="row g-3 justify-content-center">
                 <?php
-                $lab_card_colors = ['#e8fff9', '#eef8ff', '#f3efff', '#eefbf5', '#fff6e8', '#edf8ff'];
+                $lab_card_colors = ['#F0FFF8', '#E8F7FF', '#EFF6FF', '#F0FDFA', '#E8F7FF', '#F0FFF8'];
                 if($city_id > 0){
                     $labs_query = "SELECT l.*, c.city_name FROM laboratories l LEFT JOIN cities c ON l.city_id = c.city_id LEFT JOIN users u ON u.user_id = l.user_id WHERE u.status = 1 AND l.approve = 1 AND l.city_id=$city_id ORDER BY l.lab_id DESC LIMIT 6";
                 }else{
@@ -535,7 +542,7 @@ $categories_result = mysqli_query($con, $categories_query);
             </div>
             <div class="row g-3 justify-content-center">
                 <?php
-                $blood_card_colors = ['#fff1f1', '#fff6e8', '#fceef3', '#eef6ff', '#f3efff', '#edf8ff'];
+                $blood_card_colors = ['#E8F7FF', '#F0FFF8', '#EFF6FF', '#F0FDFA', '#EEF2FF', '#F0F9FF'];
                 if($city_id > 0){
                     $blood_banks_query = "SELECT bb.*, c.city_name FROM blood_bank bb LEFT JOIN cities c ON bb.city_id = c.city_id LEFT JOIN users u ON u.user_id = bb.user_id WHERE u.status = 1 AND bb.approve = 1 AND bb.city_id=$city_id ORDER BY bb.bb_id DESC LIMIT 6";
                 }else{
@@ -784,6 +791,7 @@ function filterSpecializations(searchTerm) {
 // Handle search input
 specializationSearch.addEventListener('input', function() {
     filterSpecializations(this.value);
+    document.getElementById('specializationClear').style.display = this.value ? 'block' : 'none';
 });
 
 // Handle dropdown item click
@@ -809,5 +817,18 @@ document.addEventListener('click', function(e) {
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
     initializeSpecializationOptions();
+
+    var clearBtn = document.getElementById('specializationClear');
+    if (specializationSearch.value) {
+        clearBtn.style.display = 'block';
+    }
+
+    clearBtn.addEventListener('click', function() {
+        specializationSearch.value = '';
+        specializationValue.value  = '';
+        specializationDropdown.style.display = 'none';
+        clearBtn.style.display = 'none';
+        specializationSearch.focus();
+    });
 });
 </script>

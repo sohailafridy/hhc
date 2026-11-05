@@ -51,8 +51,18 @@
         <div class="container position-relative">
             <div class="row">
                 <div class="col-lg-12 text-center">
-                    <h1 class="display-4 fw-bold mb-3" data-aos="fade-up">Our Hospitals</h1>
-                    <p class="lead mb-0" data-aos="fade-up" data-aos-delay="200">Find quality healthcare facilities near you</p>
+                    <!-- Page Header -->
+                    <section class="page-header">
+                        <div class="container position-relative">
+                            <div class="row">
+                                <div class="col-lg-12 text-center">
+                                    <h1 class="display-4 fw-bold mb-3" data-aos="fade-up">Our Hospitals</h1><br>
+                                    <p class="lead mb-0" data-aos="fade-up" data-aos-delay="200">Find quality healthcare facilities near you</p>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                    
                 </div>
             </div>
         </div>
@@ -98,54 +108,90 @@
             </div>
 
             <!-- Hospitals Grid -->
-            <div class="row g-3" id="hospitalsContainer">
+            <div class="hospitals-grid" id="hospitalsContainer">
                 <?php
-                $hospital_card_colors = ['#fce4ec', '#ffebee', '#f3e5f5', '#fff9c4', '#e1f5fe', '#e0f2f1'];
+                // Brand bg colors (light tints matching logo)
+                $card_bgs = ['#E8F7FF','#F0FFF8','#EFF6FF','#F0FDFA','#EEF2FF','#F0F9FF'];
+                // Brand accent colors matching logo
+                $card_accents = ['#1C3F8F','#27C96A','#00A8CC','#00C9A7','#1C3F8F','#00A8CC'];
                 $hospital_index = 0;
+
                 if (mysqli_num_rows($result) > 0) {
                     while($row = mysqli_fetch_assoc($result)) {
-                        // Rating (feedback table me user_id se)
-                        $hosp_stars_q = mysqli_query($con, "SELECT AVG(stars) as stars FROM `feedback` WHERE user_id='". (int)$row['user_id'] ."'");
-                        $hosp_stars = mysqli_fetch_assoc($hosp_stars_q);
-                        $hosp_stars = $hosp_stars['stars'];
+                        $hosp_stars_q  = mysqli_query($con, "SELECT AVG(stars) as stars FROM feedback WHERE user_id='".(int)$row['user_id']."'");
+                        $hosp_stars    = mysqli_fetch_assoc($hosp_stars_q)['stars'];
                         $hospital_rating = $hosp_stars ? number_format((float)$hosp_stars, 1) : 'New';
-                        $hospital_bg = $hospital_card_colors[$hospital_index % count($hospital_card_colors)];
+                        $is_new        = ($hospital_rating === 'New');
+                        $bg            = $card_bgs[$hospital_index   % count($card_bgs)];
+                        $accent        = $card_accents[$hospital_index % count($card_accents)];
                         $hospital_index++;
-                        ?>
-                        <div class="col-lg-3 col-md-4 col-6" data-aos="fade-up" data-aos-delay="<?php echo 100 + ($hospital_index * 80); ?>">
-                            <div class="speciality-card hospital-mini-card">
-                                <div class="speciality-card-body" style="background-color: <?php echo $hospital_bg; ?>;">
-                                    <div class="speciality-icon">
-                                        <i class="fas fa-hospital-alt"></i>
-                                    </div>
-                                    <h4 class="speciality-title"><?php echo htmlspecialchars($row['hospital_name']); ?></h4>
-                                    <p class="hospital-mini-location">
-                                        <i class="fas fa-map-marker-alt"></i><?php echo htmlspecialchars($row['city_name']); ?>
-                                    </p>
-                                    <div class="hospital-mini-rating">
-                                        <i class="fas fa-star text-warning"></i><?php echo $hospital_rating; ?> Rating
-                                    </div>
-                                    <a href="hospital-detail?hospital_id=<?php echo $row['hospital_id']; ?>" class="speciality-btn">
-                                        <i class="fas fa-arrow-right"></i>
-                                        DETAILS
-                                    </a>
-                                </div>
-                            </div>
+
+                        // Doctor count
+                        $doc_cnt_q = mysqli_query($con, "SELECT COUNT(*) as c FROM doctor_in_hospital WHERE hospital_id=".(int)$row['hospital_id']." AND inactive=0");
+                        $doc_cnt   = mysqli_fetch_assoc($doc_cnt_q)['c'];
+
+                        $img_src = (!empty($row['hospital_pic']) && file_exists(BASE_PATH.'/admin/inc/uploads/hospitals/'.$row['hospital_pic']))
+                            ? BASE_URL.'admin/inc/uploads/hospitals/'.htmlspecialchars($row['hospital_pic'])
+                            : '';
+                ?>
+                <div class="h-card" style="--hc-bg:<?= $bg ?>; --hc-accent:<?= $accent ?>;" data-aos="fade-up" data-aos-delay="<?= 80 * ($hospital_index % 6) ?>">
+
+                    <!-- Background art -->
+                    <div class="h-bg-icon"><i class="fas fa-hospital"></i></div>
+
+                    <!-- Top banner -->
+                    <div class="h-card-top">
+                        <div class="h-art">
+                            <i class="fas fa-hospital-alt h-art-icon"></i>
                         </div>
-                        <?php
-                    }
-                } else {
-                    ?>
-                    <div class="col-12">
-                        <div class="no-hospitals text-center py-5">
-                            <i class="fas fa-hospital fa-3x text-primary mb-3"></i>
-                            <h3>No Hospitals Found</h3>
-                            <p class="text-muted">No hospitals match your search criteria. Please try different filters.</p>
+
+                        <!-- Rating pill -->
+                        <span class="h-pill h-pill-rating <?= $is_new ? 'is-new' : '' ?>">
+                            <i class="fas <?= $is_new ? 'fa-sparkles' : 'fa-star' ?>"></i>
+                            <?= $hospital_rating ?>
+                        </span>
+
+                        <!-- Image / placeholder -->
+                        <div class="h-avatar">
+                            <?php if ($img_src): ?>
+                                <img src="<?= $img_src ?>" alt="<?= htmlspecialchars($row['hospital_name']) ?>">
+                            <?php else: ?>
+                                <div class="h-avatar-icon"><i class="fas fa-hospital-alt"></i></div>
+                            <?php endif; ?>
                         </div>
                     </div>
-                    <?php
-                }
-                ?>
+
+                    <!-- Body -->
+                    <div class="h-card-body">
+                        <div class="h-type"><i class="fas fa-hospital-user"></i> Hospital</div>
+                        <h4 class="h-name"><?= htmlspecialchars($row['hospital_name']) ?></h4>
+                        <ul class="h-meta">
+                            <li><i class="fas fa-map-marker-alt"></i><span><?= htmlspecialchars($row['city_name']) ?></span></li>
+                            <li><i class="fas fa-user-md"></i><span><?= $doc_cnt ?> Doctor<?= $doc_cnt != 1 ? 's' : '' ?></span></li>
+                        </ul>
+                    </div>
+
+                    <!-- Footer -->
+                    <div class="h-card-footer">
+                        <span class="h-stars">
+                            <?php for ($s = 1; $s <= 5; $s++): ?>
+                                <i class="fas fa-star <?= (!$is_new && $s <= round($hospital_rating)) ? 'on' : '' ?>"></i>
+                            <?php endfor; ?>
+                        </span>
+                        <a href="hospital-detail?hospital_id=<?= $row['hospital_id'] ?>" class="h-btn">
+                            View Details <i class="fas fa-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+                <?php
+                    }
+                } else { ?>
+                    <div class="no-hospitals">
+                        <i class="fas fa-hospital"></i>
+                        <h3>No Hospitals Found</h3>
+                        <p>No hospitals match your search criteria. Please try different filters.</p>
+                    </div>
+                <?php } ?>
             </div>
 
             <!-- Pagination -->

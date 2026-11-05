@@ -1,0 +1,248 @@
+/*
+ * SehatNexa — entity-card.css
+ * Shared card styles for Labs & Blood Banks listing pages
+ * Brand: #1C3F8F navy | #00A8CC teal | #27C96A green | #00C9A7 teal-green
+ */
+
+/* ── GRID ─────────────────────────────────────────────────── */
+.entity-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 24px;
+    margin-top: 30px;
+}
+
+/* ── E-CARD ───────────────────────────────────────────────── */
+.e-card {
+    --ec-bg:     #E8F7FF;
+    --ec-accent: #1C3F8F;
+
+    position: relative;
+    isolation: isolate;
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    border-radius: 20px;
+    overflow: hidden;
+    border: 1px solid rgba(0,0,0,0.04);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    transition: transform 0.35s ease, box-shadow 0.35s ease;
+}
+
+.e-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 16px 40px rgba(0,0,0,0.15);
+}
+
+/* Plus pattern */
+.e-card::before {
+    content: "";
+    position: absolute; inset: 0;
+    background: var(--ec-accent);
+    opacity: 0.06; pointer-events: none;
+    -webkit-mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='34' height='34'><path d='M17 12v10M12 17h10' stroke='black' stroke-width='2' stroke-linecap='round'/></svg>");
+    mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='34' height='34'><path d='M17 12v10M12 17h10' stroke='black' stroke-width='2' stroke-linecap='round'/></svg>");
+    -webkit-mask-size: 34px 34px;
+    mask-size: 34px 34px;
+    z-index: -1;
+}
+
+/* Large bg icon */
+.e-bg-icon {
+    position: absolute;
+    right: -20px; bottom: 60px;
+    z-index: -1;
+    font-size: 9rem;
+    color: var(--ec-accent);
+    opacity: 0.05;
+    transform: rotate(-15deg);
+    pointer-events: none;
+    transition: transform 0.5s ease, opacity 0.5s ease;
+}
+.e-card:hover .e-bg-icon {
+    transform: rotate(-4deg) scale(1.08);
+    opacity: 0.09;
+}
+
+/* ── TOP BANNER ───────────────────────────────────────────── */
+.e-card-top {
+    position: relative;
+    padding: 22px 18px 54px;
+    overflow: hidden;
+    background:
+        linear-gradient(135deg, var(--ec-bg) 0%, rgba(255,255,255,0.6) 100%),
+        #fff;
+}
+
+.e-art {
+    position: absolute; inset: 0;
+    overflow: hidden; pointer-events: none; z-index: 0;
+}
+
+.e-art-icon {
+    position: absolute;
+    top: 50%; left: 12px;
+    font-size: 3.2rem;
+    color: var(--ec-accent);
+    opacity: 0.18;
+    transform: translateY(-50%) rotate(-12deg);
+    transition: transform 0.4s ease, opacity 0.4s ease;
+}
+.e-card:hover .e-art-icon {
+    transform: translateY(-50%) rotate(-4deg) scale(1.15);
+    opacity: 0.28;
+}
+
+/* ── PILL ─────────────────────────────────────────────────── */
+.e-pill {
+    position: absolute; z-index: 2;
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 5px 11px; border-radius: 999px;
+    background: #fff; font-size: 0.68rem; font-weight: 700;
+    white-space: nowrap;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+.e-pill i { font-size: 0.72rem; }
+
+.e-pill-rating {
+    right: 14px; top: 14px;
+    background: linear-gradient(135deg, #fff8e1, #fff);
+    color: #f59e0b;
+}
+.e-pill-rating.is-new {
+    background: linear-gradient(135deg, #E8F7FF, #fff);
+    color: #1C3F8F;
+}
+
+/* ── AVATAR ───────────────────────────────────────────────── */
+.e-avatar {
+    position: relative; z-index: 2;
+    width: 100px; height: 100px;
+    margin: 24px auto 0;
+    padding: 4px;
+    border-radius: 18px;
+    background: #fff;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.12), 0 0 0 3px var(--ec-accent);
+    transition: transform 0.35s ease;
+    overflow: hidden;
+}
+.e-card:hover .e-avatar { transform: scale(1.05); }
+
+.e-avatar img {
+    display: block; width: 100%; height: 100%;
+    border-radius: 14px; object-fit: cover;
+}
+
+.e-avatar-icon {
+    width: 100%; height: 100%;
+    border-radius: 14px;
+    background: linear-gradient(135deg, var(--ec-bg), #fff);
+    color: var(--ec-accent);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 2.4rem;
+}
+
+/* ── BODY ─────────────────────────────────────────────────── */
+.e-card-body {
+    flex: 1 1 auto;
+    padding: 16px 20px 12px;
+    text-align: center;
+}
+
+.e-type {
+    display: inline-flex; align-items: center; gap: 5px;
+    margin-bottom: 10px;
+    padding: 5px 12px; border-radius: 999px;
+    background: var(--ec-bg);
+    color: var(--ec-accent);
+    font-size: 0.7rem; font-weight: 700;
+    letter-spacing: 0.04em; text-transform: uppercase;
+}
+
+.e-name {
+    margin: 0 0 10px;
+    font-size: 1.05rem; font-weight: 800; line-height: 1.25;
+    color: #0D2B6E;
+    display: -webkit-box;
+    -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.e-meta {
+    list-style: none; margin: 0; padding: 0;
+    display: flex; flex-direction: column; gap: 6px;
+    text-align: left;
+}
+.e-meta li {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 0.8rem; color: #475569;
+}
+.e-meta li i { flex-shrink: 0; width: 16px; text-align: center; color: var(--ec-accent); }
+.e-meta li span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ── FOOTER ───────────────────────────────────────────────── */
+.e-card-footer {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 10px; margin-top: auto;
+    padding: 12px 20px 18px;
+    border-top: 1px dashed rgba(0,0,0,0.08);
+}
+
+.e-stars {
+    display: inline-flex; gap: 2px;
+    font-size: 0.75rem; color: #cbd5e1;
+}
+.e-stars i.on { color: #f59e0b; }
+
+.e-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 16px; border-radius: 999px;
+    background: var(--ec-accent);
+    color: #fff; font-size: 0.78rem; font-weight: 700;
+    white-space: nowrap; text-decoration: none;
+    box-shadow: 0 4px 12px rgba(15,23,42,0.18);
+    transition: all 0.3s ease;
+}
+.e-btn:hover {
+    color: #fff; filter: brightness(1.1);
+    transform: translateX(3px);
+    box-shadow: 0 8px 20px rgba(15,23,42,0.28);
+}
+.e-btn i { font-size: 0.72rem; transition: transform 0.3s ease; }
+.e-btn:hover i { transform: translateX(3px); }
+
+/* ── NO ENTITY ────────────────────────────────────────────── */
+.no-entity {
+    grid-column: 1 / -1;
+    padding: 60px 20px; text-align: center;
+    background: #fff; border-radius: 20px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+}
+.no-entity i  { font-size: 4rem; color: #00A8CC; margin-bottom: 20px; display: block; }
+.no-entity h3 { font-size: 1.4rem; font-weight: 800; color: #0D2B6E; margin-bottom: 10px; }
+.no-entity p  { color: #64748b; }
+
+/* ── RESPONSIVE ───────────────────────────────────────────── */
+@media (max-width: 992px) {
+    .entity-grid { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px; }
+    .e-avatar { width: 90px; height: 90px; }
+    .e-name   { font-size: 0.98rem; }
+}
+
+@media (max-width: 768px) {
+    .entity-grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
+    .e-card-top  { padding: 18px 14px 46px; }
+    .e-card-body { padding: 14px 16px 10px; }
+    .e-card-footer { padding: 10px 16px 14px; flex-direction: column; align-items: stretch; }
+    .e-stars  { justify-content: center; }
+    .e-btn    { justify-content: center; }
+}
+
+@media (max-width: 480px) {
+    .entity-grid { grid-template-columns: 1fr 1fr; }
+    .e-avatar { width: 80px; height: 80px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .e-card, .e-avatar, .e-art-icon, .e-bg-icon, .e-btn { transition: none; }
+}

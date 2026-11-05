@@ -64,15 +64,19 @@ if (isset($_GET['delete_id']) && is_numeric($_GET['delete_id'])) {
 // ============================================
 // GET DOCTORS - JOIN WITH doctor_in_hospital
 // ============================================
-$search   = isset($_GET['search']) ? mysqli_real_escape_string($con, $_GET['search']) : '';
-$page     = max(1, (int)($_GET['page'] ?? 1));
-$per_page = 10;
-$offset   = ($page - 1) * $per_page;
+$search      = isset($_GET['search'])      ? mysqli_real_escape_string($con, $_GET['search'])      : '';
+$filter_pmdc = isset($_GET['filter_pmdc']) ? mysqli_real_escape_string($con, trim($_GET['filter_pmdc'])) : '';
+$page        = max(1, (int)($_GET['page'] ?? 1));
+$per_page    = 10;
+$offset      = ($page - 1) * $per_page;
 
 $where = "dih.hospital_id = $hospital_id AND d.approve = 1 AND u.status = 1 AND dih.inactive = 0";
 
 if (!empty($search)) {
     $where .= " AND (d.doctor_name LIKE '%$search%' OR dct.type LIKE '%$search%')";
+}
+if (!empty($filter_pmdc)) {
+    $where .= " AND d.pmdc_no LIKE '%$filter_pmdc%'";
 }
 
 // Count total
@@ -86,7 +90,7 @@ $count_result  = mysqli_query($con, $count_query);
 $total_records = (int)mysqli_fetch_assoc($count_result)['total'];
 $total_pages   = (int)ceil($total_records / $per_page);
 
-// Fetch doctors
+// Fetch doctors (pmdc_no already d.* mein included hai)
 $doctors_query = "SELECT d.*, dct.type as specialization, u.status as ustatus
                   FROM doctor_in_hospital dih
                   INNER JOIN doctors d ON dih.doctor_id = d.doctor_id
@@ -139,10 +143,16 @@ mysqli_free_result($doctors_result);
 
     <div class="filter-section">
         <form method="GET" class="row g-2">
-            <div class="col-md-10">
+            <div class="col-md-7">
                 <input type="text" class="form-control" name="search"
                        value="<?php echo htmlspecialchars($_GET['search'] ?? ''); ?>"
                        placeholder="Search by name or specialization...">
+            </div>
+            <div class="col-md-3">
+                <input type="text" class="form-control" name="filter_pmdc"
+                       value="<?php echo htmlspecialchars($_GET['filter_pmdc'] ?? ''); ?>"
+                       placeholder="Filter by PMDC No..."
+                       oninput="this.value=this.value.toUpperCase()">
             </div>
             <div class="col-md-2">
                 <button type="submit" class="btn btn-primary w-100">
@@ -159,6 +169,7 @@ mysqli_free_result($doctors_result);
                     <th style="width:50px;">#</th>
                     <th>Doctor</th>
                     <th>Specialization</th>
+                    <th>PMDC No</th>
                     <th>Phone</th>
                     <th>Experience</th>
                     <th>Status</th>
@@ -189,6 +200,13 @@ mysqli_free_result($doctors_result);
                             </div>
                         </td>
                         <td><?php echo htmlspecialchars($doctor['specialization'] ?? 'General'); ?></td>
+                        <td>
+                            <?php if (!empty($doctor['pmdc_no'])): ?>
+                                <span class="fw-semibold"><?php echo htmlspecialchars($doctor['pmdc_no']); ?></span>
+                            <?php else: ?>
+                                <span class="text-muted">—</span>
+                            <?php endif; ?>
+                        </td>
                         <td><?php echo htmlspecialchars($doctor['doctor_phone'] ?? ''); ?></td>
                         <td><?php echo htmlspecialchars($doctor['experience_years'] ?? '0'); ?> yrs</td>
                         <td>
@@ -218,7 +236,7 @@ mysqli_free_result($doctors_result);
                 <?php endforeach; ?>
             <?php else: ?>
                 <tr>
-                    <td colspan="7" class="text-center py-4 text-muted">
+                    <td colspan="8" class="text-center py-4 text-muted">
                         <i class="fas fa-user-md fa-2x mb-2 d-block" style="color:#cbd5e1;"></i>
                         No doctors found for your hospital.
                     </td>
@@ -230,12 +248,13 @@ mysqli_free_result($doctors_result);
 
     <?php if ($total_pages > 1): ?>
         <?php $search_qs = urlencode($_GET['search'] ?? ''); ?>
+        <?php $pmdc_qs   = urlencode($_GET['filter_pmdc'] ?? ''); ?>
         <div class="pagination-container">
             <nav>
                 <ul class="pagination">
                     <?php if ($page > 1): ?>
                         <li class="page-item">
-                            <a class="page-link" href="?page=<?php echo $page - 1; ?>&search=<?php echo $search_qs; ?>">
+                            <a class="page-link" href="?page=<?php echo $page - 1; ?>&search=<?php echo $search_qs; ?>&filter_pmdc=<?php echo $pmdc_qs; ?>">
                                 <i class="fas fa-chevron-left"></i>
                             </a>
                         </li>
@@ -245,7 +264,7 @@ mysqli_free_result($doctors_result);
 
                     <?php for ($i = 1; $i <= $total_pages; $i++): ?>
                         <li class="page-item <?php echo ($i == $page) ? 'active' : ''; ?>">
-                            <a class="page-link" href="?page=<?php echo $i; ?>&search=<?php echo $search_qs; ?>">
+                            <a class="page-link" href="?page=<?php echo $i; ?>&search=<?php echo $search_qs; ?>&filter_pmdc=<?php echo $pmdc_qs; ?>">
                                 <?php echo $i; ?>
                             </a>
                         </li>
@@ -253,7 +272,7 @@ mysqli_free_result($doctors_result);
 
                     <?php if ($page < $total_pages): ?>
                         <li class="page-item">
-                            <a class="page-link" href="?page=<?php echo $page + 1; ?>&search=<?php echo $search_qs; ?>">
+                            <a class="page-link" href="?page=<?php echo $page + 1; ?>&search=<?php echo $search_qs; ?>&filter_pmdc=<?php echo $pmdc_qs; ?>">
                                 <i class="fas fa-chevron-right"></i>
                             </a>
                         </li>

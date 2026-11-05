@@ -1,3 +1,12 @@
+.page-header h1,
+.page-header p {
+    background: linear-gradient(135deg, #1C3F8F 0%, #00A8CC 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    color: transparent;           /* fallback */
+    display: inline-block;        /* gradient ko text ke size tak rakhne ke liye */
+}
 .filter-section {
             background: rgba(255, 255, 255, 0.85) !important;
             backdrop-filter: blur(20px) !important;
@@ -360,3 +369,279 @@
                 font-size: 0.6rem;
             }
         }
+
+
+/* ── Filter buttons — brand colors ───────────────────────── */
+.btn-search-custom {
+    background: linear-gradient(135deg, #1C3F8F 0%, #00A8CC 100%) !important;
+    color: white !important; border: none !important;
+    border-radius: 12px !important; padding: 10px 24px !important;
+    font-weight: 700 !important; font-size: 0.85rem !important;
+    transition: all 0.3s ease !important;
+    box-shadow: 0 4px 12px rgba(28,63,143,0.25) !important;
+    display: inline-flex !important; align-items: center !important; gap: 8px !important;
+}
+.btn-search-custom:hover {
+    background: linear-gradient(135deg, #27C96A 0%, #00C9A7 100%) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 18px rgba(0,168,204,0.35) !important;
+}
+
+/* ── HOSPITALS GRID ───────────────────────────────────────── */
+.hospitals-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 24px;
+    margin-top: 30px;
+}
+
+/* ── H-CARD (mirrors dr-card) ─────────────────────────────── */
+.h-card {
+    --hc-bg:     #E8F7FF;
+    --hc-accent: #1C3F8F;
+
+    position: relative;
+    isolation: isolate;
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    border-radius: 20px;
+    overflow: hidden;
+    border: 1px solid rgba(0,0,0,0.04);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    transition: transform 0.35s ease, box-shadow 0.35s ease;
+}
+
+.h-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 16px 40px rgba(0,0,0,0.15);
+}
+
+/* Plus pattern background */
+.h-card::before {
+    content: "";
+    position: absolute; inset: 0;
+    background: var(--hc-accent);
+    opacity: 0.06;
+    pointer-events: none;
+    -webkit-mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='34' height='34'><path d='M17 12v10M12 17h10' stroke='black' stroke-width='2' stroke-linecap='round'/></svg>");
+    mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='34' height='34'><path d='M17 12v10M12 17h10' stroke='black' stroke-width='2' stroke-linecap='round'/></svg>");
+    -webkit-mask-size: 34px 34px;
+    mask-size: 34px 34px;
+    z-index: -1;
+}
+
+/* Large bg icon */
+.h-bg-icon {
+    position: absolute;
+    right: -20px; bottom: 60px;
+    z-index: -1;
+    font-size: 9rem;
+    color: var(--hc-accent);
+    opacity: 0.05;
+    transform: rotate(-15deg);
+    pointer-events: none;
+    transition: transform 0.5s ease, opacity 0.5s ease;
+}
+.h-card:hover .h-bg-icon {
+    transform: rotate(-4deg) scale(1.08);
+    opacity: 0.09;
+}
+
+/* ── TOP BANNER ───────────────────────────────────────────── */
+.h-card-top {
+    position: relative;
+    padding: 22px 18px 54px;
+    overflow: hidden;
+    background:
+        linear-gradient(135deg, var(--hc-bg) 0%, rgba(255,255,255,0.6) 100%),
+        #fff;
+}
+
+.h-art {
+    position: absolute; inset: 0;
+    overflow: hidden; pointer-events: none; z-index: 0;
+}
+
+.h-art-icon {
+    position: absolute;
+    top: 50%; left: 12px;
+    font-size: 3.2rem;
+    color: var(--hc-accent);
+    opacity: 0.18;
+    transform: translateY(-50%) rotate(-12deg);
+    transition: transform 0.4s ease, opacity 0.4s ease;
+}
+.h-card:hover .h-art-icon {
+    transform: translateY(-50%) rotate(-4deg) scale(1.15);
+    opacity: 0.28;
+}
+
+/* ── PILLS ────────────────────────────────────────────────── */
+.h-pill {
+    position: absolute; z-index: 2;
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 5px 11px; border-radius: 999px;
+    background: #fff; font-size: 0.68rem; font-weight: 700;
+    white-space: nowrap;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+.h-pill i { font-size: 0.72rem; }
+
+.h-pill-rating {
+    right: 14px; top: 14px;
+    background: linear-gradient(135deg, #fff8e1, #fff);
+    color: #f59e0b;
+}
+.h-pill-rating.is-new {
+    background: linear-gradient(135deg, #E8F7FF, #fff);
+    color: #1C3F8F;
+}
+
+/* ── AVATAR ───────────────────────────────────────────────── */
+.h-avatar {
+    position: relative; z-index: 2;
+    width: 100px; height: 100px;
+    margin: 24px auto 0;
+    padding: 4px;
+    border-radius: 18px;
+    background: #fff;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.12), 0 0 0 3px var(--hc-accent);
+    transition: transform 0.35s ease;
+    overflow: hidden;
+}
+.h-card:hover .h-avatar { transform: scale(1.05); }
+
+.h-avatar img {
+    display: block; width: 100%; height: 100%;
+    border-radius: 14px; object-fit: cover;
+}
+
+.h-avatar-icon {
+    width: 100%; height: 100%;
+    border-radius: 14px;
+    background: linear-gradient(135deg, var(--hc-bg), #fff);
+    color: var(--hc-accent);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 2.4rem;
+}
+
+/* ── BODY ─────────────────────────────────────────────────── */
+.h-card-body {
+    flex: 1 1 auto;
+    padding: 16px 20px 12px;
+    text-align: center;
+}
+
+.h-type {
+    display: inline-flex; align-items: center; gap: 5px;
+    margin-bottom: 10px;
+    padding: 5px 12px; border-radius: 999px;
+    background: var(--hc-bg);
+    color: var(--hc-accent);
+    font-size: 0.7rem; font-weight: 700;
+    letter-spacing: 0.04em; text-transform: uppercase;
+}
+
+.h-name {
+    margin: 0 0 10px;
+    font-size: 1.05rem; font-weight: 800; line-height: 1.25;
+    color: #0D2B6E;
+    display: -webkit-box;
+    -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.h-meta {
+    list-style: none; margin: 0; padding: 0;
+    display: flex; flex-direction: column; gap: 6px;
+    text-align: left;
+}
+.h-meta li {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 0.8rem; color: #475569;
+}
+.h-meta li i { flex-shrink: 0; width: 16px; text-align: center; color: var(--hc-accent); }
+.h-meta li span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ── FOOTER ───────────────────────────────────────────────── */
+.h-card-footer {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 10px; margin-top: auto;
+    padding: 12px 20px 18px;
+    border-top: 1px dashed rgba(0,0,0,0.08);
+}
+
+.h-stars {
+    display: inline-flex; gap: 2px;
+    font-size: 0.75rem; color: #cbd5e1;
+}
+.h-stars i.on { color: #f59e0b; }
+
+.h-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 16px; border-radius: 999px;
+    background: var(--hc-accent);
+    color: #fff; font-size: 0.78rem; font-weight: 700;
+    white-space: nowrap; text-decoration: none;
+    box-shadow: 0 4px 12px rgba(15,23,42,0.18);
+    transition: all 0.3s ease;
+}
+.h-btn:hover {
+    color: #fff; filter: brightness(1.1);
+    transform: translateX(3px);
+    box-shadow: 0 8px 20px rgba(15,23,42,0.28);
+}
+.h-btn i { font-size: 0.72rem; transition: transform 0.3s ease; }
+.h-btn:hover i { transform: translateX(3px); }
+
+/* ── NO HOSPITALS ─────────────────────────────────────────── */
+.no-hospitals {
+    grid-column: 1 / -1;
+    padding: 60px 20px; text-align: center;
+    background: #fff; border-radius: 20px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+}
+.no-hospitals i  { margin-bottom: 20px; font-size: 4rem; color: #00A8CC; }
+.no-hospitals h3 { font-size: 1.4rem; font-weight: 800; color: #0D2B6E; margin-bottom: 10px; }
+.no-hospitals p  { color: #64748b; }
+
+/* ── PAGINATION brand colors ──────────────────────────────── */
+.pagination .page-link {
+    border-radius: 10px !important; border: 1px solid rgba(0,168,204,0.2) !important;
+    color: #1C3F8F !important; font-weight: 600;
+    transition: all 0.2s;
+}
+.pagination .page-link:hover {
+    background: linear-gradient(135deg,#1C3F8F,#00A8CC) !important;
+    color: white !important; border-color: transparent !important;
+}
+.pagination .page-item.active .page-link {
+    background: linear-gradient(135deg,#1C3F8F,#00A8CC) !important;
+    color: white !important; border-color: transparent !important;
+}
+
+/* ── RESPONSIVE ───────────────────────────────────────────── */
+@media (max-width: 992px) {
+    .hospitals-grid { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px; }
+    .h-avatar { width: 90px; height: 90px; }
+    .h-name   { font-size: 0.98rem; }
+}
+
+@media (max-width: 768px) {
+    .hospitals-grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
+    .h-card-top  { padding: 18px 14px 46px; }
+    .h-card-body { padding: 14px 16px 10px; }
+    .h-card-footer { padding: 10px 16px 14px; flex-direction: column; align-items: stretch; }
+    .h-stars  { justify-content: center; }
+    .h-btn    { justify-content: center; }
+}
+
+@media (max-width: 480px) {
+    .hospitals-grid { grid-template-columns: 1fr 1fr; }
+    .h-avatar { width: 80px; height: 80px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .h-card, .h-avatar, .h-art-icon, .h-bg-icon, .h-btn { transition: none; }
+}

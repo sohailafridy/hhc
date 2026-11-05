@@ -88,7 +88,7 @@ $query = "SELECT l.*, c.city_name, u.status as ustatus,
           ORDER BY l.lab_name ASC
           LIMIT $offset, $per_page";
 
-$result = mysqli_query($con, $query);
+$lab_result = mysqli_query($con, $query);
 ?>
 
 <?php include BASE_PATH . '/admin/inc/header.php'; ?>
@@ -144,9 +144,9 @@ $result = mysqli_query($con, $query);
     </div>
 
     <!-- ===== LABORATORIES GRID ===== -->
-    <?php if (mysqli_num_rows($result) > 0): ?>
+    <?php if (mysqli_num_rows($lab_result) > 0): ?>
         <div class="lab-grid">
-            <?php while ($lab = mysqli_fetch_assoc($result)): 
+            <?php while ($lab = mysqli_fetch_assoc($lab_result)): 
                 $avg_rating = $lab['avg_rating'] ? round($lab['avg_rating'], 1) : 0;
             ?>
                 <div class="lab-card">

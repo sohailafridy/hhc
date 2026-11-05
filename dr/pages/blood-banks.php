@@ -44,6 +44,7 @@
 
 <body>
 <link rel="stylesheet" href="<?= BASE_URL ?>style/blood-banks.css">
+<link rel="stylesheet" href="<?= BASE_URL ?>style/entity-card.css">
     <!-- Navbar -->
     <?php include BASE_PATH.'/includes/menu.php'; ?>
 
@@ -52,8 +53,18 @@
         <div class="container position-relative">
             <div class="row">
                 <div class="col-lg-12 text-center">
-                    <h1 class="display-4 fw-bold mb-3" data-aos="fade-up">Our Blood Banks</h1>
+                    <!-- Page Header -->
+                    <section class="page-header">
+                        <div class="container position-relative">
+                            <div class="row">
+                                <div class="col-lg-12 text-center">
+                                    <h1 class="display-4 fw-bold mb-3" data-aos="fade-up">Our Blood Banks</h1><br>
                     <p class="lead mb-0" data-aos="fade-up" data-aos-delay="200">Find quality blood banks near you</p>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                    
                 </div>
             </div>
         </div>
@@ -99,54 +110,71 @@
             </div>
 
             <!-- Blood Banks Grid -->
-            <div class="row g-3" id="bloodBanksContainer">
+            <div class="entity-grid" id="bloodBanksContainer">
                 <?php
-                $blood_card_colors = ['#fff1f1', '#fff6e8', '#fceef3', '#eef6ff', '#f3efff', '#edf8ff'];
+                $card_bgs    = ['#FFF0F0','#E8F7FF','#F0FFF8','#FFF8E8','#F0FDFA','#EFF6FF'];
+                $card_accents= ['#1C3F8F','#00A8CC','#27C96A','#00C9A7','#1C3F8F','#00A8CC'];
                 $blood_index = 0;
+
                 if (mysqli_num_rows($result) > 0) {
                     while($row = mysqli_fetch_assoc($result)) {
-                        // Rating (feedback table me user_id se)
-                        $bb_stars_q = mysqli_query($con, "SELECT AVG(stars) as stars FROM `feedback` WHERE user_id='". (int)$row['user_id'] ."'");
-                        $bb_stars = mysqli_fetch_assoc($bb_stars_q);
-                        $bb_stars = $bb_stars['stars'];
-                        $blood_rating = $bb_stars ? number_format((float)$bb_stars, 1) : 'New';
-                        $blood_bg = $blood_card_colors[$blood_index % count($blood_card_colors)];
+                        $bb_stars_q  = mysqli_query($con, "SELECT AVG(stars) as stars FROM feedback WHERE user_id='".(int)$row['user_id']."'");
+                        $blood_rating = mysqli_fetch_assoc($bb_stars_q)['stars'];
+                        $blood_rating = $blood_rating ? number_format((float)$blood_rating, 1) : 'New';
+                        $is_new       = ($blood_rating === 'New');
+                        $bg           = $card_bgs[$blood_index   % count($card_bgs)];
+                        $accent       = $card_accents[$blood_index % count($card_accents)];
                         $blood_index++;
-                        ?>
-                        <div class="col-lg-3 col-md-4 col-6" data-aos="fade-up" data-aos-delay="<?php echo 100 + ($blood_index * 80); ?>">
-                            <div class="speciality-card blood-mini-card">
-                                <div class="speciality-card-body" style="background-color: <?php echo $blood_bg; ?>;">
-                                    <div class="speciality-icon">
-                                        <i class="fas fa-tint"></i>
-                                    </div>
-                                    <h4 class="speciality-title"><?php echo htmlspecialchars($row['bb_name']); ?></h4>
-                                    <p class="hospital-mini-location">
-                                        <i class="fas fa-map-marker-alt"></i><?php echo htmlspecialchars($row['city_name']); ?>
-                                    </p>
-                                    <div class="hospital-mini-rating">
-                                        <i class="fas fa-star text-warning"></i><?php echo $blood_rating; ?> Rating
-                                    </div>
-                                    <a href="blood-bank-detail?blood_bankid=<?php echo $row['bb_id']; ?>" class="speciality-btn">
-                                        <i class="fas fa-arrow-right"></i>
-                                        DETAILS
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                        <?php
-                    }
-                } else {
-                    ?>
-                    <div class="col-12">
-                        <div class="no-blood-banks text-center py-5">
-                            <i class="fas fa-tint fa-3x text-primary mb-3"></i>
-                            <h3>No Blood Banks Found</h3>
-                            <p class="text-muted">No blood banks match your search criteria. Please try different filters.</p>
+
+                        $img_src = (!empty($row['bb_pic']) && file_exists(BASE_PATH.'/admin/inc/uploads/blood-banks/'.$row['bb_pic']))
+                            ? BASE_URL.'admin/inc/uploads/blood-banks/'.htmlspecialchars($row['bb_pic'])
+                            : '';
+                ?>
+                <div class="e-card" style="--ec-bg:<?= $bg ?>; --ec-accent:<?= $accent ?>;" data-aos="fade-up" data-aos-delay="<?= 80 * ($blood_index % 6) ?>">
+                    <div class="e-bg-icon"><i class="fas fa-tint"></i></div>
+                    <div class="e-card-top">
+                        <div class="e-art"><i class="fas fa-tint e-art-icon"></i></div>
+                        <span class="e-pill e-pill-rating <?= $is_new ? 'is-new' : '' ?>">
+                            <i class="fas fa-star"></i> <?= $blood_rating ?>
+                        </span>
+                        <div class="e-avatar">
+                            <?php if ($img_src): ?>
+                                <img src="<?= $img_src ?>" alt="<?= htmlspecialchars($row['bb_name']) ?>">
+                            <?php else: ?>
+                                <div class="e-avatar-icon"><i class="fas fa-tint"></i></div>
+                            <?php endif; ?>
                         </div>
                     </div>
-                    <?php
-                }
-                ?>
+                    <div class="e-card-body">
+                        <div class="e-type"><i class="fas fa-tint"></i> Blood Bank</div>
+                        <h4 class="e-name"><?= htmlspecialchars($row['bb_name']) ?></h4>
+                        <ul class="e-meta">
+                            <li><i class="fas fa-map-marker-alt"></i><span><?= htmlspecialchars($row['city_name']) ?></span></li>
+                            <?php if (!empty($row['bb_contact'])): ?>
+                            <li><i class="fas fa-phone"></i><span><?= htmlspecialchars($row['bb_contact']) ?></span></li>
+                            <?php endif; ?>
+                        </ul>
+                    </div>
+                    <div class="e-card-footer">
+                        <span class="e-stars">
+                            <?php for ($s = 1; $s <= 5; $s++): ?>
+                                <i class="fas fa-star <?= (!$is_new && $s <= round($blood_rating)) ? 'on' : '' ?>"></i>
+                            <?php endfor; ?>
+                        </span>
+                        <a href="blood-bank-detail?blood_bankid=<?= $row['bb_id'] ?>" class="e-btn">
+                            View Details <i class="fas fa-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+                <?php
+                    }
+                } else { ?>
+                    <div class="no-entity">
+                        <i class="fas fa-tint"></i>
+                        <h3>No Blood Banks Found</h3>
+                        <p>No blood banks match your search criteria.</p>
+                    </div>
+                <?php } ?>
             </div>
 
             <!-- Pagination -->
