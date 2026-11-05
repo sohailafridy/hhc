@@ -205,6 +205,7 @@ $reviews_q = mysqli_query($con, "SELECT * FROM feedback WHERE user_id=$user_id A
 @media (max-width: 992px) {
     .two-col-dashboard { grid-template-columns: 1fr; }
     .timing-grid       { grid-template-columns: 1fr; }
+    .welcome-section{width: 100%;}
 }
 </style>
 
