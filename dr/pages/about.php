@@ -32,7 +32,7 @@ $average_rating = $review_count > 0 ? number_format($total_stars / $review_count
 ?>
 
 <?php include BASE_PATH.'/includes/menu.php'; ?>
-<link rel="stylesheet" href="<?= BASE_URL ?>style/about-us.css?v=<?= @filemtime(__DIR__ . '/style/about-us.css') ?: time() ?>">
+<link rel="stylesheet" href="<?= BASE_URL ?>style/about-us.css?v=<?= @filemtime(BASE_PATH . '/style/about-us.css') ?: time() ?>">
 
 <!-- ══ PAGE HEADER ══════════════════════════════════════════ -->
 <section class="about-page-header">
@@ -45,6 +45,85 @@ $average_rating = $review_count > 0 ? number_format($total_stars / $review_count
     </div>
 </section>
 
+<!-- ══ STORY / WELCOME ═══════════════════════════════════════ -->
+<section class="about-story-section section-padding">
+    <div class="container">
+        <div class="row g-4 align-items-stretch">
+
+            <!-- Welcome + founder note -->
+            <div class="col-lg-7" data-aos="fade-right">
+                <div class="content-panel about-parallax-card story-panel">
+                    <span class="section-chip section-chip-soft">
+                        <i class="fas fa-hand-holding-heart"></i> Khush Aamdeed
+                    </span>
+                    <h2 class="section-title about-section-title">SehatNexa mein Khush Aamdeed!</h2>
+                    <div class="story-copy">
+                        <p class="story-lead">
+                            Ye ek mukammal healthcare directory hai jo aapke liye medical services dhoondna asaan banati hai.
+                        </p>
+                    </div>
+                    <blockquote class="story-founder-note">
+                        <i class="fas fa-quote-left"></i>
+                        <p>
+                            Ek software developer hone ke naate, maine ek aam masla mehsoos kiya: jab logon ko medical madad ki zaroorat hoti hai, to unhe apne ilaqe ke doctors, hospitals aur labs ki sahi maloomat ek jagah nahi milti. Maine SehatNexa isi masle ko hal karne ke liye banaya hai.
+                        </p>
+                        <footer><i class="fas fa-shield-heart"></i> Founder, SehatNexa</footer>
+                    </blockquote>
+                </div>
+            </div>
+
+            <!-- Vision + What we do -->
+            <div class="col-lg-5" data-aos="fade-left">
+                <div class="insight-stack">
+                    <div class="content-panel insight-panel accent-panel about-parallax-card">
+                        <span class="mini-label"><i class="fas fa-eye me-1"></i> Hamara Vision (Our Vision)</span>
+                        <h3>Behtar healthcare system</h3>
+                        <p>
+                            Hamara vision ek aisa behtar healthcare system banana hai jahan patients aur unke families bina kisi pareshani ke sahi doctor aur medical facility tak asaani se pohanch saken.
+                        </p>
+                    </div>
+                    <div class="content-panel content-panel-dark insight-panel about-parallax-card">
+                        <span class="mini-label"><i class="fas fa-briefcase-medical me-1"></i> Hum Kya Karte Hain (What We Do)</span>
+                        <h3>Poora healthcare network, ek jagah</h3>
+                        <p>
+                            Hum aapke liye poora healthcare network ek jagah par le kar aaye hain. Chahe aapko koi specialist doctor dhoondhna ho, bharosa mand hospital, diagnostic laboratory, ya emergency ke liye blood bank, SehatNexa aapko ye saari maloomat ek hi platform par foran faraham karta hai.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Services -->
+        <div class="story-services" data-aos="fade-up">
+            <div class="value-card">
+                <span><i class="fas fa-user-doctor"></i></span>
+                <h4>Specialist Doctors</h4>
+                <p>Apne ilaqe ke sahi specialist tak asaani se pohanchein.</p>
+            </div>
+            <div class="value-card">
+                <span><i class="fas fa-hospital"></i></span>
+                <h4>Bharosa Mand Hospitals</h4>
+                <p>Hospitals ki sahi maloomat ek hi jagah par.</p>
+            </div>
+            <div class="value-card">
+                <span><i class="fas fa-flask-vial"></i></span>
+                <h4>Diagnostic Laboratories</h4>
+                <p>Tests ke liye qareebi labs foran dhoondhein.</p>
+            </div>
+            <div class="value-card">
+                <span><i class="fas fa-droplet"></i></span>
+                <h4>Emergency Blood Banks</h4>
+                <p>Emergency me blood bank ki maloomat jaldi hasil karein.</p>
+            </div>
+        </div>
+
+        <div class="support-quote story-closing" data-aos="fade-up">
+            <i class="fas fa-heart-pulse me-2"></i>
+            Hamara maqsad healthcare ko dhoondhna asaan, tez aur sab ke liye mumkin banana hai.
+        </div>
+    </div>
+</section>
+
 <!-- ══ TEAM SECTION ═════════════════════════════════════════ -->
 <section class="section-padding">
     <div class="container">
@@ -53,7 +132,7 @@ $average_rating = $review_count > 0 ? number_format($total_stars / $review_count
             <span class="section-chip section-chip-soft">
                 <i class="fas fa-users"></i> Our Team
             </span>
-            <h2 class="section-title">MEET THE PEOPLE BEHINDE SEHATNEXA</h2>
+            <h2 class="section-title">MEET THE PEOPLE BEHIND SEHATNEXA</h2>
         </div>
 
         <div class="row g-4 flex-column flex-lg-row">
@@ -583,6 +662,80 @@ $average_rating = $review_count > 0 ? number_format($total_stars / $review_count
 .team-highlight-card p  { margin: 0; color: #64748b; font-size: 0.85rem; line-height: 1.6; }
 
 .team-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+/* ── Story / Welcome section ───────────────────────────── */
+.story-panel { height: 100%; }
+.story-panel .about-section-title { margin-top: 14px; }
+
+.story-lead {
+    font-size: 1.12rem;
+    font-weight: 600;
+    color: #0D2B6E !important;
+    line-height: 1.8;
+}
+
+.story-founder-note {
+    position: relative;
+    margin: 6px 0 0;
+    padding: 24px 24px 20px 28px;
+    border-radius: 22px;
+    background: linear-gradient(135deg, rgba(28,63,143,0.07), rgba(39,201,106,0.09));
+    border-left: 4px solid #1C3F8F;
+}
+
+.story-founder-note > i {
+    position: absolute;
+    top: 14px; right: 18px;
+    font-size: 1.6rem;
+    color: rgba(0,168,204,0.28);
+}
+
+.story-founder-note p {
+    margin: 0 0 14px;
+    color: #334155;
+    font-size: 1rem;
+    line-height: 1.85;
+}
+
+.story-founder-note footer {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #1C3F8F;
+}
+
+.story-founder-note footer i { color: #27C96A; margin-right: 6px; }
+
+.insight-panel .mini-label { margin-bottom: 12px; }
+.insight-panel h3 { margin-bottom: 10px; }
+
+.story-services {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 18px;
+    margin-top: 28px;
+}
+
+.story-services .value-card { padding: 22px; }
+.story-services .value-card h4 { font-size: 1.05rem; }
+.story-services .value-card p { font-size: 0.9rem; line-height: 1.7; }
+
+.story-closing {
+    margin-top: 28px;
+    text-align: center;
+    font-size: 1.05rem;
+}
+
+.story-closing i { color: #27C96A; }
+
+@media (max-width: 991px) {
+    .story-services { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 575px) {
+    .story-services { grid-template-columns: 1fr; }
+    .story-founder-note { padding: 20px 18px 16px 20px; }
+    .story-lead { font-size: 1.02rem; }
+}
 </style>
 
 <script>
