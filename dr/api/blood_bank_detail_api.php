@@ -1,19 +1,10 @@
 <?php
 /**
  * All Blood Banks Detail API
- * Returns complete details of ALL approved blood banks (with pagination)
- * Method: GET
- * URL: /api/blood_bank_detail_api.php?page=1&limit=10
- * 
- * Optional:
- * - page=1         (blood banks pagination, default 1)
- * - limit=10       (records per page, default 10)
- * - review_page=1  (reviews pagination per blood bank, default 1)
  */
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 
-// ============================================
-// STEP 1: Headers & CORS
-// ============================================
 header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, OPTIONS');
@@ -24,33 +15,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit();
 }
 
-// ============================================
-// STEP 2: Database Connection
-// ============================================
+// Config path check
+if (!file_exists('../config.php')) {
+    echo json_encode(["status" => false, "message" => "config.php not found at ../config.php"]);
+    exit();
+}
 include '../config.php';
 
 if (!$con) {
-    echo json_encode(["status" => false, "message" => "DB connection failed"]);
+    echo json_encode(["status" => false, "message" => "DB connection failed: " . mysqli_connect_error()]);
     exit();
 }
 mysqli_set_charset($con, 'utf8mb4');
 
-// ============================================
-// STEP 3: Input Validation & Pagination
-// ============================================
-// Blood banks pagination
+// Pagination
 $page  = isset($_GET['page']) && (int)$_GET['page'] > 0 ? (int)$_GET['page'] : 1;
 $limit = isset($_GET['limit']) && (int)$_GET['limit'] > 0 ? (int)$_GET['limit'] : 10;
 $offset = ($page - 1) * $limit;
 
-// Reviews pagination (per blood bank)
 $review_page = isset($_GET['review_page']) ? max(1, (int)$_GET['review_page']) : 1;
 $reviews_per_page = 10;
 $review_offset = ($review_page - 1) * $reviews_per_page;
 
-// ============================================
-// STEP 4: Fetch ALL Approved Blood Banks
-// ============================================
+// Fetch Blood Banks
 $bb_query = "
     SELECT 
         bb.*,
@@ -68,16 +55,15 @@ $bb_query = "
 $bb_result = mysqli_query($con, $bb_query);
 
 if (!$bb_result) {
-    echo json_encode(["status" => false, "message" => "Database query failed: " . mysqli_error($con)]);
+    echo json_encode(["status" => false, "message" => "Query failed: " . mysqli_error($con)]);
     exit();
 }
 
-// Total count for pagination
 $total_bb_query = "SELECT COUNT(*) as total FROM blood_bank bb 
                    LEFT JOIN users u ON u.user_id = bb.user_id 
                    WHERE u.status = 1 AND bb.approve = 1";
 $total_bb_result = mysqli_query($con, $total_bb_query);
-$total_bb = mysqli_fetch_assoc($total_bb_result)['total'];
+$total_bb = $total_bb_result ? mysqli_fetch_assoc($total_bb_result)['total'] : 0;
 $total_pages = ($total_bb > 0) ? ceil($total_bb / $limit) : 0;
 
 if (mysqli_num_rows($bb_result) === 0) {
@@ -90,26 +76,21 @@ if (mysqli_num_rows($bb_result) === 0) {
 
 $blood_banks_list = [];
 
-// Loop through all blood banks
 while ($bb = mysqli_fetch_assoc($bb_result)) {
     $bb_id = (int)$bb['bb_id'];
     $bb_user_id = (int)$bb['user_id'];
 
-    // ============================================
-    // STEP 5: Rating Summary
-    // ============================================
+    // Rating
     $rating_query = "SELECT AVG(stars) AS avg_rating, COUNT(feedback_id) AS total_reviews 
                      FROM feedback 
                      WHERE user_id = $bb_user_id AND status = 1";
     $rating_result = mysqli_query($con, $rating_query);
-    $rating_data = mysqli_fetch_assoc($rating_result);
+    $rating_data = $rating_result ? mysqli_fetch_assoc($rating_result) : ['avg_rating'=>0, 'total_reviews'=>0];
 
     $avg_rating    = $rating_data['avg_rating'] ? round((float)$rating_data['avg_rating'], 1) : 0;
     $total_reviews = (int)$rating_data['total_reviews'];
 
-    // ============================================
-    // STEP 6: Blood Stock Availability
-    // ============================================
+    // Stock
     $stock_query = "SELECT avail_b_id, b_group, stock 
                     FROM bb_available_blood 
                     WHERE bb_id = $bb_id 
@@ -128,9 +109,7 @@ while ($bb = mysqli_fetch_assoc($bb_result)) {
         }
     }
 
-    // ============================================
-    // STEP 7: Reviews (Paginated per blood bank)
-    // ============================================
+    // Reviews
     $reviews_query = "
         SELECT feedback_id, commenter_name, commenter_gmail, comment, stars, created_at
         FROM feedback 
@@ -141,36 +120,32 @@ while ($bb = mysqli_fetch_assoc($bb_result)) {
     $reviews_result = mysqli_query($con, $reviews_query);
 
     $reviews = [];
-    while ($r = mysqli_fetch_assoc($reviews_result)) {
-        $reviews[] = [
-            "review_id"     => (int)$r['feedback_id'],
-            "patient_name"  => $r['commenter_name'],
-            "patient_email" => $r['commenter_gmail'],
-            "comment"       => $r['comment'] ?? '',
-            "stars"         => (int)$r['stars'],
-            "date"          => date('d M Y', strtotime($r['created_at']))
-        ];
+    if ($reviews_result) {
+        while ($r = mysqli_fetch_assoc($reviews_result)) {
+            $reviews[] = [
+                "review_id"     => (int)$r['feedback_id'],
+                "patient_name"  => $r['commenter_name'],
+                "patient_email" => $r['commenter_gmail'],
+                "comment"       => $r['comment'] ?? '',
+                "stars"         => (int)$r['stars'],
+                "date"          => date('d M Y', strtotime($r['created_at']))
+            ];
+        }
     }
 
     $total_review_pages = ($total_reviews > 0) ? ceil($total_reviews / $reviews_per_page) : 0;
 
-    // ============================================
-    // STEP 8: Blood Bank Pic Full URL
-    // ============================================
+    // Pic URL
     $bb_pic = '';
-    $default_pic = BASE_URL . 'admin/inc/uploads/default/bb.jpg';
+    $default_pic = defined('BASE_URL') ? BASE_URL . 'admin/inc/uploads/default/bb.jpg' : '';
 
     if (!empty($bb['bb_pic'])) {
-        $bb_pic = BASE_URL . 'admin/inc/uploads/blood-banks/' . $bb['bb_pic'];
+        $bb_pic = defined('BASE_URL') ? BASE_URL . 'admin/inc/uploads/blood-banks/' . $bb['bb_pic'] : '';
     } else {
         $bb_pic = $default_pic;
     }
 
-    // ============================================
-    // STEP 9: Build Blood Bank Data Array
-    // ============================================
     $blood_banks_list[] = [
-        // ---------- BASIC INFO ----------
         "bb_info" => [
             "bb_id"         => $bb_id,
             "bb_name"       => $bb['bb_name'],
@@ -182,17 +157,11 @@ while ($bb = mysqli_fetch_assoc($bb_result)) {
             "working_hours" => "24/7 Emergency Services",
             "updated_at"    => $bb['updated_at'] ?? ''
         ],
-
-        // ---------- RATING SUMMARY ----------
         "rating_summary" => [
             "average_rating" => $avg_rating,
             "total_reviews"  => $total_reviews
         ],
-
-        // ---------- BLOOD STOCK AVAILABILITY ----------
         "blood_stock" => $blood_stock,
-
-        // ---------- REVIEWS (Paginated) ----------
         "reviews" => [
             "list"          => $reviews,
             "current_page"  => $review_page,
@@ -203,9 +172,6 @@ while ($bb = mysqli_fetch_assoc($bb_result)) {
     ];
 }
 
-// ============================================
-// STEP 10: Final Response
-// ============================================
 echo json_encode([
     "status"  => true,
     "message" => "All blood banks detail fetched successfully",
