@@ -141,7 +141,7 @@ while ($lab = mysqli_fetch_assoc($labs_result)) {
     $notes_data = mysqli_fetch_assoc($notes_result);
     $lab_notes = isset($notes_data['notes']) ? trim($notes_data['notes']) : '';
 
-    // Show notes only if not empty and not '-'
+    // Show notes only if not empty and not '-' (same as detail page)
     $show_notes = (!empty($lab_notes) && $lab_notes !== '-') ? true : false;
 
     // ============================================
@@ -164,13 +164,26 @@ while ($lab = mysqli_fetch_assoc($labs_result)) {
     $available_tests = [];
     while ($t = mysqli_fetch_assoc($tests_result)) {
         $price = (float)$t['price'];
+        
+        // Build WhatsApp link if price is 0/empty (same as detail page)
+        $wa_link = '';
+        if ($price <= 0) {
+            $lab_phone_clean = preg_replace('/[^0-9]/', '', $lab['lab_phone']);
+            if (strpos($lab_phone_clean, '0') === 0) {
+                $lab_phone_clean = '92' . substr($lab_phone_clean, 1);
+            }
+            $wa_msg = urlencode("Hello " . $lab['lab_name'] . ", I want to ask the price for the test: " . $t['test_name']);
+            $wa_link = "https://wa.me/" . $lab_phone_clean . "?text=" . $wa_msg;
+        }
+
         $available_tests[] = [
-            "test_id"     => (int)$t['test_id'],
-            "test_name"   => $t['test_name'],
-            "description" => $t['description'] ?? '',
-            "price"       => $price,
+            "test_id"       => (int)$t['test_id'],
+            "test_name"     => $t['test_name'],
+            "description"   => $t['description'] ?? '',
+            "price"         => $price,
             "price_display" => ($price > 0) ? "Rs. " . number_format($price, 0) : "Not Available",
-            "ask_whatsapp" => ($price <= 0) ? true : false // Frontend isse check kar sakta hai
+            "ask_whatsapp"  => ($price <= 0) ? true : false,
+            "wa_link"       => $wa_link
         ];
     }
 
@@ -201,7 +214,7 @@ while ($lab = mysqli_fetch_assoc($labs_result)) {
             "lab_email"     => $lab['lab_email'] ?? '',
             "city_id"       => (int)($lab['city_id'] ?? 0),
             "city_name"     => $lab['city_name'] ?? '',
-            "working_hours" => "24/7 Emergency Services",  // static
+            "working_hours" => "24/7 Emergency Services",  // static (as per your detail page)
             "updated_at"    => $lab['updated_at'] ?? ''
         ],
 
