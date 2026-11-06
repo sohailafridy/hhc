@@ -91,7 +91,7 @@ while ($bb = mysqli_fetch_assoc($bb_result)) {
     $total_reviews = (int)$rating_data['total_reviews'];
 
     // Stock
-    $stock_query = "SELECT avail_b_id, b_group, stock 
+    $stock_query = "SELECT avail_b_id, stock 
                     FROM bb_available_blood 
                     WHERE bb_id = $bb_id 
                     ORDER BY b_group ASC";
@@ -102,7 +102,6 @@ while ($bb = mysqli_fetch_assoc($bb_result)) {
         while ($s = mysqli_fetch_assoc($stock_result)) {
             $blood_stock[] = [
                 "avail_b_id"  => (int)$s['avail_b_id'],
-                "blood_group" => $s['b_group'],
                 "stock"       => (int)$s['stock'],
                 "available"   => ($s['stock'] > 0) ? true : false
             ];
