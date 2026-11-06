@@ -93,8 +93,7 @@ while ($bb = mysqli_fetch_assoc($bb_result)) {
     // Stock
     $stock_query = "SELECT avail_b_id, stock 
                     FROM bb_available_blood 
-                    WHERE bb_id = $bb_id 
-                    ORDER BY b_group ASC";
+                    WHERE bb_id = $bb_id";
     $stock_result = mysqli_query($con, $stock_query);
 
     $blood_stock = [];
