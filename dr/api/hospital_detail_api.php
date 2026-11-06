@@ -129,7 +129,7 @@ while ($hospital = mysqli_fetch_assoc($hospitals_result)) {
     }
 
     // ============================================
-    // STEP 7: Facilities Data
+    // STEP 7: Facilities Data (With Description)
     // ============================================
     $facilities_query = "SELECT * FROM hospital_facilities WHERE hospital_id = $hospital_id";
     $facilities_result = mysqli_query($con, $facilities_query);
@@ -146,7 +146,7 @@ while ($hospital = mysqli_fetch_assoc($hospitals_result)) {
         $facilities[] = [
             "facility_id"   => (int)$row['id'],
             "facility_name" => $row['facility_name'],
-            "description"   => $row['description'] ?? '',
+            "description"   => $row['description'] ?? '', // Detail page se match
             "is_available"  => (int)$row['is_available']
         ];
     }
@@ -177,7 +177,8 @@ while ($hospital = mysqli_fetch_assoc($hospitals_result)) {
             d.gender,
             d.experience_years,
             d.emergency_status,
-            dct.type AS specialization
+            dct.type AS specialization,
+            dih.doctor_in_hosp_id
         FROM doctor_in_hospital dih
         INNER JOIN doctors d ON d.doctor_id = dih.doctor_id
         LEFT JOIN dr_cat_types dct ON d.cat_type_id = dct.dr_cat_type_id
@@ -200,6 +201,7 @@ while ($hospital = mysqli_fetch_assoc($hospitals_result)) {
 
         $doctors[] = [
             "doctor_id"        => (int)$doc['doctor_id'],
+            "doctor_in_hosp_id"=> (int)$doc['doctor_in_hosp_id'],
             "doctor_name"      => "Dr. " . $doc['doctor_name'],
             "doctor_pic"       => $doctor_pic,
             "specialization"   => $doc['specialization'] ?? 'General',
@@ -211,7 +213,25 @@ while ($hospital = mysqli_fetch_assoc($hospitals_result)) {
     }
 
     // ============================================
-    // STEP 9: Reviews (Paginated per hospital)
+    // STEP 9: Hospital Notes (Match with Detail Page)
+    // ============================================
+    $notes_query = "SELECT * FROM notes WHERE user_id = $hospital_user_id LIMIT 1";
+    $notes_result = mysqli_query($con, $notes_query);
+    $hospital_note = ($notes_result && mysqli_num_rows($notes_result) > 0)
+        ? mysqli_fetch_assoc($notes_result)
+        : null;
+
+    $notes_data = null;
+    if ($hospital_note && !empty(trim($hospital_note['notes']))) {
+        $notes_data = [
+            "note_id"    => (int)$hospital_note['note_id'],
+            "notes"      => $hospital_note['notes'],
+            "updated_at" => $hospital_note['updated_at'] ?? ''
+        ];
+    }
+
+    // ============================================
+    // STEP 10: Reviews (Paginated per hospital)
     // ============================================
     $reviews_query = "
         SELECT feedback_id, commenter_name, commenter_gmail, comment, stars, created_at
@@ -237,7 +257,7 @@ while ($hospital = mysqli_fetch_assoc($hospitals_result)) {
     $total_review_pages = ($total_reviews > 0) ? ceil($total_reviews / $reviews_per_page) : 0;
 
     // ============================================
-    // STEP 10: Hospital Pic Full URL
+    // STEP 11: Hospital Pic Full URL
     // ============================================
     $hospital_pic = '';
     if (!empty($hospital['hospital_pic'])) {
@@ -245,13 +265,14 @@ while ($hospital = mysqli_fetch_assoc($hospitals_result)) {
     }
 
     // ============================================
-    // STEP 11: Build Hospital Data Array
+    // STEP 12: Build Hospital Data Array
     // ============================================
     $hospitals_list[] = [
         // ---------- BASIC INFO ----------
         "hospital_info" => [
             "hospital_id"      => $hospital_id,
             "hospital_name"    => $hospital['hospital_name'],
+            "user_id"    => $hospital['user_id'],
             "hospital_pic"     => $hospital_pic,
             "hospital_address" => $hospital['hospital_address'] ?? '',
             "hospital_phone"   => $hospital['hospital_phone'] ?? '',
@@ -281,6 +302,9 @@ while ($hospital = mysqli_fetch_assoc($hospitals_result)) {
         // ---------- FACILITIES ----------
         "facilities" => $facilities,
 
+        // ---------- HOSPITAL NOTES (NEW) ----------
+        "hospital_notes" => $notes_data,
+
         // ---------- DOCTORS (Paginated) ----------
         "doctors" => [
             "list"          => $doctors,
@@ -302,7 +326,7 @@ while ($hospital = mysqli_fetch_assoc($hospitals_result)) {
 }
 
 // ============================================
-// STEP 12: Final Response
+// STEP 13: Final Response
 // ============================================
 echo json_encode([
     "status"  => true,
