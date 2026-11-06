@@ -6,21 +6,21 @@ $bb_id = isset($_GET['blood_bankid']) ? (int)$_GET['blood_bankid'] : 0;
 
 // submit review
 if (isset($_POST['user_id']) && (int)$_POST['user_id'] != 0) {
-        $user_id = (int)$_POST['user_id'];
-        $commenter_name = isset($_POST['reviewer_name']) ? trim($_POST['reviewer_name']) : '';
-        $commenter_gmail = isset($_POST['reviewer_email']) ? trim($_POST['reviewer_email']) : '';
-        $comment = isset($_POST['review_comment']) ? trim($_POST['review_comment']) : '';
-        $stars = isset($_POST['rating']) ? (int)$_POST['rating'] : 5;
+    $user_id = (int)$_POST['user_id'];
+    $commenter_name = isset($_POST['reviewer_name']) ? trim($_POST['reviewer_name']) : '';
+    $commenter_gmail = isset($_POST['reviewer_email']) ? trim($_POST['reviewer_email']) : '';
+    $comment = isset($_POST['review_comment']) ? trim($_POST['review_comment']) : '';
+    $stars = isset($_POST['rating']) ? (int)$_POST['rating'] : 5;
 
-        $insert_query = "INSERT INTO feedback (user_id, commenter_name, commenter_gmail, comment, stars, status, created_at, updated_at)
-                        VALUES ($user_id,
-                        '" . mysqli_real_escape_string($con, $commenter_name) . "',
-                        '" . mysqli_real_escape_string($con, $commenter_gmail) . "',
-                        '" . mysqli_real_escape_string($con, $comment) . "',
-                        $stars,1, NOW(), NOW())";
+    $insert_query = "INSERT INTO feedback (user_id, commenter_name, commenter_gmail, comment, stars, status, created_at, updated_at)
+                    VALUES ($user_id,
+                    '" . mysqli_real_escape_string($con, $commenter_name) . "',
+                    '" . mysqli_real_escape_string($con, $commenter_gmail) . "',
+                    '" . mysqli_real_escape_string($con, $comment) . "',
+                    $stars,1, NOW(), NOW())";
 
-        $feedback_run = mysqli_query($con, $insert_query);
-    }
+    $feedback_run = mysqli_query($con, $insert_query);
+}
 
 // Fetch blood bank details (status users table se)
 $bb_query = "SELECT bb.*, c.city_name
@@ -50,13 +50,33 @@ $rating_data = mysqli_fetch_assoc($rating_result);
 $avg_rating = $rating_data['avg_rating'] ? round($rating_data['avg_rating'], 1) : 0;
 $total_reviews = $rating_data['total_reviews'] ? $rating_data['total_reviews'] : 0;
 
+// ============================================
+// FETCH BLOOD STOCK (Available Blood Bags)
+// ============================================
+$stock_query = "SELECT bb_available_blood.avail_b_id, bb_available_blood.stock, blood_groups.bg_name AS blood_group
+                FROM bb_available_blood
+                LEFT JOIN blood_groups ON blood_groups.bg_id = bb_available_blood.bg_id
+                WHERE bb_available_blood.bb_id = $bb_id
+                ORDER BY blood_groups.bg_id ASC";
+$stock_result = mysqli_query($con, $stock_query);
+
+// ============================================
+// FETCH BLOOD BANK NOTES (Admin Message)
+// ============================================
+$notes_query = "SELECT * FROM notes WHERE user_id = $user_id LIMIT 1";
+$notes_result = mysqli_query($con, $notes_query);
+$bb_note = ($notes_result && mysqli_num_rows($notes_result) > 0) ? mysqli_fetch_assoc($notes_result) : null;
+
+// Check condition for notes: show only if not empty and not just dash '-'
+$show_notes = ($bb_note && !empty(trim($bb_note['notes'])) && trim($bb_note['notes']) !== '-');
 ?>
- <!-- Navbar -->
-    <?php include BASE_PATH.'/includes/menu.php'; ?>
-<!-- Blood Bank Profile Section -->
+
+<!-- Navbar -->
+<?php include BASE_PATH.'/includes/menu.php'; ?>
 
 <link rel="stylesheet" href="<?= BASE_URL ?>style/blood-bank-detail.css?v=<?= @filemtime(__DIR__ . '/style/blood-bank-detail.css') ?: time() ?>">
 
+<!-- Blood Bank Profile Section -->
 <section class="bb-profile-section">
     <div class="container">
         <div class="bb-profile-card">
@@ -107,8 +127,6 @@ $total_reviews = $rating_data['total_reviews'] ? $rating_data['total_reviews'] :
                                 </div>
                             </div>
 
-
-
                             <div class="detail-item">
                                 <i class="fas fa-clock"></i>
                                 <div class="detail-content">
@@ -135,7 +153,72 @@ $total_reviews = $rating_data['total_reviews'] ? $rating_data['total_reviews'] :
     </div>
 </section>
 
+<!-- ============================================ -->
+<!-- NEW SECTION: Available Blood Bags            -->
+<!-- ============================================ -->
+<section class="bb-stock-section section-padding bg-white">
+    <div class="container">
+        <div class="section-header">
+            <h2 class="section-title txt-color">Available Blood Bags</h2>
+            <p class="section-subtitle txt-color">Current stock availability at <?php echo htmlspecialchars($bb['bb_name']); ?></p>
+        </div>
 
+        <?php if (mysqli_num_rows($stock_result) > 0): ?>
+            <div class="blood-stock-grid">
+                <?php while ($stock = mysqli_fetch_assoc($stock_result)): 
+                    $is_available = ($stock['stock'] > 0);
+                ?>
+                    <div class="blood-stock-card <?php echo $is_available ? 'in-stock' : 'out-stock'; ?>">
+                        <div class="blood-group-icon">
+                            <i class="fas fa-tint"></i>
+                        </div>
+                        <div class="blood-group-name"><?php echo htmlspecialchars($stock['blood_group']); ?></div>
+                        <div class="blood-stock-count">
+                            <?php if ($is_available): ?>
+                                <span class="stock-available"><?php echo (int)$stock['stock']; ?> Bags</span>
+                            <?php else: ?>
+                                <span class="stock-unavailable">Out of Stock</span>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                <?php endwhile; ?>
+            </div>
+        <?php else: ?>
+            <div class="no-stock text-center">
+                <i class="fas fa-tint-slash"></i>
+                <h3>No Stock Information</h3>
+                <p>This blood bank has not updated its blood stock yet.</p>
+            </div>
+        <?php endif; ?>
+    </div>
+</section>
+
+<!-- ============================================ -->
+<!-- NEW SECTION: Blood Bank Admin Message        -->
+<!-- ============================================ -->
+<?php if ($show_notes): ?>
+<section class="bb-notes-section section-padding">
+    <div class="container">
+        <div class="notes-card-bb" data-aos="fade-up">
+            <div class="notes-icon-bb">
+                <i class="fas fa-bullhorn"></i>
+            </div>
+            <div class="notes-content-bb">
+                <h3 class="notes-title-bb">Message from Admin</h3>
+                <div class="notes-text-bb">
+                    <?php echo nl2br(htmlspecialchars($bb_note['notes'])); ?>
+                </div>
+                <?php if (!empty($bb_note['updated_at'])): ?>
+                    <div class="notes-date-bb">
+                        <i class="fas fa-clock me-1"></i>
+                        Updated: <?php echo date('d M Y, h:i A', strtotime($bb_note['updated_at'])); ?>
+                    </div>
+                <?php endif; ?>
+            </div>
+        </div>
+    </div>
+</section>
+<?php endif; ?>
 
 <!-- Blood Bank Reviews Section -->
 <section class="bb-reviews-section section-padding bg-light">
@@ -275,15 +358,11 @@ $total_reviews = $rating_data['total_reviews'] ? $rating_data['total_reviews'] :
     </div>
 </section>
 
-<style>
-
-</style>
-
 <!-- Footer -->
 <?php include BASE_PATH.'/includes/footer.php';?>
 
 <script>
-// Star Rating Functionality
+// (Aapka purana JavaScript code yahan waise hi rahega)
 document.addEventListener('DOMContentLoaded', function() {
     const stars = document.querySelectorAll('.star-rating .star');
     const ratingText = document.querySelector('.rating-text');
@@ -333,7 +412,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Handle success/error messages from URL parameters
     const urlParams = new URLSearchParams(window.location.search);
     const error = urlParams.get('error');
     const success = urlParams.get('success');
@@ -341,20 +419,11 @@ document.addEventListener('DOMContentLoaded', function() {
     if (error) {
         let errorMessage = '';
         switch(error) {
-            case 'empty':
-                errorMessage = 'Please fill in all required fields.';
-                break;
-            case 'email':
-                errorMessage = 'Please enter a valid email address.';
-                break;
-            case 'rating':
-                errorMessage = 'Please select a valid rating.';
-                break;
-            case 'database':
-                errorMessage = 'An error occurred while submitting your review. Please try again.';
-                break;
-            default:
-                errorMessage = 'An error occurred. Please try again.';
+            case 'empty': errorMessage = 'Please fill in all required fields.'; break;
+            case 'email': errorMessage = 'Please enter a valid email address.'; break;
+            case 'rating': errorMessage = 'Please select a valid rating.'; break;
+            case 'database': errorMessage = 'An error occurred while submitting your review. Please try again.'; break;
+            default: errorMessage = 'An error occurred. Please try again.';
         }
         showAlert(errorMessage, 'error');
     }
@@ -372,18 +441,12 @@ document.addEventListener('DOMContentLoaded', function() {
             ${message}
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         `;
-
         document.body.appendChild(alertDiv);
-
-        // Auto remove after 5 seconds
         setTimeout(() => {
-            if (alertDiv.parentNode) {
-                alertDiv.parentNode.removeChild(alertDiv);
-            }
+            if (alertDiv.parentNode) alertDiv.parentNode.removeChild(alertDiv);
         }, 5000);
     }
 
-    // Load More Reviews functionality
     const loadMoreBtn = document.getElementById('loadMoreReviews');
     if (loadMoreBtn) {
         loadMoreBtn.addEventListener('click', function() {
@@ -399,10 +462,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             const reviewCard = createReviewCard(review);
                             reviewsGrid.appendChild(reviewCard);
                         });
-
-                        if (data.reviews.length < 5) {
-                            loadMoreBtn.style.display = 'none';
-                        }
+                        if (data.reviews.length < 5) loadMoreBtn.style.display = 'none';
                     } else {
                         loadMoreBtn.style.display = 'none';
                     }
@@ -414,18 +474,13 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Helpful and Report buttons
     document.addEventListener('click', function(e) {
         if (e.target.classList.contains('btn-helpful')) {
             e.preventDefault();
             const reviewId = e.target.dataset.reviewId;
-
-            // Send AJAX request to mark as helpful
             fetch('mark-helpful.php', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: `review_id=${reviewId}`
             })
             .then(response => response.json())
@@ -435,22 +490,16 @@ document.addEventListener('DOMContentLoaded', function() {
                     e.target.disabled = true;
                 }
             })
-            .catch(error => {
-                console.error('Error marking as helpful:', error);
-            });
+            .catch(error => console.error('Error marking as helpful:', error));
         }
 
         if (e.target.classList.contains('btn-report')) {
             e.preventDefault();
             const reviewId = e.target.dataset.reviewId;
-
             if (confirm('Are you sure you want to report this review?')) {
-                // Send AJAX request to report review
                 fetch('report-review.php', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                     body: `review_id=${reviewId}`
                 })
                 .then(response => response.json())
@@ -460,9 +509,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         e.target.disabled = true;
                     }
                 })
-                .catch(error => {
-                    console.error('Error reporting review:', error);
-                });
+                .catch(error => console.error('Error reporting review:', error));
             }
         }
     });
@@ -471,8 +518,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const card = document.createElement('div');
         card.className = 'review-card';
         card.setAttribute('data-aos', 'fade-up');
-
-        // Generate star rating HTML
         let starsHTML = '';
         for (let i = 1; i <= 5; i++) {
             if (i <= review.stars) {
@@ -481,13 +526,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 starsHTML += '<i class="far fa-star"></i>';
             }
         }
-
         card.innerHTML = `
             <div class="review-header">
                 <div class="reviewer-info">
-                    <div class="reviewer-avatar">
-                        <i class="fas fa-user"></i>
-                    </div>
+                    <div class="reviewer-avatar"><i class="fas fa-user"></i></div>
                     <div class="reviewer-details">
                         <h4 class="reviewer-name">${review.commenter_name}</h4>
                         <div class="review-date">
@@ -496,13 +538,9 @@ document.addEventListener('DOMContentLoaded', function() {
                         </div>
                     </div>
                 </div>
-                <div class="review-rating">
-                    ${starsHTML}
-                </div>
+                <div class="review-rating">${starsHTML}</div>
             </div>
-            <div class="review-content">
-                <p>${review.comment}</p>
-            </div>
+            <div class="review-content"><p>${review.comment}</p></div>
             <div class="review-footer">
                 <div class="review-actions">
                     <button class="btn-helpful" data-review-id="${review.feedback_id}">
@@ -514,7 +552,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
             </div>
         `;
-
         return card;
     }
 });

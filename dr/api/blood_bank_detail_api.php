@@ -1,6 +1,7 @@
 <?php
 /**
  * All Blood Banks Detail API
+ * Matched with latest blood-bank-detail.php
  */
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
@@ -37,17 +38,17 @@ $review_page = isset($_GET['review_page']) ? max(1, (int)$_GET['review_page']) :
 $reviews_per_page = 10;
 $review_offset = ($review_page - 1) * $reviews_per_page;
 
-// Fetch Blood Banks
+// ============================================
+// STEP 4: Fetch ALL Approved Blood Banks
+// ============================================
 $bb_query = "
     SELECT 
         bb.*,
         c.city_name,
-        u.user_id,
-        n.notes
+        u.user_id
     FROM blood_bank bb
     LEFT JOIN cities c ON bb.city_id = c.city_id
     LEFT JOIN users u ON u.user_id = bb.user_id
-    LEFT JOIN notes n ON u.user_id = n.user_id
     WHERE u.status = 1 
       AND bb.approve = 1
     ORDER BY bb.bb_id DESC
@@ -82,7 +83,9 @@ while ($bb = mysqli_fetch_assoc($bb_result)) {
     $bb_id = (int)$bb['bb_id'];
     $bb_user_id = (int)$bb['user_id'];
 
-    // Rating
+    // ============================================
+    // Rating Summary
+    // ============================================
     $rating_query = "SELECT AVG(stars) AS avg_rating, COUNT(feedback_id) AS total_reviews 
                      FROM feedback 
                      WHERE user_id = $bb_user_id AND status = 1";
@@ -92,24 +95,53 @@ while ($bb = mysqli_fetch_assoc($bb_result)) {
     $avg_rating    = $rating_data['avg_rating'] ? round((float)$rating_data['avg_rating'], 1) : 0;
     $total_reviews = (int)$rating_data['total_reviews'];
 
-    // Stock
-    $stock_query = "SELECT avail_b_id, stock 
-                    FROM bb_available_blood 
-                    WHERE bb_id = $bb_id";
+    // ============================================
+    // Available Blood Bags (Matched with Detail Page)
+    // ============================================
+    $stock_query = "SELECT 
+                        bb_available_blood.avail_b_id, 
+                        bb_available_blood.stock, 
+                        blood_groups.bg_name AS blood_group
+                    FROM bb_available_blood
+                    LEFT JOIN blood_groups ON blood_groups.bg_id = bb_available_blood.bg_id
+                    WHERE bb_available_blood.bb_id = $bb_id
+                    ORDER BY blood_groups.bg_id ASC";
     $stock_result = mysqli_query($con, $stock_query);
 
     $blood_stock = [];
     if ($stock_result) {
         while ($s = mysqli_fetch_assoc($stock_result)) {
+            $stock_count = (int)$s['stock'];
             $blood_stock[] = [
                 "avail_b_id"  => (int)$s['avail_b_id'],
-                "stock"       => (int)$s['stock'],
-                "available"   => ($s['stock'] > 0) ? true : false
+                "blood_group" => $s['blood_group'] ?? 'N/A',
+                "stock"       => $stock_count,
+                "available"   => ($stock_count > 0) ? true : false,
+                "stock_status"=> ($stock_count > 0) ? $stock_count . " Bags" : "Out of Stock"
             ];
         }
     }
 
-    // Reviews
+    // ============================================
+    // Blood Bank Admin Message (Notes from Detail Page)
+    // ============================================
+    $notes_query = "SELECT * FROM notes WHERE user_id = $bb_user_id LIMIT 1";
+    $notes_result = mysqli_query($con, $notes_query);
+    $bb_note = ($notes_result && mysqli_num_rows($notes_result) > 0) ? mysqli_fetch_assoc($notes_result) : null;
+
+    $notes_data = null;
+    // Same logic as detail page: Show only if not empty and not just '-'
+    if ($bb_note && !empty(trim($bb_note['notes'])) && trim($bb_note['notes']) !== '-') {
+        $notes_data = [
+            "note_id"    => (int)$bb_note['note_id'],
+            "notes"      => $bb_note['notes'],
+            "updated_at" => $bb_note['updated_at'] ?? ''
+        ];
+    }
+
+    // ============================================
+    // Reviews (Paginated)
+    // ============================================
     $reviews_query = "
         SELECT feedback_id, commenter_name, commenter_gmail, comment, stars, created_at
         FROM feedback 
@@ -135,7 +167,9 @@ while ($bb = mysqli_fetch_assoc($bb_result)) {
 
     $total_review_pages = ($total_reviews > 0) ? ceil($total_reviews / $reviews_per_page) : 0;
 
-    // Pic URL
+    // ============================================
+    // Blood Bank Pic Full URL
+    // ============================================
     $bb_pic = '';
     $default_pic = defined('BASE_URL') ? BASE_URL . 'admin/inc/uploads/default/bb.jpg' : '';
 
@@ -145,6 +179,9 @@ while ($bb = mysqli_fetch_assoc($bb_result)) {
         $bb_pic = $default_pic;
     }
 
+    // ============================================
+    // Build Blood Bank Data Array
+    // ============================================
     $blood_banks_list[] = [
         "bb_info" => [
             "bb_id"         => $bb_id,
@@ -155,14 +192,17 @@ while ($bb = mysqli_fetch_assoc($bb_result)) {
             "city_id"       => (int)($bb['city_id'] ?? 0),
             "city_name"     => $bb['city_name'] ?? '',
             "working_hours" => "24/7 Emergency Services",
-            "updated_at"    => $bb['updated_at'] ?? '',
-            "notes"    => $bb['notes'] ?? ''
+            "updated_at"    => $bb['updated_at'] ?? ''
         ],
         "rating_summary" => [
             "average_rating" => $avg_rating,
             "total_reviews"  => $total_reviews
         ],
         "blood_stock" => $blood_stock,
+        "admin_message" => [
+            "show_section" => ($notes_data !== null),
+            "notes"        => $notes_data
+        ],
         "reviews" => [
             "list"          => $reviews,
             "current_page"  => $review_page,

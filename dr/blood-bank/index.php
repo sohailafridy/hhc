@@ -2,7 +2,7 @@
 include '../config.php';
 
 // ── BLOOD BANK AUTH ────────────────────────────────────────
-if (!isset($_SESSION['user_id']) || $_SESSION['type'] != 'blood_bank') {
+if (!isset($_SESSION['user_id']) || $_SESSION['type'] != 'blood bank') {
     header("Location: " . BASE_URL . "login"); exit();
 }
 
