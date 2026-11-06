@@ -42,10 +42,12 @@ $bb_query = "
     SELECT 
         bb.*,
         c.city_name,
-        u.user_id
+        u.user_id,
+        n.notes
     FROM blood_bank bb
     LEFT JOIN cities c ON bb.city_id = c.city_id
     LEFT JOIN users u ON u.user_id = bb.user_id
+    LEFT JOIN notes n ON u.user_id = n.user_id
     WHERE u.status = 1 
       AND bb.approve = 1
     ORDER BY bb.bb_id DESC
@@ -153,7 +155,8 @@ while ($bb = mysqli_fetch_assoc($bb_result)) {
             "city_id"       => (int)($bb['city_id'] ?? 0),
             "city_name"     => $bb['city_name'] ?? '',
             "working_hours" => "24/7 Emergency Services",
-            "updated_at"    => $bb['updated_at'] ?? ''
+            "updated_at"    => $bb['updated_at'] ?? '',
+            "notes"    => $bb['notes'] ?? ''
         ],
         "rating_summary" => [
             "average_rating" => $avg_rating,

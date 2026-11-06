@@ -62,11 +62,13 @@ $query = "
         h.hospital_address,
         dct.type AS specialization,
         dct.treatment,
-        dc.cat_name AS specialization_category
+        dc.cat_name AS specialization_category,
+        n.notes as doctor_msg
     FROM doctors d
     LEFT JOIN cities c ON d.city_id = c.city_id
     LEFT JOIN hospitals h ON d.hospital_id = h.hospital_id
     LEFT JOIN users u ON u.user_id = d.user_id
+    LEFT JOIN notes n ON u.user_id = n.user_id
     LEFT JOIN dr_cat_types dct ON d.cat_type_id = dct.dr_cat_type_id
     LEFT JOIN dr_categories dc ON dct.dr_cat_id = dc.dr_cat_id
     WHERE u.status = 1 
@@ -239,6 +241,7 @@ while ($doctor = mysqli_fetch_assoc($result)) {
             "clinic_name"       => $doctor['clinic_name'] ?? '',
             "clinic_address"    => $doctor['clinic_address'] ?? '',
             "clinic_status"     => (int)($doctor['clinic_status'] ?? 0),
+            "doctor_msg"     => $doctor['doctor_msg'] ?? '',
             "updated_at"        => $doctor['updated_at'] ?? ''
         ],
 
