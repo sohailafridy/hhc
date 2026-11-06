@@ -48,9 +48,36 @@ if (isset($_POST['save_note'])) {
     exit();
 }
 
+// ── SAVE BLOOD STOCK (AJAX Handler) ────────────────────────
+if (isset($_POST['save_blood_stock'])) {
+    $bg_id = (int)$_POST['bg_id'];
+    $stock = (int)$_POST['stock'];
+
+    // Check if record exists
+    $check_q = mysqli_query($con, "SELECT avail_b_id FROM bb_available_blood WHERE bb_id=$bb_id AND bg_id=$bg_id LIMIT 1");
+    
+    if (mysqli_num_rows($check_q) > 0) {
+        // Update
+        mysqli_query($con, "UPDATE bb_available_blood SET stock=$stock WHERE bb_id=$bb_id AND bg_id=$bg_id");
+    } else {
+        // Insert
+        mysqli_query($con, "INSERT INTO bb_available_blood (bb_id, bg_id, stock) VALUES ($bb_id, $bg_id, $stock)");
+    }
+    
+    echo json_encode(['success' => true, 'message' => 'Stock updated successfully']);
+    exit();
+}
+
 $note_row = null;
 $note_r   = mysqli_query($con, "SELECT * FROM notes WHERE user_id=$user_id LIMIT 1");
 if (mysqli_num_rows($note_r) > 0) $note_row = mysqli_fetch_assoc($note_r);
+
+// ── FETCH BLOOD GROUPS & STOCK ─────────────────────────────
+$bg_query = "SELECT bg.bg_id, bg.bg_name, IFNULL(bab.stock, 0) as stock 
+             FROM blood_groups bg
+             LEFT JOIN bb_available_blood bab ON bg.bg_id = bab.bg_id AND bab.bb_id = $bb_id
+             ORDER BY bg.bg_id ASC";
+$bg_result = mysqli_query($con, $bg_query);
 
 // ── STATS ──────────────────────────────────────────────────
 $rating_q    = mysqli_query($con, "SELECT AVG(stars) as avg, COUNT(*) as cnt FROM feedback WHERE user_id=$user_id AND status=1");
@@ -58,12 +85,10 @@ $rating_data = mysqli_fetch_assoc($rating_q);
 $avg_rating  = $rating_data['avg'] ? round($rating_data['avg'], 1) : 0;
 $total_reviews = (int)$rating_data['cnt'];
 
-// Nearby hospitals (same city)
 $hosp_cnt = (int)mysqli_fetch_assoc(mysqli_query($con,
     "SELECT COUNT(*) as c FROM hospitals h LEFT JOIN users u ON u.user_id=h.user_id
      WHERE h.city_id={$bb['city_id']} AND u.status=1 AND h.approve=1"))['c'];
 
-// Nearby labs (same city)
 $lab_cnt = (int)mysqli_fetch_assoc(mysqli_query($con,
     "SELECT COUNT(*) as c FROM laboratories l LEFT JOIN users u ON u.user_id=l.user_id
      WHERE l.city_id={$bb['city_id']} AND u.status=1 AND l.approve=1"))['c'];
@@ -122,6 +147,33 @@ $reviews_q = mysqli_query($con,
 .nearby-item .ni-icon { width:36px; height:36px; border-radius:10px; background:linear-gradient(135deg,#1C3F8F,#00A8CC); display:flex; align-items:center; justify-content:center; color:white; font-size:0.9rem; flex-shrink:0; }
 .nearby-item .ni-name { font-weight:700; font-size:0.88rem; color:#0D2B6E; }
 .nearby-item .ni-sub  { font-size:0.75rem; color:#64748b; }
+
+/* ── NEW: BLOOD STOCK STYLES ── */
+.stock-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 14px; background: #fff; border: 1px solid #e2e8f0;
+    border-radius: 10px; margin-bottom: 10px; transition: all 0.2s;
+}
+.stock-row:hover { border-color: #00A8CC; box-shadow: 0 2px 8px rgba(0,168,204,0.1); }
+.stock-row .bg-name {
+    font-weight: 800; font-size: 1.1rem; color: #ef4444; /* Red color for blood groups */
+    width: 50px; text-align: center;
+}
+.stock-row .stock-input-wrapper {
+    display: flex; align-items: center; gap: 8px; flex: 1; margin-left: 15px;
+}
+.stock-row input[type="number"] {
+    width: 80px; padding: 6px 10px; border: 2px solid #e2e8f0; border-radius: 8px;
+    font-weight: 600; color: #0D2B6E; text-align: center; transition: all 0.2s;
+}
+.stock-row input[type="number"]:focus { border-color: #00A8CC; outline: none; }
+.btn-save-stock {
+    background: #f0f9ff; color: #00A8CC; border: 1px solid #00A8CC;
+    padding: 6px 12px; border-radius: 8px; font-size: 0.8rem; font-weight: 700;
+    cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 5px;
+}
+.btn-save-stock:hover { background: #00A8CC; color: white; }
+.btn-save-stock:disabled { opacity: 0.6; cursor: not-allowed; }
 
 @media (max-width:992px) { .two-col-dashboard { grid-template-columns:1fr; } }
 </style>
@@ -211,12 +263,12 @@ $reviews_q = mysqli_query($con,
                     <?php endforeach; ?>
                 </div>
             </div>
-
+            
             <!-- Nearby Hospitals -->
             <div class="info-card">
                 <div class="info-card-header">
                     <h5><i class="fas fa-hospital-alt"></i> Nearby Hospitals</h5>
-                    <a href="<?= BASE_URL ?>blood-bank/hospitals" style="font-size:0.8rem; color:#00A8CC; text-decoration:none; font-weight:600;">View All</a>
+                    <!-- <a href="<?= BASE_URL ?>blood-bank/hospitals" style="font-size:0.8rem; color:#00A8CC; text-decoration:none; font-weight:600;">View All</a> -->
                 </div>
                 <div class="info-card-body">
                     <?php if (mysqli_num_rows($nearby_hosps) > 0):
@@ -261,7 +313,7 @@ $reviews_q = mysqli_query($con,
                     <?php endif; ?>
                 </div>
             </div>
-
+                
             <!-- Notes Board -->
             <div class="info-card">
                 <div class="info-card-header">
@@ -325,6 +377,36 @@ $reviews_q = mysqli_query($con,
                 </div>
             </div>
 
+            <!-- ── NEW SECTION: MANAGE BLOOD STOCK ── -->
+            <div class="info-card">
+                <div class="info-card-header">
+                    <h5><i class="fas fa-tint"></i> Manage Blood Stock</h5>
+                    <small style="color:#94a3b8; font-size:0.75rem;">Update available bags</small>
+                </div>
+                <div class="info-card-body">
+                    <?php 
+                    if (mysqli_num_rows($bg_result) > 0):
+                        while ($bg = mysqli_fetch_assoc($bg_result)): 
+                    ?>
+                        <div class="stock-row">
+                            <div class="bg-name"><?= htmlspecialchars($bg['bg_name']) ?></div>
+                            <div class="stock-input-wrapper">
+                                <input type="number" min="0" id="stock_<?= $bg['bg_id'] ?>" value="<?= (int)$bg['stock'] ?>" placeholder="0">
+                                <span style="font-size:0.8rem; color:#64748b; font-weight:600;">Bags</span>
+                            </div>
+                            <button class="btn-save-stock" onclick="saveStock(<?= $bg['bg_id'] ?>, this)">
+                                <i class="fas fa-save"></i> Save
+                            </button>
+                        </div>
+                    <?php 
+                        endwhile; 
+                    else: 
+                    ?>
+                        <p class="text-muted text-center py-2">No blood groups found in database.</p>
+                    <?php endif; ?>
+                </div>
+            </div>
+
             <!-- Recent Reviews -->
             <div class="info-card">
                 <div class="info-card-header">
@@ -362,6 +444,7 @@ $reviews_q = mysqli_query($con,
 <?php include BASE_PATH.'/admin/inc/footer.php'; ?>
 
 <script>
+// ── NOTES SAVE FUNCTION ──
 function saveNote() {
     var text = document.getElementById('noteTextarea').value.trim();
     var btn = document.getElementById('saveNoteBtn');
@@ -395,4 +478,49 @@ function saveNote() {
 document.getElementById('noteTextarea').addEventListener('keydown', e => {
     if ((e.ctrlKey||e.metaKey) && e.key==='s') { e.preventDefault(); saveNote(); }
 });
+
+// ── BLOOD STOCK SAVE FUNCTION (AJAX) ──
+function saveStock(bgId, btn) {
+    var stockInput = document.getElementById('stock_' + bgId);
+    var stockValue = stockInput.value;
+    
+    // Basic validation
+    if (stockValue === '' || stockValue < 0) stockValue = 0;
+
+    var originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+    var fd = new FormData();
+    fd.append('save_blood_stock', '1');
+    fd.append('bg_id', bgId);
+    fd.append('stock', stockValue);
+
+    fetch('<?= BASE_URL ?>blood-bank/index.php', { method:'POST', body:fd })
+        .then(r => r.json())
+        .then(d => {
+            btn.disabled = false;
+            if (d.success) {
+                btn.innerHTML = '<i class="fas fa-check"></i> Saved';
+                btn.style.background = '#27C96A';
+                btn.style.color = 'white';
+                btn.style.borderColor = '#27C96A';
+                
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    btn.style.background = '#f0f9ff';
+                    btn.style.color = '#00A8CC';
+                    btn.style.borderColor = '#00A8CC';
+                }, 2000);
+            } else {
+                btn.innerHTML = originalText;
+                alert('Error saving stock');
+            }
+        })
+        .catch(() => {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+            alert('Error connecting to server');
+        });
+}
 </script>

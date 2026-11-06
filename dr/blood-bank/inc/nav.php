@@ -115,14 +115,14 @@ if ($current_page === 'index' || $current_page === '' || $current_page === 'bloo
                     <span>Patient Reviews</span>
                 </a>
             </li>
-
+            <?php /*
             <li class="treeview <?= $open === 'hospitals' ? 'active' : '' ?>">
                 <a class="waves-effect waves-dark" href="<?= BASE_URL ?>blood-bank/hospitals">
                     <i class="icon-home"></i>
                     <span>Hospitals</span>
                 </a>
             </li>
-
+                */ ?>
             <li class="treeview <?= $open === 'labs' ? 'active' : '' ?>">
                 <a class="waves-effect waves-dark" href="<?= BASE_URL ?>blood-bank/labs">
                     <i class="icon-flask"></i>
