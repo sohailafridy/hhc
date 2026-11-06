@@ -298,3 +298,247 @@
     .review-actions { justify-content: center; }
     .btn-helpful, .btn-report { flex: 1; text-align: center; }
 }
+
+/* ========================================================= */
+/* ── NAYA SECTION: AVAILABLE TESTS (Sirf Yeh Add Hua Hai) ── */
+/* ========================================================= */
+
+.lab-tests-section {
+    background-color: #ffffff;
+    padding: 60px 0;
+}
+
+.tests-list-card {
+    background: white;
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: 0 10px 30px rgba(28,63,143,0.08);
+    border: 1px solid rgba(0,168,204,0.12);
+}
+
+.tests-table {
+    margin-bottom: 0;
+    width: 100%;
+}
+
+.tests-table thead th {
+    background: #f8fafc;
+    color: #0D2B6E;
+    font-weight: 700;
+    border-bottom: 2px solid rgba(0,168,204,0.2);
+    padding: 15px;
+    white-space: nowrap;
+}
+
+.tests-table tbody td {
+    padding: 15px;
+    vertical-align: middle;
+    border-bottom: 1px solid #f1f5f9;
+    color: #475569;
+}
+
+.tests-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.test-name {
+    color: #0D2B6E;
+    font-size: 1.05rem;
+}
+
+.test-desc {
+    font-size: 0.9rem;
+    color: #64748b;
+    display: block;
+    max-width: 300px;
+}
+
+.test-price {
+    color: #27C96A;
+    font-weight: 700;
+    font-size: 1.1rem;
+}
+
+.price-na {
+    color: #ef4444;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+/* WhatsApp & Book Buttons */
+.btn-wa-ask, .btn-book-test {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+
+.btn-wa-ask {
+    background: rgba(37, 211, 102, 0.1);
+    color: #25D366;
+    border: 1px solid rgba(37, 211, 102, 0.3);
+}
+
+.btn-wa-ask:hover {
+    background: #25D366;
+    color: white;
+    box-shadow: 0 4px 12px rgba(37, 211, 102, 0.3);
+}
+
+.btn-book-test {
+    background: linear-gradient(135deg, #1C3F8F 0%, #00A8CC 100%);
+    color: white;
+    border: none;
+}
+
+.btn-book-test:hover {
+    background: linear-gradient(135deg, #27C96A 0%, #00C9A7 100%);
+    color: white;
+    box-shadow: 0 4px 12px rgba(0,168,204,0.3);
+}
+
+/* No Tests Found */
+.no-tests {
+    text-align: center;
+    padding: 60px 20px;
+    color: #64748b;
+}
+
+.no-tests i {
+    font-size: 4rem;
+    color: #00A8CC;
+    margin-bottom: 20px;
+    opacity: 0.6;
+}
+
+.no-tests h3 {
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+    color: #0D2B6E;
+}
+
+.no-tests p {
+    font-size: 1rem;
+}
+
+/* Available Tests Responsive */
+@media (max-width: 768px) {
+    .tests-list-card {
+        padding: 15px;
+    }
+    .tests-table thead {
+        display: none;
+    }
+    .tests-table, .tests-table tbody, .tests-table tr, .tests-table td {
+        display: block;
+        width: 100%;
+    }
+    .tests-table tr {
+        margin-bottom: 15px;
+        border: 1px solid #f1f5f9;
+        border-radius: 10px;
+        padding: 10px;
+    }
+    .tests-table td {
+        border: none;
+        padding: 8px 10px;
+        text-align: left !important;
+    }
+    .test-desc {
+        max-width: 100%;
+    }
+    .btn-wa-ask, .btn-book-test {
+        width: 100%;
+        justify-content: center;
+    }
+}
+/* ========================================================= */
+/* ── NAYA SECTION: LAB NOTES / MESSAGE ───────────────────── */
+/* ========================================================= */
+
+.lab-notes-section {
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+}
+
+.notes-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+    background: white;
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: 0 10px 30px rgba(28,63,143,0.08);
+    border: 1px solid rgba(0,168,204,0.15);
+    border-left: 6px solid #00A8CC;
+    position: relative;
+    overflow: hidden;
+}
+
+.notes-card::before {
+    content: '';
+    position: absolute;
+    top: -50px;
+    right: -50px;
+    width: 150px;
+    height: 150px;
+    background: rgba(0,168,204,0.05);
+    border-radius: 50%;
+}
+
+.notes-icon {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, #1C3F8F 0%, #00A8CC 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+    box-shadow: 0 5px 15px rgba(0,168,204,0.3);
+}
+
+.notes-content {
+    flex: 1;
+}
+
+.notes-title {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #0D2B6E;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.notes-text {
+    color: #475569;
+    font-size: 1rem;
+    line-height: 1.7;
+    padding-left: 5px;
+    border-left: 3px solid rgba(0,168,204,0.3);
+    padding-left: 15px;
+}
+
+/* Responsive Notes */
+@media (max-width: 576px) {
+    .notes-card {
+        flex-direction: column;
+        padding: 20px;
+        text-align: center;
+    }
+    .notes-text {
+        border-left: none;
+        border-top: 3px solid rgba(0,168,204,0.3);
+        padding-left: 0;
+        padding-top: 15px;
+    }
+}

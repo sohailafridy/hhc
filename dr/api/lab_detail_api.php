@@ -1,12 +1,14 @@
 <?php
 /**
- * Lab Detail API
- * Returns complete details of a single laboratory
+ * All Labs Detail API
+ * Returns complete details of ALL approved laboratories (with pagination)
  * Method: GET
- * URL: /api/lab_detail_api.php?lab_id=1
+ * URL: /api/lab_detail_api.php?page=1&limit=10
  * 
  * Optional:
- * - review_page=1  (reviews pagination, default 1)
+ * - page=1         (labs pagination, default 1)
+ * - limit=10       (records per page, default 10)
+ * - review_page=1  (reviews pagination per lab, default 1)
  */
 
 // ============================================
@@ -26,7 +28,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 // STEP 2: Database Connection
 // ============================================
 include '../config.php';
-// Agar $con nahi mil raha: $con = mysqli_connect("localhost", "user", "pass", "doctor");
 
 if (!$con) {
     echo json_encode(["status" => false, "message" => "DB connection failed"]);
@@ -35,27 +36,22 @@ if (!$con) {
 mysqli_set_charset($con, 'utf8mb4');
 
 // ============================================
-// STEP 3: Input Validation
+// STEP 3: Input Validation & Pagination
 // ============================================
-$lab_id = isset($_GET['lab_id']) ? (int)$_GET['lab_id'] : 0;
+// Labs pagination
+$page  = isset($_GET['page']) && (int)$_GET['page'] > 0 ? (int)$_GET['page'] : 1;
+$limit = isset($_GET['limit']) && (int)$_GET['limit'] > 0 ? (int)$_GET['limit'] : 10;
+$offset = ($page - 1) * $limit;
 
-if ($lab_id <= 0) {
-    echo json_encode([
-        "status" => false,
-        "message" => "Invalid or missing lab_id"
-    ]);
-    exit();
-}
-
-// Reviews pagination
+// Reviews pagination (per lab)
 $review_page = isset($_GET['review_page']) ? max(1, (int)$_GET['review_page']) : 1;
 $reviews_per_page = 10;
 $review_offset = ($review_page - 1) * $reviews_per_page;
 
 // ============================================
-// STEP 4: Lab Basic Info Fetch
+// STEP 4: Fetch ALL Approved Labs
 // ============================================
-$lab_query = "
+$labs_query = "
     SELECT 
         l.*,
         c.city_name,
@@ -63,85 +59,140 @@ $lab_query = "
     FROM laboratories l 
     LEFT JOIN cities c ON l.city_id = c.city_id
     LEFT JOIN users u ON u.user_id = l.user_id 
-    WHERE l.lab_id = $lab_id 
-      AND u.status = 1 
+    WHERE u.status = 1 
       AND l.approve = 1
-    LIMIT 1
+    ORDER BY l.lab_id DESC
+    LIMIT $limit OFFSET $offset
 ";
 
-$lab_result = mysqli_query($con, $lab_query);
+$labs_result = mysqli_query($con, $labs_query);
 
-if (!$lab_result || mysqli_num_rows($lab_result) === 0) {
+if (!$labs_result) {
+    echo json_encode(["status" => false, "message" => "Database query failed: " . mysqli_error($con)]);
+    exit();
+}
+
+// Total count for pagination
+$total_labs_query = "SELECT COUNT(*) as total FROM laboratories l 
+                     LEFT JOIN users u ON u.user_id = l.user_id 
+                     WHERE u.status = 1 AND l.approve = 1";
+$total_labs_result = mysqli_query($con, $total_labs_query);
+$total_labs = mysqli_fetch_assoc($total_labs_result)['total'];
+$total_pages = ($total_labs > 0) ? ceil($total_labs / $limit) : 0;
+
+if (mysqli_num_rows($labs_result) === 0) {
     echo json_encode([
         "status" => false,
-        "message" => "Laboratory not found or not approved"
+        "message" => "No approved laboratories found"
     ]);
     exit();
 }
 
-$lab = mysqli_fetch_assoc($lab_result);
-$lab_user_id = (int)$lab['user_id'];
+$labs_list = [];
 
-// ============================================
-// STEP 5: Rating Summary
-// ============================================
-$rating_query = "SELECT AVG(stars) AS avg_rating, COUNT(feedback_id) AS total_reviews 
-                 FROM feedback 
-                 WHERE user_id = $lab_user_id AND status = 1";
-$rating_result = mysqli_query($con, $rating_query);
-$rating_data = mysqli_fetch_assoc($rating_result);
+// Loop through all labs
+while ($lab = mysqli_fetch_assoc($labs_result)) {
+    $lab_id = (int)$lab['lab_id'];
+    $lab_user_id = (int)$lab['user_id'];
 
-$avg_rating    = $rating_data['avg_rating'] ? round((float)$rating_data['avg_rating'], 1) : 0;
-$total_reviews = (int)$rating_data['total_reviews'];
+    // ============================================
+    // STEP 5: Rating Summary
+    // ============================================
+    $rating_query = "SELECT AVG(stars) AS avg_rating, COUNT(feedback_id) AS total_reviews 
+                     FROM feedback 
+                     WHERE user_id = $lab_user_id AND status = 1";
+    $rating_result = mysqli_query($con, $rating_query);
+    $rating_data = mysqli_fetch_assoc($rating_result);
 
-// ============================================
-// STEP 6: Reviews (Paginated)
-// ============================================
-$reviews_query = "
-    SELECT feedback_id, commenter_name, commenter_gmail, comment, stars, created_at
-    FROM feedback 
-    WHERE user_id = $lab_user_id AND status = 1
-    ORDER BY feedback_id DESC
-    LIMIT $reviews_per_page OFFSET $review_offset
-";
-$reviews_result = mysqli_query($con, $reviews_query);
+    $avg_rating    = $rating_data['avg_rating'] ? round((float)$rating_data['avg_rating'], 1) : 0;
+    $total_reviews = (int)$rating_data['total_reviews'];
 
-$reviews = [];
-while ($r = mysqli_fetch_assoc($reviews_result)) {
-    $reviews[] = [
-        "review_id"     => (int)$r['feedback_id'],
-        "patient_name"  => $r['commenter_name'],
-        "patient_email" => $r['commenter_gmail'],
-        "comment"       => $r['comment'] ?? '',
-        "stars"         => (int)$r['stars'],
-        "date"          => date('d M Y', strtotime($r['created_at']))
-    ];
-}
+    // ============================================
+    // STEP 6: Reviews (Paginated per lab)
+    // ============================================
+    $reviews_query = "
+        SELECT feedback_id, commenter_name, commenter_gmail, comment, stars, created_at
+        FROM feedback 
+        WHERE user_id = $lab_user_id AND status = 1
+        ORDER BY feedback_id DESC
+        LIMIT $reviews_per_page OFFSET $review_offset
+    ";
+    $reviews_result = mysqli_query($con, $reviews_query);
 
-$total_review_pages = ($total_reviews > 0) ? ceil($total_reviews / $reviews_per_page) : 0;
+    $reviews = [];
+    while ($r = mysqli_fetch_assoc($reviews_result)) {
+        $reviews[] = [
+            "review_id"     => (int)$r['feedback_id'],
+            "patient_name"  => $r['commenter_name'],
+            "patient_email" => $r['commenter_gmail'],
+            "comment"       => $r['comment'] ?? '',
+            "stars"         => (int)$r['stars'],
+            "date"          => date('d M Y', strtotime($r['created_at']))
+        ];
+    }
 
-// ============================================
-// STEP 7: Lab Pic Full URL
-// ============================================
-$lab_pic = '';
-$default_pic = BASE_URL . 'admin/inc/uploads/default/lab.jpg';
+    $total_review_pages = ($total_reviews > 0) ? ceil($total_reviews / $reviews_per_page) : 0;
 
-if (!empty($lab['lab_pic'])) {
-    $lab_pic = BASE_URL . 'admin/inc/uploads/labs/' . $lab['lab_pic'];
-} else {
-    $lab_pic = $default_pic;
-}
+    // ============================================
+    // STEP 7: Lab Notes (Message Section)
+    // ============================================
+    $notes_query = "SELECT notes FROM notes WHERE user_id = $lab_user_id LIMIT 1";
+    $notes_result = mysqli_query($con, $notes_query);
+    $notes_data = mysqli_fetch_assoc($notes_result);
+    $lab_notes = isset($notes_data['notes']) ? trim($notes_data['notes']) : '';
 
-// ============================================
-// STEP 8: Final Response
-// ============================================
-echo json_encode([
-    "status"  => true,
-    "message" => "Laboratory detail fetched successfully",
-    "data" => [
+    // Show notes only if not empty and not '-'
+    $show_notes = (!empty($lab_notes) && $lab_notes !== '-') ? true : false;
+
+    // ============================================
+    // STEP 8: Available Tests (tbl_lab_tests + tbl_tests)
+    // ============================================
+    $tests_query = "
+        SELECT 
+            t.test_id, 
+            t.test_name, 
+            t.description, 
+            lt.price 
+        FROM tbl_lab_tests lt 
+        INNER JOIN tbl_tests t ON lt.test_id = t.test_id 
+        WHERE lt.lab_id = $lab_id 
+          AND lt.status = 1 
+          AND t.status = 1
+    ";
+    $tests_result = mysqli_query($con, $tests_query);
+
+    $available_tests = [];
+    while ($t = mysqli_fetch_assoc($tests_result)) {
+        $price = (float)$t['price'];
+        $available_tests[] = [
+            "test_id"     => (int)$t['test_id'],
+            "test_name"   => $t['test_name'],
+            "description" => $t['description'] ?? '',
+            "price"       => $price,
+            "price_display" => ($price > 0) ? "Rs. " . number_format($price, 0) : "Not Available",
+            "ask_whatsapp" => ($price <= 0) ? true : false // Frontend isse check kar sakta hai
+        ];
+    }
+
+    // ============================================
+    // STEP 9: Lab Pic Full URL
+    // ============================================
+    $lab_pic = '';
+    $default_pic = BASE_URL . 'admin/inc/uploads/default/lab.jpg';
+
+    if (!empty($lab['lab_pic'])) {
+        $lab_pic = BASE_URL . 'admin/inc/uploads/labs/' . $lab['lab_pic'];
+    } else {
+        $lab_pic = $default_pic;
+    }
+
+    // ============================================
+    // STEP 10: Build Lab Data Array
+    // ============================================
+    $labs_list[] = [
         // ---------- BASIC INFO ----------
         "lab_info" => [
-            "lab_id"        => (int)$lab['lab_id'],
+            "lab_id"        => $lab_id,
             "lab_name"      => $lab['lab_name'],
             "lab_pic"       => $lab_pic,
             "lab_type"      => (int)($lab['lab_type'] ?? 0),
@@ -150,8 +201,14 @@ echo json_encode([
             "lab_email"     => $lab['lab_email'] ?? '',
             "city_id"       => (int)($lab['city_id'] ?? 0),
             "city_name"     => $lab['city_name'] ?? '',
-            "working_hours" => "24/7 Emergency Services",  // static (aapke code se)
+            "working_hours" => "24/7 Emergency Services",  // static
             "updated_at"    => $lab['updated_at'] ?? ''
+        ],
+
+        // ---------- LAB MESSAGE / NOTES (Show if available) ----------
+        "lab_notes" => [
+            "show_section" => $show_notes,
+            "notes"        => $show_notes ? $lab_notes : ''
         ],
 
         // ---------- RATING SUMMARY ----------
@@ -159,6 +216,9 @@ echo json_encode([
             "average_rating" => $avg_rating,
             "total_reviews"  => $total_reviews
         ],
+
+        // ---------- AVAILABLE TESTS ----------
+        "available_tests" => $available_tests,
 
         // ---------- REVIEWS (Paginated) ----------
         "reviews" => [
@@ -168,7 +228,22 @@ echo json_encode([
             "total_reviews" => $total_reviews,
             "per_page"      => $reviews_per_page
         ]
-    ]
+    ];
+}
+
+// ============================================
+// STEP 11: Final Response
+// ============================================
+echo json_encode([
+    "status"  => true,
+    "message" => "All laboratories detail fetched successfully",
+    "pagination" => [
+        "current_page"  => $page,
+        "limit"         => $limit,
+        "total_records" => (int)$total_labs,
+        "total_pages"   => $total_pages
+    ],
+    "data" => $labs_list
 ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 
 mysqli_close($con);

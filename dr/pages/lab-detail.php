@@ -4,26 +4,23 @@
 // Get lab ID from URL
 $lab_id = isset($_GET['lab_id']) ? (int)$_GET['lab_id'] : 0;
 
-
 // submit review
 if (isset($_POST['user_id']) AND (int)$_POST['user_id'] != 0) {
-        $user_id = (int)$_POST['user_id'];
-        $commenter_name = isset($_POST['reviewer_name']) ? trim($_POST['reviewer_name']) : '';
-        $commenter_gmail = isset($_POST['reviewer_email']) ? trim($_POST['reviewer_email']) : '';
-        $comment = isset($_POST['review_comment']) ? trim($_POST['review_comment']) : '';
-        $stars = isset($_POST['rating']) ? (int)$_POST['rating'] : 5;
+    $user_id = (int)$_POST['user_id'];
+    $commenter_name = isset($_POST['reviewer_name']) ? trim($_POST['reviewer_name']) : '';
+    $commenter_gmail = isset($_POST['reviewer_email']) ? trim($_POST['reviewer_email']) : '';
+    $comment = isset($_POST['review_comment']) ? trim($_POST['review_comment']) : '';
+    $stars = isset($_POST['rating']) ? (int)$_POST['rating'] : 5;
 
-        $insert_query = "INSERT INTO feedback (user_id, commenter_name, commenter_gmail, comment, stars, status, created_at, updated_at) 
-                        VALUES ($user_id,
-                        '" . mysqli_real_escape_string($con, $commenter_name) . "', 
-                        '" . mysqli_real_escape_string($con, $commenter_gmail) . "', 
-                        '" . mysqli_real_escape_string($con, $comment) . "', 
-                        $stars,1, NOW(), NOW())";
+    $insert_query = "INSERT INTO feedback (user_id, commenter_name, commenter_gmail, comment, stars, status, created_at, updated_at) 
+                    VALUES ($user_id,
+                    '" . mysqli_real_escape_string($con, $commenter_name) . "', 
+                    '" . mysqli_real_escape_string($con, $commenter_gmail) . "', 
+                    '" . mysqli_real_escape_string($con, $comment) . "', 
+                    $stars,1, NOW(), NOW())";
 
-        $feedback_run = mysqli_query($con, $insert_query);
-    }
-
-
+    $feedback_run = mysqli_query($con, $insert_query);
+}
 
 // Fetch lab details
 $lab_query = "SELECT l.*, c.city_name 
@@ -34,6 +31,7 @@ $lab_query = "SELECT l.*, c.city_name
 $lab_result = mysqli_query($con, $lab_query);
 $lab = mysqli_fetch_assoc($lab_result);
 $user_id = (int)$lab['user_id'];
+
 // Calculate average rating from feedback table
 $rating_query = "SELECT AVG(stars) as avg_rating, COUNT(feedback_id) as total_reviews 
                  FROM feedback 
@@ -43,10 +41,25 @@ $rating_data = mysqli_fetch_assoc($rating_result);
 $avg_rating = $rating_data['avg_rating'] ? round($rating_data['avg_rating'], 1) : 0;
 $total_reviews = $rating_data['total_reviews'] ? $rating_data['total_reviews'] : 0;
 
+// Clean lab phone for WhatsApp
+$lab_phone_clean = preg_replace('/[^0-9]/', '', $lab['lab_phone']);
+if (strpos($lab_phone_clean, '0') === 0) {
+    $lab_phone_clean = '92' . substr($lab_phone_clean, 1);
+}
 
+// Fetch Lab Notes/Message
+$notes_query = "SELECT notes FROM notes WHERE user_id = $user_id LIMIT 1";
+$notes_result = mysqli_query($con, $notes_query);
+$notes_data = mysqli_fetch_assoc($notes_result);
+$lab_notes = isset($notes_data['notes']) ? trim($notes_data['notes']) : '';
+
+// Check condition: Show only if not empty and not just a dash '-'
+$show_notes_section = (!empty($lab_notes) && $lab_notes !== '-');
 ?>
- <!-- Navbar -->
-    <?php include BASE_PATH.'/includes/menu.php'; ?>
+
+<!-- Navbar -->
+<?php include BASE_PATH.'/includes/menu.php'; ?>
+
 <!-- Lab Profile Section -->
 <section class="lab-profile-section">
     <div class="container">
@@ -128,7 +141,103 @@ $total_reviews = $rating_data['total_reviews'] ? $rating_data['total_reviews'] :
     </div>
 </section>
 
+<!-- NEW SECTION: Lab Notes / Message (Shows only if condition met) -->
+<?php if ($show_notes_section): ?>
+<section class="lab-notes-section section-padding bg-light">
+    <div class="container">
+        <div class="notes-card" data-aos="fade-up">
+            <div class="notes-icon">
+                <i class="fas fa-info-circle"></i>
+            </div>
+            <div class="notes-content">
+                <h3 class="notes-title">Message from <?php echo htmlspecialchars($lab['lab_name']); ?></h3>
+                <div class="notes-text">
+                    <?php echo nl2br(htmlspecialchars($lab_notes)); ?>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<?php endif; ?>
 
+<!-- Available Tests Section -->
+<section class="lab-tests-section section-padding bg-white">
+    <div class="container">
+        <div class="section-header">
+            <h2 class="section-title">Available Tests</h2>
+            <p class="section-subtitle">Tests offered by <?php echo htmlspecialchars($lab['lab_name']); ?></p>
+        </div>
+
+        <div class="tests-list-card" data-aos="fade-up">
+            <?php
+            // Fetch tests for this specific lab
+            $tests_query = "SELECT t.test_id, t.test_name, t.description, lt.price 
+                            FROM tbl_lab_tests lt 
+                            INNER JOIN tbl_tests t ON lt.test_id = t.test_id 
+                            WHERE lt.lab_id = $lab_id AND lt.status = 1 AND t.status = 1";
+            
+            $tests_result = mysqli_query($con, $tests_query);
+
+            if (mysqli_num_rows($tests_result) > 0): 
+            ?>
+                <div class="table-responsive">
+                    <table class="table tests-table align-middle">
+                        <thead>
+                            <tr>
+                                <th>Test Name</th>
+                                <th>Price</th>
+                                <th class="text-end">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php while($test = mysqli_fetch_assoc($tests_result)): ?>
+                                <tr>
+                                    <td>
+                                        <strong class="test-name"><?php echo htmlspecialchars($test['test_name']); ?></strong>
+                                    </td>
+                                    <td>
+                                        <?php if(!empty($test['price']) && $test['price'] > 0): ?>
+                                            <span class="test-price">Rs. <?php echo number_format($test['price'], 0); ?></span>
+                                        <?php else: ?>
+                                            <span class="price-na">Not Available</span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td class="text-end">
+                                        <?php if(empty($test['price']) || $test['price'] == 0): ?>
+                                            <!-- WhatsApp Ask Button -->
+                                            <?php 
+                                            $wa_msg = urlencode("Hello " . $lab['lab_name'] . ", I want to ask the price for the test: " . $test['test_name']);
+                                            $wa_link = "https://wa.me/" . $lab_phone_clean . "?text=" . $wa_msg;
+                                            ?>
+                                            <a href="<?php echo $wa_link; ?>" target="_blank" class="btn-wa-ask">
+                                                <i class="fab fa-whatsapp"></i> Ask Price
+                                            </a>
+                                        <?php else: ?>
+                                            <!-- Book/Contact Button -->
+                                            <?php 
+                                            $wa_msg_book = urlencode("Hello " . $lab['lab_name'] . ", I want to book the test: " . $test['test_name'] . " (Price: Rs. " . number_format($test['price'], 0) . ")");
+                                            $wa_link_book = "https://wa.me/" . $lab_phone_clean . "?text=" . $wa_msg_book;
+                                            ?>
+                                            <a href="<?php echo $wa_link_book; ?>" target="_blank" class="btn-book-test">
+                                                <i class="fas fa-calendar-check"></i> Book Test
+                                            </a>
+                                        <?php endif; ?>
+                                    </td>
+                                </tr>
+                            <?php endwhile; ?>
+                        </tbody>
+                    </table>
+                </div>
+            <?php else: ?>
+                <div class="no-tests">
+                    <i class="fas fa-flask"></i>
+                    <h3>No Tests Available</h3>
+                    <p>This lab has not listed any tests yet.</p>
+                </div>
+            <?php endif; ?>
+        </div>
+    </div>
+</section>
 
 <!-- Lab Reviews Section -->
 <section class="lab-reviews-section section-padding bg-light">
@@ -366,7 +475,6 @@ document.addEventListener('DOMContentLoaded', function() {
         
         document.body.appendChild(alertDiv);
         
-        // Auto remove after 5 seconds
         setTimeout(() => {
             if (alertDiv.parentNode) {
                 alertDiv.parentNode.removeChild(alertDiv);
@@ -411,7 +519,6 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             const reviewId = e.target.dataset.reviewId;
             
-            // Send AJAX request to mark as helpful
             fetch('mark-helpful.php', {
                 method: 'POST',
                 headers: {
@@ -436,7 +543,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const reviewId = e.target.dataset.reviewId;
             
             if (confirm('Are you sure you want to report this review?')) {
-                // Send AJAX request to report review
                 fetch('report-review.php', {
                     method: 'POST',
                     headers: {
@@ -463,7 +569,6 @@ document.addEventListener('DOMContentLoaded', function() {
         card.className = 'review-card';
         card.setAttribute('data-aos', 'fade-up');
         
-        // Generate star rating HTML
         let starsHTML = '';
         for (let i = 1; i <= 5; i++) {
             if (i <= review.stars) {

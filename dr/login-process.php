@@ -62,7 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 header("Location: lab/");
                 exit();
             } 
-            elseif ($user['user_type_name'] == 'blood_bank') {
+            elseif ($user['user_type_name'] == 'blood bank') {
                 header("Location: blood-bank/");
                 exit();
             } 
