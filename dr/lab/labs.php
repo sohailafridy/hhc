@@ -43,7 +43,7 @@ $lab_result = mysqli_query($con, "SELECT l.*, c.city_name, u.status as ustatus,
     FROM laboratories l
     LEFT JOIN cities c ON l.city_id=c.city_id
     LEFT JOIN users u ON u.user_id=l.user_id
-    WHERE $where ORDER BY l.lab_name ASC LIMIT $offset,$per_page");
+    WHERE $where and l.user_id != '". $user_id ."' ORDER BY l.lab_name ASC LIMIT $offset,$per_page");
 ?>
 <?php include BASE_PATH.'/admin/inc/header.php'; ?>
 <?php include BASE_PATH.'/admin/inc/top.php'; ?>

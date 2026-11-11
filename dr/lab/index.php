@@ -196,6 +196,20 @@ $nearby_hosps = mysqli_query($con, "SELECT h.hospital_id, h.hospital_name, h.hos
     WHERE h.city_id={$lab['city_id']} AND u.status=1 AND h.approve=1
     ORDER BY h.hospital_name ASC LIMIT 8");
 
+
+
+//---Working in Hospitals
+$working_in_q =mysqli_query($con, "SELECT h.hospital_id, h.hospital_name, h.hospital_phone, c.city_name
+    from assign_hospital asg
+    LEFT JOIN hospitals h ON h.hospital_id=asg.hospital_id
+    LEFT JOIN cities c ON h.city_id=c.city_id
+    LEFT JOIN users u ON u.user_id=asg.user_id
+    WHERE u.status=1 AND h.approve=1 and asg.user_id = '". $user_id ."'
+    ORDER BY h.hospital_name");
+
+
+
+
 // ── RECENT REVIEWS ─────────────────────────────────────────
 $reviews_q = mysqli_query($con, "SELECT * FROM feedback WHERE user_id=$user_id AND status=1 ORDER BY created_at DESC LIMIT 5");
 
@@ -400,6 +414,32 @@ $available_tests_q = mysqli_query($con, "
                             <i class="fas fa-check-circle"></i><span id="noteSavedText">Saved!</span>
                         </div>
                     </div>
+                </div>
+            </div>
+
+            <!-- Working in Hospitals -->
+            <div class="info-card">
+                <div class="info-card-header">
+                    <h5><i class="fas fa-hospital-alt"></i> Working in </h5>
+                    <!-- <a href="<?= BASE_URL ?>lab/hospitals" style="font-size:0.8rem; color:#00A8CC; text-decoration:none; font-weight:600;">View All</a> -->
+                </div>
+                <div class="info-card-body">
+                    <?php if (mysqli_num_rows($working_in_q) > 0):
+                        while ($h = mysqli_fetch_assoc($working_in_q)): ?>
+                    <div class="hosp-chip-item">
+                        <div class="hc-icon"><i class="fas fa-hospital"></i></div>
+                        <div>
+                            <div class="hc-name"><?= htmlspecialchars($h['hospital_name']) ?></div>
+                            <div class="hc-city"><i class="fas fa-map-marker-alt me-1"></i><?= htmlspecialchars($h['city_name']) ?>
+                                <?php if (!empty($h['hospital_phone'])): ?>
+                                &nbsp;·&nbsp;<i class="fas fa-phone me-1"></i><?= htmlspecialchars($h['hospital_phone']) ?>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    </div>
+                    <?php endwhile; else: ?>
+                        <p class="text-muted text-center py-2">No hospitals found in your city.</p>
+                    <?php endif; ?>
                 </div>
             </div>
 

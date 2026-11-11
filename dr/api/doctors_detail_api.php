@@ -74,7 +74,6 @@ $query = "
     WHERE u.status = 1 
       AND d.approve = 1
     ORDER BY d.doctor_id DESC
-    LIMIT $limit OFFSET $offset
 ";
 
 $result = mysqli_query($con, $query);

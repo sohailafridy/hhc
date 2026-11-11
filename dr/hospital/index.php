@@ -32,6 +32,26 @@ $hospital_id = $hospital_data['hospital_id'];
 $entity_id   = $hospital_data['entity_id'];
 
 // ============================================
+// AJAX: REMOVE LAB FROM HOSPITAL
+// ============================================
+if (isset($_POST['action']) && $_POST['action'] == 'remove_lab') {
+    header('Content-Type: application/json');
+    $lab_user_id = (int)$_POST['lab_user_id'];
+
+    if ($lab_user_id > 0) {
+        $delete = "DELETE FROM assign_hospital WHERE hospital_id = $hospital_id AND user_id = $lab_user_id";
+        if (mysqli_query($con, $delete)) {
+            echo json_encode(['success' => true, 'message' => 'Lab removed successfully!']);
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Database error: ' . mysqli_error($con)]);
+        }
+    } else {
+        echo json_encode(['success' => false, 'message' => 'Invalid Lab ID.']);
+    }
+    exit();
+}
+
+// ============================================
 // STATISTICS
 // ============================================
 $doctors_query = "SELECT COUNT(*) as total FROM doctor_in_hospital WHERE hospital_id = $hospital_id AND inactive = 0";
@@ -61,7 +81,20 @@ $rating_result = mysqli_query($con, $rating_query);
 $rating_data = mysqli_fetch_assoc($rating_result);
 $avg_rating = $rating_data['avg_rating'] ? round($rating_data['avg_rating'], 1) : 0;
 
-// Recent Doctors (only one query — duplicate line removed)
+// ============================================
+// FETCH REGISTERED LABS
+// ============================================
+$labs_query = "SELECT l.lab_id, l.lab_name, l.user_id as lab_user_id, l.lab_pic, c.city_name 
+               FROM assign_hospital ah 
+               INNER JOIN laboratories l ON l.user_id = ah.user_id
+               LEFT JOIN cities c ON l.city_id = c.city_id
+               LEFT JOIN users u ON u.user_id = l.user_id
+               WHERE ah.hospital_id = $hospital_id AND ah.status = 1 AND l.approve = 1 AND u.status = 1
+               ORDER BY l.lab_name ASC";
+$labs_result = mysqli_query($con, $labs_query);
+$total_labs = mysqli_num_rows($labs_result);
+
+// Recent Doctors
 $recent_doctors_query = "SELECT d.*, dct.type as specialization, u.status as ustatus
                          FROM doctor_in_hospital dih
                          INNER JOIN doctors d ON dih.doctor_id = d.doctor_id
@@ -88,10 +121,7 @@ if (mysqli_num_rows($notes_tbl) == 0) {
 // AJAX: save note
 if (isset($_POST['save_note'])) {
     $note_text = mysqli_real_escape_string($con, trim($_POST['note_text'] ?? ''));
-    if ($note_text === '') {
-        // echo json_encode(['success' => false, 'msg' => 'Note cannot be empty.']);
-        // exit();
-    }
+    
     $exists = mysqli_query($con, "SELECT note_id FROM notes WHERE user_id = $user_id LIMIT 1");
     if (mysqli_num_rows($exists) > 0) {
         $row = mysqli_fetch_assoc($exists);
@@ -151,6 +181,62 @@ $recent_reviews_result = mysqli_query($con, $recent_reviews_query);
     .two-col-dashboard {
         grid-template-columns: 1fr;
     }
+}
+
+/* Custom styles for Lab List */
+.lab-list-item {
+    display: flex;
+    align-items: center;
+    padding: 12px;
+    background: #f8fafc;
+    border-radius: 10px;
+    margin-bottom: 12px;
+    border: 1px solid #e2e8f0;
+    gap: 12px;
+}
+.lab-list-item:last-child {
+    margin-bottom: 0;
+}
+.lab-avatar {
+    width: 45px;
+    height: 45px;
+    border-radius: 8px;
+    background: #e0f2fe;
+    color: #0284c7;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+.lab-info {
+    flex: 1;
+    min-width: 0;
+}
+.lab-info .lab-name {
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: #0D2B6E;
+    margin-bottom: 2px;
+}
+.lab-info .lab-city {
+    font-size: 0.8rem;
+    color: #64748b;
+}
+.btn-remove-lab {
+    background: #fee2e2;
+    color: #ef4444;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.btn-remove-lab:hover {
+    background: #ef4444;
+    color: #fff;
 }
 </style>
 
@@ -341,6 +427,43 @@ $recent_reviews_result = mysqli_query($con, $recent_reviews_query);
                 </div>
             </div>
 
+            <!-- ===== NEW: REGISTERED LABS ===== -->
+            <div class="info-card">
+                <div class="info-card-header">
+                    <h5><i class="fas fa-flask"></i> Registered Labs (<?php echo $total_labs; ?>)</h5>
+                    <a href="<?php echo BASE_URL; ?>hospital/labs" class="btn btn-sm btn-primary">Manage</a>
+                </div>
+                <div class="info-card-body" id="labsContainer">
+                    <?php if ($total_labs > 0): ?>
+                        <?php while ($lab = mysqli_fetch_assoc($labs_result)): 
+                            $pic_path = BASE_PATH . '/admin/inc/uploads/laboratories/' . trim($lab['lab_pic'] ?? '');
+                            $has_pic = (!empty(trim($lab['lab_pic'] ?? '')) && strtolower(trim($lab['lab_pic'])) !== 'null' && file_exists($pic_path));
+                        ?>
+                            <div class="lab-list-item" id="lab-row-<?php echo $lab['lab_user_id']; ?>">
+                                <?php if ($has_pic): ?>
+                                    <img src="<?php echo BASE_URL; ?>admin/inc/uploads/laboratories/<?php echo htmlspecialchars($lab['lab_pic']); ?>" 
+                                         class="lab-avatar" style="object-fit: cover;">
+                                <?php else: ?>
+                                    <div class="lab-avatar"><i class="fas fa-flask"></i></div>
+                                <?php endif; ?>
+                                
+                                <div class="lab-info">
+                                    <div class="lab-name"><?php echo htmlspecialchars($lab['lab_name']); ?></div>
+                                    <div class="lab-city"><i class="fas fa-map-marker-alt me-1"></i><?php echo htmlspecialchars($lab['city_name']); ?></div>
+                                </div>
+                                
+                                <button class="btn-remove-lab" onclick="removeLab(<?php echo $lab['lab_user_id']; ?>)">
+                                    <i class="fas fa-trash"></i> Remove
+                                </button>
+                            </div>
+                        <?php endwhile; ?>
+                    <?php else: ?>
+                        <p class="text-muted text-center py-2">No labs registered yet.</p>
+                    <?php endif; ?>
+                </div>
+            </div>
+            <!-- ===== END REGISTERED LABS ===== -->
+
             <!-- Recent Reviews -->
             <div class="info-card">
                 <div class="info-card-header">
@@ -380,6 +503,9 @@ $recent_reviews_result = mysqli_query($con, $recent_reviews_query);
 <?php include BASE_PATH . '/admin/inc/footer.php'; ?>
 
 <script>
+// ============================================
+// SAVE NOTE
+// ============================================
 function saveNote() {
     var text = document.getElementById('noteTextarea').value.trim();
     var errBox  = document.getElementById('noteError');
@@ -434,4 +560,40 @@ document.getElementById('noteTextarea').addEventListener('keydown', function(e) 
         saveNote();
     }
 });
+
+// ============================================
+// REMOVE LAB
+// ============================================
+function removeLab(labUserId) {
+    if (confirm("Are you sure you want to remove this lab from your hospital?")) {
+        let formData = new URLSearchParams();
+        formData.append('action', 'remove_lab');
+        formData.append('lab_user_id', labUserId);
+
+        fetch('<?= BASE_URL ?>hospital/index.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: formData.toString()
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                // Remove the row visually without reloading
+                let row = document.getElementById('lab-row-' + labUserId);
+                if (row) {
+                    row.style.transition = 'opacity 0.3s';
+                    row.style.opacity = '0';
+                    setTimeout(() => row.remove(), 300);
+                }
+            } else {
+                alert("Error: " + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert("Something went wrong. Please try again.");
+        });
+    }
+}
 </script>

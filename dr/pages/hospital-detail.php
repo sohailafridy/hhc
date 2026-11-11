@@ -66,6 +66,19 @@ $doctors_query = "SELECT d.*, dct.type as specialization, dih.doctor_in_hosp_id
 $doctors_result = mysqli_query($con, $doctors_query);
 $total_doctors = mysqli_num_rows($doctors_result);
 
+// ============================================
+// FETCH REGISTERED LABS FOR THIS HOSPITAL
+// ============================================
+$labs_query = "SELECT l.*, c.city_name 
+               FROM assign_hospital ah 
+               INNER JOIN laboratories l ON l.user_id = ah.user_id
+               LEFT JOIN cities c ON l.city_id = c.city_id
+               LEFT JOIN users u ON u.user_id = l.user_id
+               WHERE ah.hospital_id = $hospital_id AND ah.status = 1 AND l.approve = 1 AND u.status = 1
+               ORDER BY l.lab_name ASC";
+$labs_result = mysqli_query($con, $labs_query);
+$total_labs = mysqli_num_rows($labs_result);
+
 // Fetch feedbacks
 $feedback_query = "SELECT f.* FROM feedback f WHERE f.user_id = $user_id AND f.status = 1 ORDER BY f.created_at DESC LIMIT 10";
 $feedback_result = mysqli_query($con, $feedback_query);
@@ -253,9 +266,8 @@ $hospital_note = ($notes_result && mysqli_num_rows($notes_result) > 0)
                                         <img src="<?php echo BASE_URL; ?>admin/inc/uploads/doctors/<?php echo $doctor['doctor_pic']; ?>" 
                                              alt="<?php echo htmlspecialchars($doctor['doctor_name']); ?>" class="doctor-avatar">
                                     <?php else: ?>
-                                        <div class="doctor-avatar-placeholder">
-                                            <?php echo strtoupper(substr($doctor['doctor_name'], 0, 1)); ?>
-                                        </div>
+                                        <img src="<?php echo BASE_URL; ?>admin/inc/uploads/default/doctor.jpg" 
+                                             alt="<?php echo htmlspecialchars($doctor['doctor_name']); ?>" class="doctor-avatar">
                                     <?php endif; ?>
                                     <div>
                                         <h6>Dr. <?php echo htmlspecialchars($doctor['doctor_name']); ?></h6>
@@ -270,6 +282,43 @@ $hospital_note = ($notes_result && mysqli_num_rows($notes_result) > 0)
                         <?php endif; ?>
                     </div>
                 </div>
+
+                <!-- ===== REGISTERED LABS SECTION (NEW) ===== -->
+                <div class="info-card">
+                    <div class="info-card-header">
+                        <h5><i class="fas fa-flask"></i> Registered Labs (<?php echo $total_labs; ?>)</h5>
+                    </div>
+                    <div class="info-card-body">
+                        <?php if ($total_labs > 0): ?>
+                            <?php while ($lab = mysqli_fetch_assoc($labs_result)): ?>
+                                <?php 
+$lab_pic_val = trim($lab['lab_pic'] ?? ''); 
+$lab_img_path = BASE_PATH . '/admin/inc/uploads/laboratories/' . $lab_pic_val;
+$has_valid_pic = (!empty($lab_pic_val) && $lab_pic_val !== '0' && strtolower($lab_pic_val) !== 'null' && file_exists($lab_img_path));
+?>
+<div class="doctor-mini-card">
+    <?php if ($has_valid_pic): ?>
+        <img src="<?php echo BASE_URL; ?>admin/inc/uploads/laboratories/<?php echo htmlspecialchars($lab_pic_val); ?>" 
+             alt="<?php echo htmlspecialchars($lab['lab_name']); ?>" class="doctor-avatar">
+    <?php else: ?>
+        <img src="<?php echo BASE_URL; ?>admin/inc/uploads/default/lab.jpg" 
+             alt="<?php echo htmlspecialchars($lab['lab_name']); ?>" class="doctor-avatar">
+    <?php endif; ?>
+    <div>
+        <h6><?php echo htmlspecialchars($lab['lab_name']); ?></h6>
+        <span class="doctor-spec"><i class="fas fa-map-marker-alt me-1"></i><?php echo htmlspecialchars($lab['city_name']); ?></span>
+    </div>
+    <a href="<?php echo BASE_URL; ?>lab-detail?lab_id=<?php echo $lab['lab_id']; ?>" 
+       class="btn btn-sm btn-primary">View</a>
+</div>
+                            <?php endwhile; ?>
+                        <?php else: ?>
+                            <p class="text-muted text-center py-2">No labs registered at this hospital</p>
+                        <?php endif; ?>
+                    </div>
+                </div>
+                <!-- ===== END REGISTERED LABS SECTION ===== -->
+
             </div>
 
             <!-- ===== RIGHT COLUMN ===== -->

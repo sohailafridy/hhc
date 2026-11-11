@@ -55,6 +55,15 @@ $lab_notes = isset($notes_data['notes']) ? trim($notes_data['notes']) : '';
 
 // Check condition: Show only if not empty and not just a dash '-'
 $show_notes_section = (!empty($lab_notes) && $lab_notes !== '-');
+
+//---Working in Hospitals
+$working_in_q = mysqli_query($con, "SELECT h.hospital_id, h.hospital_name, h.hospital_phone, c.city_name
+    from assign_hospital asg
+    LEFT JOIN hospitals h ON h.hospital_id=asg.hospital_id
+    LEFT JOIN cities c ON h.city_id=c.city_id
+    LEFT JOIN users u ON u.user_id=asg.user_id
+    WHERE u.status=1 AND h.approve=1 and asg.user_id = '". $user_id ."'
+    ORDER BY h.hospital_name");
 ?>
 
 <!-- Navbar -->
@@ -154,6 +163,42 @@ $show_notes_section = (!empty($lab_notes) && $lab_notes !== '-');
                 <div class="notes-text">
                     <?php echo nl2br(htmlspecialchars($lab_notes)); ?>
                 </div>
+            </div>
+        </div>
+    </div>
+</section>
+<?php endif; ?>
+
+<!-- NEW SECTION: Working in Hospitals -->
+<?php if (mysqli_num_rows($working_in_q) > 0): ?>
+<section class="lab-hospitals-section section-padding bg-white">
+    <div class="container">
+        <div class="section-header">
+            <h2 class="section-title">Working in Hospitals</h2>
+            <p class="section-subtitle">Hospitals associated with <?php echo htmlspecialchars($lab['lab_name']); ?></p>
+        </div>
+
+        <div class="info-card" data-aos="fade-up">
+            <div class="info-card-header">
+                <h5><i class="fas fa-hospital-alt"></i> Working in </h5>
+            </div>
+            <div class="info-card-body">
+                <?php while ($h = mysqli_fetch_assoc($working_in_q)): ?>
+                    <a target="_blank" href="<?=BASE_URL?>hospital-detail?hospital_id=<?=$h['hospital_id']?>" style="text-decoration: none;">
+                    <div class="hosp-chip-item">
+                        <div class="hc-icon"><i class="fas fa-hospital"></i></div>
+                        <div>
+                            <div class="hc-name"><?= htmlspecialchars($h['hospital_name']) ?></div>
+                            <div class="hc-city">
+                                <i class="fas fa-map-marker-alt me-1"></i><?= htmlspecialchars($h['city_name']) ?>
+                                <?php if (!empty($h['hospital_phone'])): ?>
+                                    &nbsp;·&nbsp;<i class="fas fa-phone me-1"></i><?= htmlspecialchars($h['hospital_phone']) ?>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    </div>
+                    </a>
+                <?php endwhile; ?>
             </div>
         </div>
     </div>
