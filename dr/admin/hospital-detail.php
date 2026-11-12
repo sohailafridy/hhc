@@ -268,6 +268,32 @@ $past_doctors_query = "SELECT d.*, dct.type as specialization, dih.doctor_in_hos
 $past_doctors_result = mysqli_query($con, $past_doctors_query);
 $total_past_doctors = $past_doctors_result ? mysqli_num_rows($past_doctors_result) : 0;
 
+// ============================================
+// REGISTERED LABS (Exact based on your tables)
+// ============================================
+$labs_query = "SELECT l.*, c.city_name 
+               FROM assign_hospital ah 
+               INNER JOIN laboratories l ON l.user_id = ah.user_id
+               LEFT JOIN cities c ON l.city_id = c.city_id
+               LEFT JOIN users u ON u.user_id = l.user_id
+               WHERE ah.hospital_id = $hospital_id AND ah.status = 1 AND l.approve = 1 AND u.status = 1
+               ORDER BY l.lab_name ASC";
+$labs_result = mysqli_query($con, $labs_query);
+$total_labs = $labs_result ? mysqli_num_rows($labs_result) : 0;
+
+// ============================================
+// REGISTERED RADIOLOGY (Exact based on your tables)
+// ============================================
+$radiology_query = "SELECT r.*, c.city_name 
+                    FROM assign_hospital_radiology ahr 
+                    INNER JOIN radiology r ON r.user_id = ahr.user_id
+                    LEFT JOIN cities c ON r.city_id = c.city_id
+                    LEFT JOIN users u ON u.user_id = r.user_id
+                    WHERE ahr.hospital_id = $hospital_id AND ahr.status = 1 AND r.approve = 1 AND u.status = 1
+                    ORDER BY r.rad_name ASC";
+$radiology_result = mysqli_query($con, $radiology_query);
+$total_radiology = $radiology_result ? mysqli_num_rows($radiology_result) : 0;
+
 // Fetch feedbacks
 $feedback_query = "SELECT f.* FROM feedback f WHERE f.user_id = $user_id AND f.status = 1 ORDER BY f.created_at DESC LIMIT 10";
 $feedback_result = mysqli_query($con, $feedback_query);
@@ -397,6 +423,27 @@ $total_reviews = $rating_data['total_reviews'] ? $rating_data['total_reviews'] :
         .ad-grid { grid-template-columns: 1fr; }
         .ad-result-card { flex-wrap: wrap; }
     }
+
+    /* ===== Custom Styling for Labs & Radiology (Exact match to reference) ===== */
+    .lab-list-item {
+        display: flex; align-items: center; padding: 12px;
+        background: #f8fafc; border-radius: 10px;
+        margin-bottom: 12px; border: 1px solid #e2e8f0; gap: 12px;
+    }
+    .lab-list-item:last-child { margin-bottom: 0; }
+    .lab-avatar {
+        width: 45px; height: 45px; border-radius: 8px;
+        background: #e0f2fe; color: #0284c7;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.2rem; flex-shrink: 0; object-fit: cover;
+    }
+    .lab-info { flex: 1; min-width: 0; }
+    .lab-info .lab-name { font-weight: 700; font-size: 0.95rem; color: #0D2B6E; margin-bottom: 2px; }
+    .lab-info .lab-city { font-size: 0.8rem; color: #64748b; }
+    
+    /* Radiology Specific Colors */
+    .rad-list-item { border-left: 3px solid #4338ca; }
+    .rad-avatar { background: #e0e7ff; color: #4338ca; }
 </style>
 
 <div class="content-wrapper">
@@ -479,6 +526,18 @@ $total_reviews = $rating_data['total_reviews'] ? $rating_data['total_reviews'] :
             <div class="stat-icon purple"><i class="fas fa-star"></i></div>
             <div class="stat-number"><?php echo $avg_rating > 0 ? $avg_rating : 'N/A'; ?></div>
             <div class="stat-label">Rating (<?php echo $total_reviews; ?> reviews)</div>
+        </div>
+        <!-- NEW LAB CARD -->
+        <div class="stat-card">
+            <div class="stat-icon" style="background:#ccfbf1; color:#0f766e;"><i class="fas fa-flask"></i></div>
+            <div class="stat-number"><?php echo $total_labs; ?></div>
+            <div class="stat-label">Total Labs</div>
+        </div>
+        <!-- NEW RADIOLOGY CARD -->
+        <div class="stat-card">
+            <div class="stat-icon" style="background:#e0e7ff; color:#4338ca;"><i class="fas fa-x-ray"></i></div>
+            <div class="stat-number"><?php echo $total_radiology; ?></div>
+            <div class="stat-label">Total Radiology</div>
         </div>
     </div>
 
@@ -629,6 +688,82 @@ $total_reviews = $rating_data['total_reviews'] ? $rating_data['total_reviews'] :
                         <?php endwhile; ?>
                     <?php else: ?>
                         <p class="text-muted text-center py-2">No doctors registered at this hospital</p>
+                    <?php endif; ?>
+                </div>
+            </div>
+
+            <!-- ============================================ -->
+            <!-- REGISTERED LABS SECTION -->
+            <!-- ============================================ -->
+            <div class="info-card">
+                <div class="info-card-header">
+                    <h5><i class="fas fa-flask"></i> Registered Labs (<?php echo $total_labs; ?>)</h5>
+                </div>
+                <div class="info-card-body">
+                    <?php if ($total_labs > 0): ?>
+                        <?php while ($lab = mysqli_fetch_assoc($labs_result)): 
+                            // Image handling exactly like reference
+                            $pic_path = BASE_PATH . '/admin/inc/uploads/laboratories/' . trim($lab['lab_pic'] ?? '');
+                            $has_pic = (!empty(trim($lab['lab_pic'] ?? '')) && strtolower(trim($lab['lab_pic'])) !== 'null' && file_exists($pic_path));
+                        ?>
+                            <div class="lab-list-item">
+                                <?php if ($has_pic): ?>
+                                    <img src="<?php echo BASE_URL; ?>admin/inc/uploads/laboratories/<?php echo htmlspecialchars($lab['lab_pic']); ?>" class="lab-avatar">
+                                <?php else: ?>
+                                    <div class="lab-avatar"><i class="fas fa-flask"></i></div>
+                                <?php endif; ?>
+                                <div class="lab-info">
+                                    <div class="lab-name"><?php echo htmlspecialchars($lab['lab_name']); ?></div>
+                                    <div class="lab-city"><i class="fas fa-map-marker-alt me-1"></i><?php echo htmlspecialchars($lab['city_name'] ?? 'N/A'); ?></div>
+                                </div>
+                                <div class="d-flex gap-1">
+                                    <!-- LAB DETAIL LINK -->
+                                    <a href="<?php echo BASE_URL; ?>admin/labs/detail?id=<?php echo $lab['lab_id']; ?>" class="btn btn-sm btn-info" style="background:#0f766e; border-color:#0f766e; color:white;">
+                                        <i class="fas fa-eye me-1"></i> Detail
+                                    </a>
+                                </div>
+                            </div>
+                        <?php endwhile; ?>
+                    <?php else: ?>
+                        <p class="text-muted text-center py-2">No labs registered at this hospital</p>
+                    <?php endif; ?>
+                </div>
+            </div>
+
+            <!-- ============================================ -->
+            <!-- REGISTERED RADIOLOGY SECTION -->
+            <!-- ============================================ -->
+            <div class="info-card">
+                <div class="info-card-header">
+                    <h5><i class="fas fa-x-ray"></i> Registered Radiology (<?php echo $total_radiology; ?>)</h5>
+                </div>
+                <div class="info-card-body">
+                    <?php if ($total_radiology > 0): ?>
+                        <?php while ($rad = mysqli_fetch_assoc($radiology_result)): 
+                            // Image handling for radiology
+                            $rad_pic_path = BASE_PATH . '/admin/inc/uploads/radiology/' . trim($rad['rad_pic'] ?? '');
+                            $has_rad_pic = (!empty(trim($rad['rad_pic'] ?? '')) && strtolower(trim($rad['rad_pic'])) !== 'null' && file_exists($rad_pic_path));
+                        ?>
+                            <div class="lab-list-item rad-list-item">
+                                <?php if ($has_rad_pic): ?>
+                                    <img src="<?php echo BASE_URL; ?>admin/inc/uploads/radiology/<?php echo htmlspecialchars($rad['rad_pic']); ?>" class="lab-avatar rad-avatar">
+                                <?php else: ?>
+                                    <div class="lab-avatar rad-avatar"><i class="fas fa-x-ray"></i></div>
+                                <?php endif; ?>
+                                <div class="lab-info">
+                                    <div class="lab-name"><?php echo htmlspecialchars($rad['rad_name']); ?></div>
+                                    <div class="lab-city"><i class="fas fa-map-marker-alt me-1"></i><?php echo htmlspecialchars($rad['city_name'] ?? 'N/A'); ?></div>
+                                </div>
+                                <div class="d-flex gap-1">
+                                    <!-- RADIOLOGY DETAIL LINK -->
+                                    <a href="<?php echo BASE_URL; ?>admin/radiology/detail?id=<?php echo $rad['rad_id']; ?>" class="btn btn-sm btn-info" style="background:#4338ca; border-color:#4338ca; color:white;">
+                                        <i class="fas fa-eye me-1"></i> Detail
+                                    </a>
+                                </div>
+                            </div>
+                        <?php endwhile; ?>
+                    <?php else: ?>
+                        <p class="text-muted text-center py-2">No radiology centers registered</p>
                     <?php endif; ?>
                 </div>
             </div>

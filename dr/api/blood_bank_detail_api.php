@@ -52,7 +52,6 @@ $bb_query = "
     WHERE u.status = 1 
       AND bb.approve = 1
     ORDER BY bb.bb_id DESC
-    LIMIT $limit OFFSET $offset
 ";
 
 $bb_result = mysqli_query($con, $bb_query);

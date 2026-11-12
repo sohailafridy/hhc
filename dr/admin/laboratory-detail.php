@@ -70,7 +70,8 @@ $query = "SELECT l.*,
                 c.city_name,
                 h.hospital_name,
                 u.status as estatus,
-                u.user_id as u_id
+                u.user_id as u_id,
+                u.username
           FROM laboratories l 
           LEFT JOIN cities c ON l.city_id = c.city_id
           LEFT JOIN hospitals h ON l.hospital_id = h.hospital_id
@@ -166,6 +167,10 @@ $tests_rows  = $tests_q ? mysqli_fetch_all($tests_q, MYSQLI_ASSOC) : [];
                   <div class="sn-info-item">
                      <span class="sn-info-label">Laboratory ID</span>
                      <span class="sn-info-value"><?php echo htmlspecialchars($laboratory['lab_id'] ?? '-'); ?></span>
+                  </div>
+                  <div class="sn-info-item">
+                     <span class="sn-info-label">Username</span>
+                     <span class="sn-info-value"><?php echo htmlspecialchars($laboratory['username'] ?? '-'); ?></span>
                   </div>
                   <?php if (!empty($laboratory['reg_no'])): ?>
                   <div class="sn-info-item">

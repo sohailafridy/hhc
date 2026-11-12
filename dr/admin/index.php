@@ -19,6 +19,11 @@ $labs_count_query = "SELECT COUNT(*) as total FROM laboratories LEFT JOIN users 
 $labs_count_result = mysqli_query($con, $labs_count_query);
 $labs_count = (int) mysqli_fetch_assoc($labs_count_result)['total'];
 
+// ✅ NAYA: Radiology Count
+$radiology_count_query = "SELECT COUNT(*) as total FROM radiology LEFT JOIN users u ON u.user_id = radiology.user_id WHERE u.status = 1 AND radiology.approve = 1";
+$radiology_count_result = mysqli_query($con, $radiology_count_query);
+$radiology_count = (int) mysqli_fetch_assoc($radiology_count_result)['total'];
+
 $blood_banks_count_query = "SELECT COUNT(*) as total FROM blood_bank LEFT JOIN users u ON u.user_id = blood_bank.user_id WHERE u.status = 1 AND blood_bank.approve = 1";
 $blood_banks_count_result = mysqli_query($con, $blood_banks_count_query);
 $blood_banks_count = (int) mysqli_fetch_assoc($blood_banks_count_result)['total'];
@@ -50,6 +55,7 @@ $recent_doctors_query = "SELECT d.*, c.city_name, h.hospital_name, dct.type as s
                          LIMIT 5";
 $recent_doctors_result = mysqli_query($con, $recent_doctors_query);
 
+// Charts data array
 $chart_month_labels = [];
 $chart_month_keys = [];
 for ($i = 5; $i >= 0; $i--) {
@@ -62,13 +68,12 @@ $chart_start = $chart_month_keys[0] . '-01';
 $chart_month_doctors = array_fill_keys($chart_month_keys, 0);
 $chart_month_hospitals = array_fill_keys($chart_month_keys, 0);
 $chart_month_labs = array_fill_keys($chart_month_keys, 0);
+$chart_month_radiology = array_fill_keys($chart_month_keys, 0); // ✅ Naya
 $chart_month_blood_banks = array_fill_keys($chart_month_keys, 0);
 
 $monthly_fill = function ($sql, &$bucket) use ($con) {
     $result = mysqli_query($con, $sql);
-    if (!$result) {
-        return;
-    }
+    if (!$result) return;
     while ($row = mysqli_fetch_assoc($result)) {
         if (isset($bucket[$row['ym']])) {
             $bucket[$row['ym']] = (int) $row['total'];
@@ -100,6 +105,15 @@ $monthly_fill(
      GROUP BY ym",
     $chart_month_labs
 );
+// ✅ Naya: Radiology Chart fill
+$monthly_fill(
+    "SELECT DATE_FORMAT(r.created_at, '%Y-%m') AS ym, COUNT(*) AS total
+     FROM radiology r
+     LEFT JOIN users u ON u.user_id = r.user_id
+     WHERE u.status = 1 AND r.approve = 1 AND r.created_at >= '$chart_start'
+     GROUP BY ym",
+    $chart_month_radiology
+);
 $monthly_fill(
     "SELECT DATE_FORMAT(b.created_at, '%Y-%m') AS ym, COUNT(*) AS total
      FROM blood_bank b
@@ -115,12 +129,14 @@ $dashboard_chart_data = [
         'doctors' => array_values($chart_month_doctors),
         'hospitals' => array_values($chart_month_hospitals),
         'labs' => array_values($chart_month_labs),
+        'radiology' => array_values($chart_month_radiology), // ✅ Naya
         'bloodBanks' => array_values($chart_month_blood_banks),
     ],
     'totals' => [
         'doctors' => $doctors_count,
         'hospitals' => $hospitals_count,
         'labs' => $labs_count,
+        'radiology' => $radiology_count, // ✅ Naya
         'bloodBanks' => $blood_banks_count,
         'cities' => $city_count,
         'users' => $users_count,
@@ -181,6 +197,15 @@ $dashboard_chart_data = [
                 <div class="stat-icon orange"><i class="fas fa-flask"></i></div>
                 <div class="stat-number"><?php echo $labs_count; ?></div>
                 <div class="stat-label">Total Laboratories</div>
+                <span class="stat-change up"><i class="fas fa-check-circle"></i> Active</span>
+            </div>
+        </a>
+        <!-- ✅ NAYA: Radiology Stat Card -->
+        <a href="<?=BASE_URL?>admin/radiology-list.php">
+            <div class="stat-card">
+                <div class="stat-icon purple" style="background:rgba(139,92,246,0.1); color:#8b5cf6;"><i class="fas fa-x-ray"></i></div>
+                <div class="stat-number"><?php echo $radiology_count; ?></div>
+                <div class="stat-label">Total Radiology</div>
                 <span class="stat-change up"><i class="fas fa-check-circle"></i> Active</span>
             </div>
         </a>
@@ -309,6 +334,11 @@ $dashboard_chart_data = [
                             <span class="qa-icon teal"><i class="fas fa-flask"></i></span>
                             <span class="qa-text"><span class="qa-title">Add Lab</span><span class="qa-desc">New laboratory</span></span>
                         </a>
+                        <!-- ✅ NAYA: Add Radiology Action -->
+                        <a href="<?php echo BASE_URL; ?>admin/radiology-add.php" class="quick-action-btn">
+                            <span class="qa-icon purple" style="background:rgba(139,92,246,0.1); color:#8b5cf6;"><i class="fas fa-x-ray"></i></span>
+                            <span class="qa-text"><span class="qa-title">Add Radiology</span><span class="qa-desc">New imaging center</span></span>
+                        </a>
                         <a href="<?php echo BASE_URL; ?>admin/blood-banks/add" class="quick-action-btn">
                             <span class="qa-icon red"><i class="fas fa-tint"></i></span>
                             <span class="qa-text"><span class="qa-title">Add Blood Bank</span><span class="qa-desc">New blood bank</span></span>
@@ -340,8 +370,79 @@ $dashboard_chart_data = [
 
 </div>
 
+<!-- ✅ ApexCharts Library Include karein agar pehle se nahi hai -->
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+
 <script>
 window.adminDashboardStats = <?php echo json_encode($dashboard_chart_data, JSON_UNESCAPED_UNICODE); ?>;
+
+document.addEventListener("DOMContentLoaded", function() {
+    // ==========================================
+    // 1. BAR CHART (LAST 6 MONTHS)
+    // ==========================================
+    var optionsBar = {
+        series: [
+            { name: 'Doctors', data: window.adminDashboardStats.monthly.doctors },
+            { name: 'Hospitals', data: window.adminDashboardStats.monthly.hospitals },
+            { name: 'Laboratories', data: window.adminDashboardStats.monthly.labs },
+            { name: 'Radiology', data: window.adminDashboardStats.monthly.radiology }, // ✅ Radiology Added
+            { name: 'Blood Banks', data: window.adminDashboardStats.monthly.bloodBanks }
+        ],
+        chart: {
+            type: 'bar',
+            height: 350,
+            toolbar: { show: false }
+        },
+        plotOptions: {
+            bar: { horizontal: false, columnWidth: '55%', endingShape: 'rounded' },
+        },
+        colors: ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444'], // ✅ Colors (Purple for Radiology)
+        dataLabels: { enabled: false },
+        stroke: { show: true, width: 2, colors: ['transparent'] },
+        xaxis: { categories: window.adminDashboardStats.months },
+        fill: { opacity: 1 },
+        tooltip: {
+            y: { formatter: function (val) { return val + " entries"; } }
+        }
+    };
+
+    var chartBar = new ApexCharts(document.querySelector("#barchart"), optionsBar);
+    chartBar.render();
+
+    // ==========================================
+    // 2. PIE CHART (DISTRIBUTION)
+    // ==========================================
+    var optionsPie = {
+        series: [
+            window.adminDashboardStats.totals.doctors,
+            window.adminDashboardStats.totals.hospitals,
+            window.adminDashboardStats.totals.labs,
+            window.adminDashboardStats.totals.radiology, // ✅ Radiology Added
+            window.adminDashboardStats.totals.bloodBanks
+        ],
+        chart: {
+            type: 'pie',
+            height: 280
+        },
+        labels: ['Doctors', 'Hospitals', 'Laboratories', 'Radiology', 'Blood Banks'], // ✅ Labels Added
+        colors: ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444'],
+        legend: {
+            position: 'bottom',
+            fontSize: '13px',
+            markers: { radius: 12 }
+        },
+        responsive: [{
+            breakpoint: 480,
+            options: {
+                chart: { width: 200 },
+                legend: { position: 'bottom' }
+            }
+        }]
+    };
+
+    var chartPie = new ApexCharts(document.querySelector("#piechart"), optionsPie);
+    chartPie.render();
+});
 </script>
 
 <?php include BASE_PATH.'/admin/inc/footer.php'; ?>

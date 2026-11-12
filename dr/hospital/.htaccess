@@ -15,6 +15,10 @@ RewriteRule ^doctor-detail$ doctor-detail.php [L]
 RewriteRule ^recycle$ recycle.php [L]
 RewriteRule ^past-registered-doctors$ past_registered_doctors.php [L]
 
+RewriteRule ^radiology$ radiology.php [L]
+RewriteRule ^radiology-detail$ radiology-detail.php [L]
+RewriteRule ^radiology-add$ radiology-add.php [L]
+
 
 
 

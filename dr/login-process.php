@@ -66,6 +66,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 header("Location: blood-bank/");
                 exit();
             } 
+            elseif ($user['user_type_name'] == 'radiology') {
+                header("Location: radiology/");
+                exit();
+            } 
             else {
                 // Default redirect for other user types
                 header("Location: dashboard.php");

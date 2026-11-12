@@ -624,8 +624,8 @@ function ci_options(array $options, $selected) {
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label class="form-label">Email <span class="required">*</span></label>
-                                <input type="email" class="form-control-modern" id="doctorEmail" name="doctor_email" required
+                                <label class="form-label">Email </label>
+                                <input type="email" class="form-control-modern" id="doctorEmail" name="doctor_email"
                                        placeholder="doctor@example.com" value="<?php echo fv('doctor_email'); ?>"
                                        <?php echo $edit_mode ? 'readonly' : ''; ?>>
                                 <small class="field-msg" id="doctorEmail_msg"></small>
@@ -633,8 +633,8 @@ function ci_options(array $options, $selected) {
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label class="form-label">Phone <span class="required">*</span></label>
-                                <input type="tel" class="form-control-modern" id="doctorPhone" name="doctor_phone" required
+                                <label class="form-label">Phone </label>
+                                <input type="tel" class="form-control-modern" id="doctorPhone" name="doctor_phone"
                                        placeholder="+92 300 1234567" value="<?php echo fv('doctor_phone'); ?>">
                             </div>
                         </div>
@@ -656,7 +656,6 @@ function ci_options(array $options, $selected) {
                                 <label class="form-label">Gender <span class="required">*</span></label>
                                 <?php $g = $_POST['gender'] ?? ($edit_mode ? $doctor_data['gender'] : ''); ?>
                                 <select class="form-control-modern" id="gender" name="gender" required>
-                                    <option value="">Select Gender</option>
                                     <option value="Male" <?php echo $g == 'Male' ? 'selected' : ''; ?>>Male</option>
                                     <option value="Female" <?php echo $g == 'Female' ? 'selected' : ''; ?>>Female</option>
                                     <option value="Other" <?php echo $g == 'Other' ? 'selected' : ''; ?>>Other</option>

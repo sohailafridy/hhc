@@ -62,7 +62,6 @@ $labs_query = "
     WHERE u.status = 1 
       AND l.approve = 1
     ORDER BY l.lab_id DESC
-    LIMIT $limit OFFSET $offset
 ";
 
 $labs_result = mysqli_query($con, $labs_query);

@@ -79,6 +79,19 @@ $labs_query = "SELECT l.*, c.city_name
 $labs_result = mysqli_query($con, $labs_query);
 $total_labs = mysqli_num_rows($labs_result);
 
+// ============================================
+// FETCH REGISTERED RADIOLOGY FOR THIS HOSPITAL (NEW)
+// ============================================
+$rad_query = "SELECT r.*, c.city_name 
+              FROM assign_hospital_radiology ahr 
+              INNER JOIN radiology r ON r.user_id = ahr.user_id
+              LEFT JOIN cities c ON r.city_id = c.city_id
+              LEFT JOIN users u ON u.user_id = r.user_id
+              WHERE ahr.hospital_id = $hospital_id AND ahr.status = 1 AND r.approve = 1 AND u.status = 1
+              ORDER BY r.rad_name ASC";
+$rad_result = mysqli_query($con, $rad_query);
+$total_radiology = $rad_result ? mysqli_num_rows($rad_result) : 0;
+
 // Fetch feedbacks
 $feedback_query = "SELECT f.* FROM feedback f WHERE f.user_id = $user_id AND f.status = 1 ORDER BY f.created_at DESC LIMIT 10";
 $feedback_result = mysqli_query($con, $feedback_query);
@@ -104,7 +117,6 @@ $hospital_note = ($notes_result && mysqli_num_rows($notes_result) > 0)
 <!-- Navbar -->
 <?php include BASE_PATH . '/includes/menu.php'; ?>
 <link rel="stylesheet" href="<?= BASE_URL ?>style/hospital-detail.css?v=<?= @filemtime(__DIR__ . '/style/hospital-detail.css') ?: time() ?>">
-
 
 <!-- ===== HERO SECTION ===== -->
 <section class="hospital-hero">
@@ -180,7 +192,7 @@ $hospital_note = ($notes_result && mysqli_num_rows($notes_result) > 0)
                     </div>
                 </div>
 
-                <!-- ===== NOTES (NEW SECTION) ===== -->
+                <!-- ===== NOTES ===== -->
                 <?php if ($hospital_note && !empty(trim($hospital_note['notes']))): ?>
                     <div class="info-card notes-card">
                         <div class="info-card-header">
@@ -283,7 +295,7 @@ $hospital_note = ($notes_result && mysqli_num_rows($notes_result) > 0)
                     </div>
                 </div>
 
-                <!-- ===== REGISTERED LABS SECTION (NEW) ===== -->
+                <!-- ===== REGISTERED LABS SECTION ===== -->
                 <div class="info-card">
                     <div class="info-card-header">
                         <h5><i class="fas fa-flask"></i> Registered Labs (<?php echo $total_labs; ?>)</h5>
@@ -292,25 +304,25 @@ $hospital_note = ($notes_result && mysqli_num_rows($notes_result) > 0)
                         <?php if ($total_labs > 0): ?>
                             <?php while ($lab = mysqli_fetch_assoc($labs_result)): ?>
                                 <?php 
-$lab_pic_val = trim($lab['lab_pic'] ?? ''); 
-$lab_img_path = BASE_PATH . '/admin/inc/uploads/laboratories/' . $lab_pic_val;
-$has_valid_pic = (!empty($lab_pic_val) && $lab_pic_val !== '0' && strtolower($lab_pic_val) !== 'null' && file_exists($lab_img_path));
-?>
-<div class="doctor-mini-card">
-    <?php if ($has_valid_pic): ?>
-        <img src="<?php echo BASE_URL; ?>admin/inc/uploads/laboratories/<?php echo htmlspecialchars($lab_pic_val); ?>" 
-             alt="<?php echo htmlspecialchars($lab['lab_name']); ?>" class="doctor-avatar">
-    <?php else: ?>
-        <img src="<?php echo BASE_URL; ?>admin/inc/uploads/default/lab.jpg" 
-             alt="<?php echo htmlspecialchars($lab['lab_name']); ?>" class="doctor-avatar">
-    <?php endif; ?>
-    <div>
-        <h6><?php echo htmlspecialchars($lab['lab_name']); ?></h6>
-        <span class="doctor-spec"><i class="fas fa-map-marker-alt me-1"></i><?php echo htmlspecialchars($lab['city_name']); ?></span>
-    </div>
-    <a href="<?php echo BASE_URL; ?>lab-detail?lab_id=<?php echo $lab['lab_id']; ?>" 
-       class="btn btn-sm btn-primary">View</a>
-</div>
+                                $lab_pic_val = trim($lab['lab_pic'] ?? ''); 
+                                $lab_img_path = BASE_PATH . '/admin/inc/uploads/laboratories/' . $lab_pic_val;
+                                $has_valid_pic = (!empty($lab_pic_val) && $lab_pic_val !== '0' && strtolower($lab_pic_val) !== 'null' && file_exists($lab_img_path));
+                                ?>
+                                <div class="doctor-mini-card">
+                                    <?php if ($has_valid_pic): ?>
+                                        <img src="<?php echo BASE_URL; ?>admin/inc/uploads/laboratories/<?php echo htmlspecialchars($lab_pic_val); ?>" 
+                                             alt="<?php echo htmlspecialchars($lab['lab_name']); ?>" class="doctor-avatar">
+                                    <?php else: ?>
+                                        <img src="<?php echo BASE_URL; ?>admin/inc/uploads/default/lab.jpg" 
+                                             alt="<?php echo htmlspecialchars($lab['lab_name']); ?>" class="doctor-avatar">
+                                    <?php endif; ?>
+                                    <div>
+                                        <h6><?php echo htmlspecialchars($lab['lab_name']); ?></h6>
+                                        <span class="doctor-spec"><i class="fas fa-map-marker-alt me-1"></i><?php echo htmlspecialchars($lab['city_name']); ?></span>
+                                    </div>
+                                    <a href="<?php echo BASE_URL; ?>lab-detail?lab_id=<?php echo $lab['lab_id']; ?>" 
+                                       class="btn btn-sm btn-primary">View</a>
+                                </div>
                             <?php endwhile; ?>
                         <?php else: ?>
                             <p class="text-muted text-center py-2">No labs registered at this hospital</p>
@@ -318,6 +330,43 @@ $has_valid_pic = (!empty($lab_pic_val) && $lab_pic_val !== '0' && strtolower($la
                     </div>
                 </div>
                 <!-- ===== END REGISTERED LABS SECTION ===== -->
+
+                <!-- ===== REGISTERED RADIOLOGY SECTION (NEW) ===== -->
+                <div class="info-card">
+                    <div class="info-card-header">
+                        <h5><i class="fas fa-x-ray"></i> Registered Radiology (<?php echo $total_radiology; ?>)</h5>
+                    </div>
+                    <div class="info-card-body">
+                        <?php if ($total_radiology > 0): ?>
+                            <?php while ($rad = mysqli_fetch_assoc($rad_result)): ?>
+                                <?php 
+                                $rad_pic_val = trim($rad['rad_pic'] ?? ''); 
+                                $rad_img_path = BASE_PATH . '/admin/inc/uploads/radiology/' . $rad_pic_val;
+                                $has_valid_rad_pic = (!empty($rad_pic_val) && $rad_pic_val !== '0' && strtolower($rad_pic_val) !== 'null' && file_exists($rad_img_path));
+                                ?>
+                                <div class="doctor-mini-card">
+                                    <?php if ($has_valid_rad_pic): ?>
+                                        <img src="<?php echo BASE_URL; ?>admin/inc/uploads/radiology/<?php echo htmlspecialchars($rad_pic_val); ?>" 
+                                             alt="<?php echo htmlspecialchars($rad['rad_name']); ?>" class="doctor-avatar">
+                                    <?php else: ?>
+                                        <img src="<?php echo BASE_URL; ?>admin/inc/uploads/default/radiology.jpg" 
+                                             alt="<?php echo htmlspecialchars($rad['rad_name']); ?>" class="doctor-avatar">
+                                    <?php endif; ?>
+                                    <div>
+                                        <h6><?php echo htmlspecialchars($rad['rad_name']); ?></h6>
+                                        <span class="doctor-spec"><i class="fas fa-map-marker-alt me-1"></i><?php echo htmlspecialchars($rad['city_name'] ?? 'N/A'); ?></span>
+                                    </div>
+                                    <!-- Assuming you have a radiology detail page -->
+                                    <a href="<?php echo BASE_URL; ?>radiology-detail?rad_id=<?php echo $rad['rad_id']; ?>" 
+                                       class="btn btn-sm btn-primary">View</a>
+                                </div>
+                            <?php endwhile; ?>
+                        <?php else: ?>
+                            <p class="text-muted text-center py-2">No radiology centers registered at this hospital</p>
+                        <?php endif; ?>
+                    </div>
+                </div>
+                <!-- ===== END REGISTERED RADIOLOGY SECTION ===== -->
 
             </div>
 

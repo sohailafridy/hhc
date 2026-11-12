@@ -95,6 +95,18 @@ if (in_array('blood-banks', $url_parts)) {
 }
 
 // ============================================
+// RADIOLOGY  ← NEW MODULE
+// ============================================
+if (in_array('radiology', $url_parts)) {
+    $open = 'radiology';
+    if (in_array('add', $url_parts)) {
+        $active = 'add';
+    } elseif (in_array('list', $url_parts)) {
+        $active = 'list';
+    }
+}
+
+// ============================================
 // USERS
 // ============================================
 if ($in_users_section) {
@@ -111,6 +123,8 @@ if ($in_users_section) {
         $active = 'lab';
     } elseif ($user_type_param == 'blood_bank') {
         $active = 'blood_bank';
+    } elseif ($user_type_param == 'radiology') {
+        $active = 'radiology';
     } elseif ($user_type_param == 'fixit') {
         $active = 'fixit';
     }
@@ -486,6 +500,29 @@ if (($current_page == 'admin' || $current_page == 'index' || $current_page == ''
                 </ul>
             </li>
 
+            <!-- ========================================== -->
+            <!-- ===== RADIOLOGY (NEW MODULE) ===== -->
+            <!-- ========================================== -->
+            <li class="treeview <?php echo ($open == 'radiology') ? 'active' : ''; ?>">
+                <a class="waves-effect waves-dark" href="#!">
+                    <i class="icon-book-open"></i>
+                    <span>Radiology</span>
+                    <i class="icon-arrow-down"></i>
+                </a>
+                <ul class="treeview-menu" <?php echo ($open == 'radiology') ? 'style="display:block;"' : ''; ?>>
+                    <li class="<?php echo ($active == 'add') ? 'active' : ''; ?>">
+                        <a class="waves-effect waves-dark" href="<?php echo BASE_URL; ?>admin/radiology/add">
+                            <i class="icon-plus"></i> New
+                        </a>
+                    </li>
+                    <li class="<?php echo ($active == 'list') ? 'active' : ''; ?>">
+                        <a class="waves-effect waves-dark" href="<?php echo BASE_URL; ?>admin/radiology/list">
+                            <i class="icon-arrow-right"></i> List
+                        </a>
+                    </li>
+                </ul>
+            </li>
+
             <li class="<?php echo ($active == 'import-all') ? 'active' : ''; ?>">
                         <a class="waves-effect waves-dark" href="<?php echo BASE_URL; ?>admin/import-all">
                             <i class="icon-cloud-upload"></i> Import All
@@ -530,6 +567,11 @@ if (($current_page == 'admin' || $current_page == 'index' || $current_page == ''
                     <li class="<?php echo ($active == 'blood_bank') ? 'active' : ''; ?>">
                         <a class="waves-effect waves-dark" href="<?php echo BASE_URL; ?>admin/users?type=blood_bank">
                             <i class="icon-arrow-right"></i> Blood Banks
+                        </a>
+                    </li>
+                    <li class="<?php echo ($active == 'radiology') ? 'active' : ''; ?>">
+                        <a class="waves-effect waves-dark" href="<?php echo BASE_URL; ?>admin/users?type=radiology">
+                            <i class="icon-arrow-right"></i> Radiology
                         </a>
                     </li>
                     <li class="<?php echo ($active == 'fixit') ? 'active' : ''; ?>">

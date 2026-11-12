@@ -535,6 +535,86 @@ $categories_result = mysqli_query($con, $categories_query);
         </div>
     </section>
 
+        <!-- Radiology Section -->
+    <section class="modern-cards section-padding" style="background: var(--brand-light-blue);">
+        <div class="container">
+            <div class="section-header" data-aos="fade-up">
+                <h2 class="section-title heading-color">Radiology Centers</h2>
+                <p class="section-subtitle normal-color">Advanced imaging and diagnostic services</p>
+            </div>
+            <div class="row g-3 justify-content-center">
+                <?php
+                $rad_card_colors = ['#E8F7FF', '#F0FFF8', '#EFF6FF', '#F0FDFA', '#EEF2FF', '#F0F9FF'];
+                if($city_id > 0){
+                    $rad_query = "SELECT r.*, c.city_name FROM radiology r LEFT JOIN cities c ON r.city_id = c.city_id LEFT JOIN users u ON u.user_id = r.user_id WHERE u.status = 1 AND r.approve = 1 AND r.city_id=$city_id ORDER BY r.rad_id DESC LIMIT 6";
+                }else{
+                    $rad_query = "SELECT r.*, c.city_name FROM radiology r LEFT JOIN cities c ON r.city_id = c.city_id LEFT JOIN users u ON u.user_id = r.user_id WHERE u.status = 1 AND r.approve = 1 ORDER BY r.rad_id DESC LIMIT 6";
+                }
+                
+                $rad_result = mysqli_query($con, $rad_query);
+                $rad_index = 0;
+                $has_rad = $rad_result && mysqli_num_rows($rad_result) > 0;
+                if ($has_rad) {
+                while($rad = mysqli_fetch_assoc($rad_result)) {
+                    $rad_stars_q = mysqli_query($con, "SELECT AVG(stars) as stars FROM `feedback` WHERE user_id='". $rad['user_id'] ."'");
+                    $rad_stars = mysqli_fetch_assoc($rad_stars_q);
+                    $rad_stars = $rad_stars['stars'];
+                    $rad_index++;
+                    $rad_rating = $rad_stars ? number_format((float)$rad_stars, 1) : 'New';
+                    $rad_bg = $rad_card_colors[($rad_index - 1) % count($rad_card_colors)];
+                ?>
+                <div class="col-lg-2 col-md-4 col-6" data-aos="fade-up" data-aos-delay="<?php echo 100 + ($rad_index * 80); ?>">
+                    <div class="speciality-card service-mini-card rad-mini-card">
+                        <div class="speciality-card-body" style="background-color: <?php echo $rad_bg; ?>;">
+                            <div class="service-mini-media">
+                                <?php if (!empty($rad['rad_pic'])): ?>
+                                    <img src="<?php echo BASE_URL; ?>admin/inc/uploads/radiology/<?php echo $rad['rad_pic']; ?>" 
+                                        alt="<?php echo $rad['rad_name']; ?>" class="img-fluid">
+                                <?php else: ?>
+                                    <div class="service-mini-icon-wrap">
+                                        <i class="fas fa-camera service-mini-icon"></i>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+                            <div class="service-mini-content">
+                                <div class="service-mini-badge">
+                                    <i class="fas fa-camera"></i>RADIOLOGY
+                                </div>
+                                <h4 class="speciality-title"><?php echo htmlspecialchars($rad['rad_name']); ?></h4>
+                                <div class="service-mini-meta">
+                                    <i class="fas fa-location-dot"></i><?php echo htmlspecialchars($rad['city_name']); ?>
+                                </div>
+                                <div class="service-mini-rating">
+                                    <i class="fas fa-star text-warning"></i><?php echo $rad_rating; ?> Rating
+                                </div>
+                                <!-- Link 'radiology-detail' page par ja raha hai -->
+                                <a href="radiology-detail?rad_id=<?php echo $rad['rad_id']; ?>" class="speciality-btn">
+                                    <i class="fas fa-x-ray"></i>
+                                    DETAILS
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <?php }
+                } else { ?>
+                <div class="col-12">
+                    <div class="no-record-found">No Record Found</div>
+                </div>
+                <?php } ?>
+            </div>
+            <?php if ($has_rad): ?>
+            <div class="text-center mt-4" data-aos="fade-up">
+                <!-- Link 'radiology' list page par ja raha hai -->
+                <a href="radiology-list" class="btn-view-all btn-view-labs">
+                    <i class="fas fa-camera"></i>
+                    View All Radiology Centers
+                </a>
+            </div>
+            <?php endif; ?>
+        </div>
+    </section>
+
     <!-- Blood Banks Section -->
     <section class="modern-cards section-padding" style="background: var(--brand-light-blue);">
         <div class="container">

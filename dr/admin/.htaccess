@@ -1,14 +1,16 @@
 RewriteEngine On
 
+# City
 RewriteRule ^cities/add$ city-add.php [L]
 RewriteRule ^cities/list$ city-list.php [L]
 RewriteRule ^cities/detail$ city-detail.php [L]
 
-
+# Hospital
 RewriteRule ^hospitals/add$ hospital-add.php [L]
 RewriteRule ^hospitals/list$ hospital-list.php [L]
 RewriteRule ^hospitals/detail$ hospital-detail.php [L]
 
+# Doctors
 RewriteRule ^doctors/add$ doctor-add.php [L]
 RewriteRule ^doctors/list$ doctor-list.php [L]
 RewriteRule ^doctors/profile$ doctor-profile.php [L]
@@ -19,16 +21,21 @@ RewriteRule ^doctors/assign-hospitals$ doctor-assign-hospital.php [L]
 RewriteRule ^doctors/clinical-info$ doctor-clinical-info.php [L]
 RewriteRule ^doctors/edit-clinical-info$ edit-clinical-info.php [L]
 
-
+# Labs
 RewriteRule ^laboratories/add$ laboratory-add.php [L]
 RewriteRule ^laboratories/list$ laboratory-list.php [L]
 RewriteRule ^laboratories/detail$ laboratory-detail.php [L]
 
-
+# Blood Banks
 RewriteRule ^blood-banks/add$ blood-bank-add.php [L]
 RewriteRule ^blood-banks/list$ blood-bank-list.php [L]
 RewriteRule ^blood-banks/detail$ blood-bank-detail.php [L]
 
+
+# Radiology
+RewriteRule ^radiology/add$ radiology-add.php [L]
+RewriteRule ^radiology/list$ radiology-list.php [L]
+RewriteRule ^radiology/detail$ radiology-detail.php [L]
 
 
 RewriteRule ^delete-all-clinics$ delete-all-clinics.php [L]

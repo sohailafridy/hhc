@@ -57,6 +57,14 @@ if (in_array('labs', $url_parts) || in_array('laboratories', $url_parts)) {
 }
 
 // ============================================
+// RADIOLOGY
+// ============================================
+if (in_array('radiology', $url_parts) || in_array('radiology', $url_parts)) {
+    $open = 'radiology';
+    $active = 'list';
+}
+
+// ============================================
 // FEEDBACK
 // ============================================
 if (in_array('feedback', $url_parts)) {
@@ -391,6 +399,14 @@ if ($current_page == 'index' || $current_page == '' || $current_page == 'hospita
                 <a class="waves-effect waves-dark" href="<?php echo BASE_URL; ?>hospital/labs">
                     <i class="icon-flask"></i>
                     <span>Laboratories</span>
+                </a>
+            </li>
+
+            <!-- RATIOLOGY (Direct Link) -->
+            <li class="treeview <?php echo ($open == 'radiology') ? 'active' : ''; ?>">
+                <a class="waves-effect waves-dark" href="<?php echo BASE_URL; ?>hospital/radiology">
+                    <i class="icon-flask"></i>
+                    <span>Radiology</span>
                 </a>
             </li>
 

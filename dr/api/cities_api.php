@@ -100,7 +100,7 @@ $query = "
     LEFT JOIN provinces p ON c.province_id = p.p_id
     WHERE 1=1 $where_clause
     ORDER BY c.city_name ASC
-    $limit_clause
+
 ";
 
 $result = mysqli_query($con, $query);

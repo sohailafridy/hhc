@@ -26,8 +26,9 @@ include 'colors.php';
         $active_menu = 'hospitals';
     } elseif ($current_page === 'labs' || $current_page === 'laboratories' || $current_page === 'lab-detail') {
         $active_menu = 'labs';
-    } elseif ($current_page === 'blood-banks' || $current_page === 'blood-bank-detail') {
-        $active_menu = 'blood-banks';
+    } elseif ($current_page === 'radiology-list' || $current_page === 'radiology-detail') {
+        // ✅ Radiology Active State
+        $active_menu = 'radiology';
     } elseif ($current_page === 'blood-banks' || $current_page === 'blood-bank-detail') {
         $active_menu = 'blood-banks';
     } elseif ($current_page === 'about') {
@@ -135,7 +136,7 @@ include 'colors.php';
         .nav-link.active::after { display: none; }
     }
 </style>
-</style>
+
 <nav class="navbar navbar-expand-lg fixed-top">
         <div class="container">
             <a class="navbar-brand fw-bold me-auto" href="<?php echo clean_url(''); ?>">
@@ -150,20 +151,12 @@ include 'colors.php';
                     <li class="nav-item"><a class="nav-link <?php echo is_active('doctors', $active_menu); ?>" href="<?php echo clean_url('doctors'); ?>">Doctors</a></li>
                     <li class="nav-item"><a class="nav-link <?php echo is_active('hospitals', $active_menu); ?>" href="<?php echo clean_url('hospitals'); ?>">Hospitals</a></li>
                     <li class="nav-item"><a class="nav-link <?php echo is_active('labs', $active_menu); ?>" href="<?php echo clean_url('labs'); ?>">Laboratories</a></li>
+                    <!-- ✅ URL 'radiology-list' set kiya gaya hai -->
+                    <li class="nav-item"><a class="nav-link <?php echo is_active('radiology', $active_menu); ?>" href="<?php echo clean_url('radiology-list'); ?>">Radiology</a></li>
                     <li class="nav-item"><a class="nav-link <?php echo is_active('blood-banks', $active_menu); ?>" href="<?php echo clean_url('blood-banks'); ?>">Blood Banks</a></li>
                     <li class="nav-item"><a class="nav-link <?php echo is_active('all-specialities', $active_menu); ?>" href="<?php echo clean_url('all-specialities'); ?>">All Specialities</a></li>
                     <li class="nav-item"><a class="nav-link <?php echo is_active('about', $active_menu); ?>" href="<?php echo clean_url('about'); ?>">About</a></li>
                     <li class="nav-item"><a class="nav-link <?php echo is_active('contact', $active_menu); ?>" href="<?php echo clean_url('contact'); ?>">Contact</a></li>
-                    <!-- <li class="nav-item ms-lg-3">
-                        <a class="nav-link btn-login" href="<?php echo clean_url('admin/'); ?>">
-                            <i class="fas fa-sign-in-alt me-2"></i>Login
-                        </a>
-                    </li> -->
-                   <!--  <li class="nav-item ms-lg-3">
-                        <a class="nav-link btn-login fixit-btn" href="<?php echo clean_url('fixit/'); ?>">
-                            Fixit
-                        </a>
-                    </li> -->
                 </ul>
             </div>
         </div>

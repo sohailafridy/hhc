@@ -34,3 +34,9 @@ RewriteRule ^terms-of-service$ pages/terms-of-service.php [L]
 RewriteRule ^privacy-policy$ pages/privacy-policy.php [L]
 
 
+# Radiology
+RewriteRule ^radiology-list$ pages/radiology.php [L]
+RewriteRule ^radiology-detail$ pages/radiology-detail.php [L]
+
+
+

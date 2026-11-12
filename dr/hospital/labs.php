@@ -54,6 +54,27 @@ if (isset($_POST['action']) && $_POST['action'] == 'assign_hospital') {
 }
 
 // ============================================
+// AJAX: REMOVE LAB FROM HOSPITAL (NEW)
+// ============================================
+if (isset($_POST['action']) && $_POST['action'] == 'remove_lab') {
+    header('Content-Type: application/json');
+    $lab_user_id = (int)$_POST['lab_user_id'];
+
+    if ($lab_user_id > 0) {
+        // Delete from assign_hospital
+        $delete = "DELETE FROM assign_hospital WHERE hospital_id = $hospital_id AND user_id = $lab_user_id";
+        if (mysqli_query($con, $delete)) {
+            echo json_encode(['success' => true, 'message' => 'Lab removed from your hospital successfully!']);
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Database error: ' . mysqli_error($con)]);
+        }
+    } else {
+        echo json_encode(['success' => false, 'message' => 'Invalid Lab ID.']);
+    }
+    exit();
+}
+
+// ============================================
 // FETCH CITIES FOR FILTER
 // ============================================
 $cities_query = "SELECT city_id, city_name FROM cities WHERE status = 1 ORDER BY city_name ASC";
@@ -153,6 +174,8 @@ if (!$lab_result) {
 .btn-register:hover { background: #0284c7; color: #fff; }
 .btn-detail { background: #f1f5f9; color: #475569; }
 .btn-detail:hover { background: #475569; color: #fff; }
+.btn-remove { background: #fee2e2; color: #ef4444; }
+.btn-remove:hover { background: #ef4444; color: #fff; }
 .btn-add-lab { background: linear-gradient(135deg,#1C3F8F,#00A8CC); color: #fff; padding: 8px 16px; border-radius: 8px; font-weight: 600; text-decoration: none; font-size: 0.9rem; border:none;}
 .btn-add-lab:hover { opacity: 0.9; color: #fff; }
 
@@ -283,18 +306,18 @@ if (!$lab_result) {
                         <!-- Action Buttons -->
                         <div class="lab-actions">
                             <?php if ($is_registered == 1): ?>
-                                <!-- If showing registered labs, hide the register button -->
-                                <a href="<?php echo BASE_URL; ?>hospital/lab-detail?id=<?= $lab['lab_id'] ?>" class="btn-action-lab btn-detail" style="width: 100%;">
-                                    <i class="fas fa-eye"></i> View Detail
+                                <!-- If showing registered labs, show Detail and Remove buttons -->
+                                <a href="<?php echo BASE_URL; ?>hospital/lab-detail?id=<?= $lab['lab_id'] ?>" class="btn-action-lab btn-detail">
+                                    <i class="fas fa-eye"></i> Detail
                                 </a>
+                                <button type="button" class="btn-action-lab btn-remove" onclick="removeLab(<?= $lab['user_id'] ?>)">
+                                    <i class="fas fa-trash"></i> Remove
+                                </button>
                             <?php else: ?>
                                 <!-- If showing unregistered labs (default), show register button -->
-                                <button type="button" class="btn-action-lab btn-register" onclick="registerLab(<?= $lab['user_id'] ?>)">
+                                <button type="button" class="btn-action-lab btn-register" onclick="registerLab(<?= $lab['user_id'] ?>)" style="width: 100%;">
                                     <i class="fas fa-hospital-user"></i> Register In Hospital
                                 </button>
-                                <!-- <a href="<?php echo BASE_URL; ?>hospital/lab-detail?id=<?= $lab['lab_id'] ?>&reg=false" class="btn-action-lab btn-detail">
-                                    <i class="fas fa-eye"></i> Detail
-                                </a> -->
                             <?php endif; ?>
                         </div>
 
@@ -356,9 +379,10 @@ if (!$lab_result) {
 <?php include BASE_PATH . '/admin/inc/footer.php'; ?>
 
 <!-- ============================================ -->
-<!-- JAVASCRIPT FOR AJAX REGISTER LAB -->
+<!-- JAVASCRIPT FOR AJAX REGISTER & REMOVE LAB -->
 <!-- ============================================ -->
 <script>
+// Register Lab
 function registerLab(labUserId) {
     if (confirm("Are you sure you want to register this lab in your hospital?")) {
         let formData = new URLSearchParams();
@@ -374,7 +398,34 @@ function registerLab(labUserId) {
         .then(data => {
             if (data.success) {
                 alert(data.message);
-                // Reload the page so the registered lab disappears from the unregistered list
+                location.reload(); 
+            } else {
+                alert("Error: " + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert("Something went wrong. Please try again.");
+        });
+    }
+}
+
+// Remove Lab
+function removeLab(labUserId) {
+    if (confirm("Are you sure you want to remove this lab from your hospital?")) {
+        let formData = new URLSearchParams();
+        formData.append('action', 'remove_lab');
+        formData.append('lab_user_id', labUserId);
+
+        fetch(window.location.href, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: formData.toString()
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
                 location.reload(); 
             } else {
                 alert("Error: " + data.message);

@@ -65,7 +65,6 @@ $hospitals_query = "
     WHERE u.status = 1 
       AND h.approve = 1
     ORDER BY h.hospital_id DESC
-    LIMIT $limit OFFSET $offset
 ";
 
 $hospitals_result = mysqli_query($con, $hospitals_query);
