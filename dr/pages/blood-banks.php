@@ -1,9 +1,18 @@
-<?php include '../includes/header.php'; ?>
+<?php 
+// ============================================================
+// 1. SEO FIX: Title aur Description set karein
+// ============================================================
+$GLOBALS['page_title'] = "Blood Banks in Pakistan — Find Blood Donors & Banks | SehatNexa";
+$GLOBALS['page_description'] = "Find verified blood banks near you. Check available blood groups, stock, emergency contacts, and directions. Save lives by connecting with the nearest blood bank.";
+
+// 2. Header Include karein
+include '../includes/header.php'; 
+?>
 
 <?php
     // Handle search and filters
     $search = isset($_GET['search']) ? mysqli_real_escape_string($con, $_GET['search']) : '';
-    $city = isset($_GET['city']) ? (int)$_GET['city'] : $city_id; // Default to Kohat if not set
+    $city = isset($_GET['city']) ? (int)$_GET['city'] : $city_id; 
 
     // Pagination
     $page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
@@ -30,7 +39,7 @@
     $total_blood_banks = $total_row['total'];
     $total_pages = ceil($total_blood_banks / $per_page);
 
-    // Fetch blood banks with pagination
+    // Fetch blood banks with pagination (BUG FIX: Added bb.approve = 1)
     $query = "SELECT bb.*, c.city_name
              FROM blood_bank bb
              LEFT JOIN cities c ON bb.city_id = c.city_id
@@ -47,8 +56,6 @@
 <link rel="stylesheet" href="<?= BASE_URL ?>style/blood-banks.css?v=<?= @filemtime(__DIR__ . '/style/blood-banks.css') ?: time() ?>">
 <link rel="stylesheet" href="<?= BASE_URL ?>style/entity-card.css?v=<?= @filemtime(__DIR__ . '/style/entity-card.css') ?: time() ?>">
 
-
-
     <!-- Navbar -->
     <?php include BASE_PATH.'/includes/menu.php'; ?>
 
@@ -57,18 +64,9 @@
         <div class="container position-relative">
             <div class="row">
                 <div class="col-lg-12 text-center">
-                    <!-- Page Header -->
-                    <section class="page-header">
-                        <div class="container position-relative">
-                            <div class="row">
-                                <div class="col-lg-12 text-center">
-                                    <h1 class="display-4 fw-bold mb-3" data-aos="fade-up">Our Blood Banks</h1><br>
+                    <!-- SEO: Only one H1 -->
+                    <h1 class="display-4 fw-bold mb-3" data-aos="fade-up">Our Blood Banks</h1><br>
                     <p class="lead mb-0" data-aos="fade-up" data-aos-delay="200">Find quality blood banks near you</p>
-                                </div>
-                            </div>
-                        </div>
-                    </section>
-                    
                 </div>
             </div>
         </div>
@@ -113,6 +111,14 @@
                 </form>
             </div>
 
+            <!-- Ad Space 1 -->
+            <div class="my-4" data-aos="fade-up">
+                <div class="ad-slot text-center" style="min-height:90px; background:#f8f9fa; border:1px dashed #dee2e6; border-radius:8px; display:flex; align-items:center; justify-content:center;">
+                    <!-- SpeedyAds Code Yahan Paste Karein -->
+                    <span class="text-muted small">Advertisement Space</span>
+                </div>
+            </div>
+
             <!-- Blood Banks Grid -->
             <div class="entity-grid" id="bloodBanksContainer">
                 <?php
@@ -151,7 +157,8 @@
                     </div>
                     <div class="e-card-body">
                         <div class="e-type"><i class="fas fa-tint"></i> Blood Bank</div>
-                        <h4 class="e-name"><?= htmlspecialchars($row['bb_name']) ?></h4>
+                        <!-- SEO: H4 to H3 -->
+                        <h3 class="e-name"><?= htmlspecialchars($row['bb_name']) ?></h3>
                         <ul class="e-meta">
                             <li><i class="fas fa-map-marker-alt"></i><span><?= htmlspecialchars($row['city_name']) ?></span></li>
                             <?php if (!empty($row['bb_contact'])): ?>
@@ -179,6 +186,14 @@
                         <p>No blood banks match your search criteria.</p>
                     </div>
                 <?php } ?>
+            </div>
+
+            <!-- Ad Space 2 -->
+            <div class="my-4" data-aos="fade-up">
+                <div class="ad-slot text-center" style="min-height:90px; background:#f8f9fa; border:1px dashed #dee2e6; border-radius:8px; display:flex; align-items:center; justify-content:center;">
+                    <!-- SpeedyAds Code Yahan Paste Karein -->
+                    <span class="text-muted small">Advertisement Space</span>
+                </div>
             </div>
 
             <!-- Pagination -->
@@ -259,7 +274,8 @@
 
     <!-- Footer -->
    <?php include BASE_PATH.'/includes/footer.php';?>
- <script>
+   
+<script>
 $(document).ready(function() {
     $('#citySelect').select2({
         theme: 'bootstrap-5',
@@ -269,14 +285,5 @@ $(document).ready(function() {
     });
 });
 </script>
-    <script>
-        function viewBloodBankDetails(bloodBankId) {
-            // You can implement this function to show blood bank details
-            // For now, just show an alert or redirect to details page
-            alert('Blood Bank ID: ' + bloodBankId + ' - Details page coming soon!');
-        }
-    </script>
-
-   
 </body>
 </html>

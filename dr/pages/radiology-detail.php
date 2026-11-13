@@ -1,8 +1,51 @@
-<?php include '../includes/header.php'; ?>
-
 <?php 
-// Get radiology ID from URL
+// ============================================================
+// 1. DB se Radiology Center ki info nikalna (Title & Schema ke liye)
+// ============================================================
+include_once '../config.php'; 
 $rad_id = isset($_GET['rad_id']) ? (int)$_GET['rad_id'] : 0;
+
+$rad_query = "SELECT r.*, c.city_name 
+               FROM radiology r 
+               LEFT JOIN cities c ON r.city_id = c.city_id
+               LEFT JOIN users u ON u.user_id = r.user_id 
+               WHERE r.rad_id = $rad_id AND u.status = 1 AND r.approve = 1";
+$rad_result = mysqli_query($con, $rad_query);
+$rad_info = mysqli_fetch_assoc($rad_result);
+
+// ============================================================
+// 2. SEO Title, Description aur Schema set karna
+// ============================================================
+$rad_name_for_seo = $rad_info ? htmlspecialchars($rad_info['rad_name']) : 'Radiology Center';
+$city_name_for_seo = $rad_info ? htmlspecialchars($rad_info['city_name']) : 'Pakistan';
+
+$GLOBALS['page_title'] = "$rad_name_for_seo — Radiology & Diagnostic Imaging | SehatNexa";
+$GLOBALS['page_description'] = "View complete details, available tests, timings, and patient reviews for $rad_name_for_seo in $city_name_for_seo. Book your MRI, CT Scan, or X-Ray today.";
+$GLOBALS['page_image'] = ($rad_info && !empty($rad_info['rad_pic'])) ? BASE_URL.'admin/inc/uploads/radiology/'.$rad_info['rad_pic'] : BASE_URL.'admin/inc/uploads/default/radiology.webp';
+
+if ($rad_info) {
+    // Schema Markup for Google
+    $schema = [
+        "@context" => "https://schema.org",
+        "@type" => "MedicalClinic",
+        "name" => $rad_info['rad_name'],
+        "image" => $GLOBALS['page_image'],
+        "telephone" => $rad_info['rad_phone'],
+        "email" => $rad_info['rad_email'],
+        "address" => [
+            "@type" => "PostalAddress",
+            "streetAddress" => $rad_info['rad_address'],
+            "addressLocality" => $rad_info['city_name'],
+            "addressCountry" => "PK"
+        ]
+    ];
+    $GLOBALS['page_schema'] = json_encode($schema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+}
+
+// ============================================================
+// 3. Header Include karein
+// ============================================================
+include '../includes/header.php'; 
 
 // Submit review
 if (isset($_POST['user_id']) AND (int)$_POST['user_id'] != 0) {
@@ -22,14 +65,7 @@ if (isset($_POST['user_id']) AND (int)$_POST['user_id'] != 0) {
     $feedback_run = mysqli_query($con, $insert_query);
 }
 
-// Fetch radiology details
-$rad_query = "SELECT r.*, c.city_name 
-               FROM radiology r 
-               LEFT JOIN cities c ON r.city_id = c.city_id
-               LEFT JOIN users u ON u.user_id = r.user_id 
-               WHERE r.rad_id = $rad_id AND u.status = 1 AND r.approve = 1";
-$rad_result = mysqli_query($con, $rad_query);
-$rad = mysqli_fetch_assoc($rad_result);
+$rad = $rad_info;
 
 // If no record found
 if (!$rad) {
@@ -39,7 +75,7 @@ if (!$rad) {
 
 $user_id = (int)$rad['user_id'];
 
-// Calculate average rating from feedback table
+// Calculate average rating
 $rating_query = "SELECT AVG(stars) as avg_rating, COUNT(feedback_id) as total_reviews 
                  FROM feedback 
                  WHERE user_id = $user_id AND status = 1";
@@ -59,11 +95,9 @@ $notes_query = "SELECT notes FROM notes WHERE user_id = $user_id LIMIT 1";
 $notes_result = mysqli_query($con, $notes_query);
 $notes_data = mysqli_fetch_assoc($notes_result);
 $rad_notes = isset($notes_data['notes']) ? trim($notes_data['notes']) : '';
-
-// Check condition: Show only if not empty and not just a dash '-'
 $show_notes_section = (!empty($rad_notes) && $rad_notes !== '-');
 
-// Working in Hospitals (using assign_hospital_radiology)
+// Working in Hospitals
 $working_in_q = mysqli_query($con, "SELECT h.hospital_id, h.hospital_name, h.hospital_phone, c.city_name
     from assign_hospital_radiology asg
     LEFT JOIN hospitals h ON h.hospital_id=asg.hospital_id
@@ -84,15 +118,16 @@ $working_in_q = mysqli_query($con, "SELECT h.hospital_id, h.hospital_name, h.hos
                 <div class="col-lg-4 col-md-5">
                     <div class="lab-image-wrapper">
                         <?php if (!empty($rad['rad_pic']) && file_exists(BASE_PATH.'/admin/inc/uploads/radiology/' . $rad['rad_pic'])): ?>
-                            <img src="<?php echo BASE_URL; ?>admin/inc/uploads/radiology/<?php echo $rad['rad_pic']; ?>" alt="<?php echo htmlspecialchars($rad['rad_name']); ?>" class="lab-image">
+                            <img src="<?php echo BASE_URL; ?>admin/inc/uploads/radiology/<?php echo $rad['rad_pic']; ?>" alt="<?php echo htmlspecialchars($rad['rad_name']); ?> in <?php echo htmlspecialchars($rad['city_name']); ?>" class="lab-image">
                         <?php else: ?>
-                            <img src="<?php echo BASE_URL; ?>admin/inc/uploads/default/radiology.jpg" alt="<?php echo htmlspecialchars($rad['rad_name']); ?>" class="lab-image">
+                            <img src="<?php echo BASE_URL; ?>includes/uploads/default/radiology.webp" alt="<?php echo htmlspecialchars($rad['rad_name']); ?>" class="lab-image">
                         <?php endif; ?>
                     </div>
                 </div>
                 <div class="col-lg-8 col-md-7">
                     <div class="lab-info">
                         <div class="lab-header">
+                            <!-- SEO: H1 properly added -->
                             <h1 class="lab-name"><?php echo htmlspecialchars($rad['rad_name']); ?></h1>
                             <div class="lab-rating">
                                 <div class="stars">
@@ -145,10 +180,9 @@ $working_in_q = mysqli_query($con, "SELECT h.hospital_id, h.hospital_name, h.hos
                         </div>
                         
                         <div class="lab-actions">
-                            <button class="btn btn-outline-primary btn-call-large">
-                                <i class="fas fa-phone-alt"></i>
-                                Call Now
-                            </button>
+                            <a href="tel:<?php echo htmlspecialchars($rad['rad_phone']); ?>" class="btn btn-outline-primary btn-call-large">
+                                <i class="fas fa-phone-alt"></i> Call Now
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -156,6 +190,14 @@ $working_in_q = mysqli_query($con, "SELECT h.hospital_id, h.hospital_name, h.hos
         </div>
     </div>
 </section>
+
+<!-- Ad Space 1 -->
+<div class="container my-4" data-aos="fade-up">
+    <div class="ad-slot text-center" style="min-height:90px; background:#f8f9fa; border:1px dashed #dee2e6; border-radius:8px; display:flex; align-items:center; justify-content:center;">
+        <!-- SpeedyAds Code Yahan Paste Karein -->
+        <span class="text-muted small">Advertisement Space</span>
+    </div>
+</div>
 
 <!-- Notes / Message Section -->
 <?php if ($show_notes_section): ?>
@@ -166,7 +208,7 @@ $working_in_q = mysqli_query($con, "SELECT h.hospital_id, h.hospital_name, h.hos
                 <i class="fas fa-info-circle"></i>
             </div>
             <div class="notes-content">
-                <h3 class="notes-title">Message from <?php echo htmlspecialchars($rad['rad_name']); ?></h3>
+                <h2 class="notes-title">Message from <?php echo htmlspecialchars($rad['rad_name']); ?></h2>
                 <div class="notes-text">
                     <?php echo nl2br(htmlspecialchars($rad_notes)); ?>
                 </div>
@@ -187,7 +229,7 @@ $working_in_q = mysqli_query($con, "SELECT h.hospital_id, h.hospital_name, h.hos
 
         <div class="info-card" data-aos="fade-up">
             <div class="info-card-header">
-                <h5><i class="fas fa-hospital-alt"></i> Working in </h5>
+                <h3><i class="fas fa-hospital-alt"></i> Associated Hospitals </h3>
             </div>
             <div class="info-card-body">
                 <?php while ($h = mysqli_fetch_assoc($working_in_q)): ?>
@@ -258,7 +300,6 @@ if (!empty($grouped_tests)):
                     </thead>
                     <tbody>
                         <?php 
-                        // Grouped array par loop chalayein
                         foreach($grouped_tests as $cat_name => $tests): 
                         ?>
                             <!-- Category Row -->
@@ -312,6 +353,15 @@ if (!empty($grouped_tests)):
     </div>
 </section>
 <?php endif; ?>
+
+<!-- Ad Space 2 -->
+<div class="container my-4" data-aos="fade-up">
+    <div class="ad-slot text-center" style="min-height:90px; background:#f8f9fa; border:1px dashed #dee2e6; border-radius:8px; display:flex; align-items:center; justify-content:center;">
+        <!-- SpeedyAds Code Yahan Paste Karein -->
+        <span class="text-muted small">Advertisement Space</span>
+    </div>
+</div>
+
 <!-- Reviews Section -->
 <section class="lab-reviews-section section-padding bg-light">
     <div class="container">
@@ -504,10 +554,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-
-
-
-
 // Load More Reviews AJAX
 document.addEventListener('DOMContentLoaded', function() {
     const loadMoreBtn = document.getElementById('loadMoreReviewsBtn');
@@ -528,14 +574,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 .then(response => response.json())
                 .then(data => {
                     if (data.success && data.html) {
-                        // Naye reviews ko existing grid mein append karein
                         document.getElementById('reviewsGrid').insertAdjacentHTML('beforeend', data.html);
                         
-                        // Naya offset set karein
                         const newOffset = parseInt(offset) + 5;
                         btn.setAttribute('data-offset', newOffset);
 
-                        // Agar mazeed reviews nahi bache toh button hata dein
                         if (data.has_more === false) {
                             document.getElementById('loadMoreContainer').style.display = 'none';
                         } else {

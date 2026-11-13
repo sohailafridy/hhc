@@ -1,8 +1,17 @@
-<?php include '../includes/header.php'; ?>
+<?php 
+// ============================================================
+// 1. SEO FIX: Title aur Description set karein
+// ============================================================
+$GLOBALS['page_title'] = "Hospitals in Pakistan — Find Top Clinics & Medical Centers | SehatNexa";
+$GLOBALS['page_description'] = "Find the best hospitals and clinics near you. Browse top-rated medical facilities, check available beds, facilities, doctors, and read patient reviews on SehatNexa.";
+
+// 2. Header Include karein
+include '../includes/header.php'; 
+?>
 <?php
     // Handle search and filters
     $search = isset($_GET['search']) ? mysqli_real_escape_string($con, $_GET['search']) : '';
-    $city = isset($_GET['city']) ? (int)$_GET['city'] : $city_id; // Default to Kohat if not set
+    $city = isset($_GET['city']) ? (int)$_GET['city'] : $city_id;
 
     // Pagination
     $page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
@@ -18,7 +27,7 @@
         $where_clause .= " AND h.city_id = '$city' ";
     }
 
-    // Count total hospitals for pagination (status users table se)
+    // Count total hospitals for pagination
     $count_query = "SELECT COUNT(*) as total
                     FROM hospitals h
                     LEFT JOIN cities c ON h.city_id = c.city_id
@@ -44,8 +53,6 @@
 <body>
 <link rel="stylesheet" href="<?= BASE_URL ?>style/hospitals.css?v=<?= @filemtime(__DIR__ . '/style/hospitals.css') ?: time() ?>">
 
-
-
     <!-- Navbar -->
    <?php include BASE_PATH.'/includes/menu.php'; ?>
 
@@ -54,18 +61,9 @@
         <div class="container position-relative">
             <div class="row">
                 <div class="col-lg-12 text-center">
-                    <!-- Page Header -->
-                    <section class="page-header">
-                        <div class="container position-relative">
-                            <div class="row">
-                                <div class="col-lg-12 text-center">
-                                    <h1 class="display-4 fw-bold mb-3" data-aos="fade-up">Our Hospitals</h1><br>
-                                    <p class="lead mb-0" data-aos="fade-up" data-aos-delay="200">Find quality healthcare facilities near you</p>
-                                </div>
-                            </div>
-                        </div>
-                    </section>
-                    
+                    <!-- SEO: Only one H1 -->
+                    <h1 class="display-4 fw-bold mb-3" data-aos="fade-up">Our Hospitals</h1><br>
+                    <p class="lead mb-0" data-aos="fade-up" data-aos-delay="200">Find quality healthcare facilities near you</p>
                 </div>
             </div>
         </div>
@@ -108,6 +106,14 @@
                         </div>
                     </div>
                 </form>
+            </div>
+
+            <!-- Ad Space 1 -->
+            <div class="my-4" data-aos="fade-up">
+                <div class="ad-slot text-center" style="min-height:90px; background:#f8f9fa; border:1px dashed #dee2e6; border-radius:8px; display:flex; align-items:center; justify-content:center;">
+                    <!-- SpeedyAds Code Yahan Paste Karein -->
+                    <span class="text-muted small">Advertisement Space</span>
+                </div>
             </div>
 
             <!-- Hospitals Grid -->
@@ -157,7 +163,7 @@
                         <!-- Image / placeholder -->
                         <div class="h-avatar">
                             <?php if ($img_src): ?>
-                                <img src="<?= $img_src ?>" alt="<?= htmlspecialchars($row['hospital_name']) ?>">
+                                <img src="<?= $img_src ?>" alt="<?= htmlspecialchars($row['hospital_name']) ?> in <?= htmlspecialchars($row['city_name']) ?>">
                             <?php else: ?>
                                 <div class="h-avatar-icon"><i class="fas fa-hospital-alt"></i></div>
                             <?php endif; ?>
@@ -167,7 +173,8 @@
                     <!-- Body -->
                     <div class="h-card-body">
                         <div class="h-type"><i class="fas fa-hospital-user"></i> Hospital</div>
-                        <h4 class="h-name"><?= htmlspecialchars($row['hospital_name']) ?></h4>
+                        <!-- SEO: H4 to H3 -->
+                        <h3 class="h-name"><?= htmlspecialchars($row['hospital_name']) ?></h3>
                         <ul class="h-meta">
                             <li><i class="fas fa-map-marker-alt"></i><span><?= htmlspecialchars($row['city_name']) ?></span></li>
                             <li><i class="fas fa-user-md"></i><span><?= $doc_cnt ?> Doctor<?= $doc_cnt != 1 ? 's' : '' ?></span></li>
@@ -195,6 +202,14 @@
                         <p>No hospitals match your search criteria. Please try different filters.</p>
                     </div>
                 <?php } ?>
+            </div>
+
+            <!-- Ad Space 2 -->
+            <div class="my-4" data-aos="fade-up">
+                <div class="ad-slot text-center" style="min-height:90px; background:#f8f9fa; border:1px dashed #dee2e6; border-radius:8px; display:flex; align-items:center; justify-content:center;">
+                    <!-- SpeedyAds Code Yahan Paste Karein -->
+                    <span class="text-muted small">Advertisement Space</span>
+                </div>
             </div>
 
             <!-- Pagination -->
@@ -285,15 +300,5 @@ $(document).ready(function() {
     });
 });
 </script>
-    <script>
-        function viewHospitalDetails(hospitalId) {
-            // You can implement this function to show hospital details
-            // For now, just show an alert or redirect to details page
-            alert('Hospital ID: ' + hospitalId + ' - Details page coming soon!');
-        }
-    </script>
-
-  
-    </style>
 </body>
 </html>

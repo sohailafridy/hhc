@@ -1,10 +1,53 @@
-<?php include '../includes/header.php'; ?>
-
 <?php 
-// Get lab ID from URL
+// ============================================================
+// 1. DB se Lab ki basic info nikalna (Title & Schema ke liye)
+// ============================================================
+include_once '../config.php'; 
 $lab_id = isset($_GET['lab_id']) ? (int)$_GET['lab_id'] : 0;
 
-// submit review
+$lab_query = "SELECT l.*, c.city_name 
+               FROM laboratories l 
+               LEFT JOIN cities c ON l.city_id = c.city_id
+               LEFT JOIN users u ON u.user_id = l.user_id 
+               WHERE l.lab_id = $lab_id AND u.status = 1 AND l.approve=1";
+$lab_result = mysqli_query($con, $lab_query);
+$lab_info = mysqli_fetch_assoc($lab_result);
+
+// ============================================================
+// 2. SEO Title, Description aur Schema set karna
+// ============================================================
+$lab_name_for_seo = $lab_info ? htmlspecialchars($lab_info['lab_name']) : 'Laboratory';
+$city_name_for_seo = $lab_info ? htmlspecialchars($lab_info['city_name']) : 'Pakistan';
+
+$GLOBALS['page_title'] = "$lab_name_for_seo — Address, Tests & Reviews | SehatNexa";
+$GLOBALS['page_description'] = "View complete details, available tests, timings, and patient reviews for $lab_name_for_seo in $city_name_for_seo. Contact directly via WhatsApp or phone.";
+$GLOBALS['page_image'] = ($lab_info && !empty($lab_info['lab_pic'])) ? BASE_URL.'admin/inc/uploads/labs/'.$lab_info['lab_pic'] : BASE_URL.'admin/inc/uploads/default/lab.jpg';
+
+if ($lab_info) {
+    // Schema Markup for Google
+    $schema = [
+        "@context" => "https://schema.org",
+        "@type" => "MedicalClinic",
+        "name" => $lab_info['lab_name'],
+        "image" => $GLOBALS['page_image'],
+        "telephone" => $lab_info['lab_phone'],
+        "email" => $lab_info['lab_email'],
+        "address" => [
+            "@type" => "PostalAddress",
+            "streetAddress" => $lab_info['lab_address'],
+            "addressLocality" => $lab_info['city_name'],
+            "addressCountry" => "PK"
+        ]
+    ];
+    $GLOBALS['page_schema'] = json_encode($schema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+}
+
+// ============================================================
+// 3. Header Include karein
+// ============================================================
+include '../includes/header.php'; 
+
+// Ab baqi kaam (submit review etc.)
 if (isset($_POST['user_id']) AND (int)$_POST['user_id'] != 0) {
     $user_id = (int)$_POST['user_id'];
     $commenter_name = isset($_POST['reviewer_name']) ? trim($_POST['reviewer_name']) : '';
@@ -22,14 +65,12 @@ if (isset($_POST['user_id']) AND (int)$_POST['user_id'] != 0) {
     $feedback_run = mysqli_query($con, $insert_query);
 }
 
-// Fetch lab details
-$lab_query = "SELECT l.*, c.city_name 
-               FROM laboratories l 
-               LEFT JOIN cities c ON l.city_id = c.city_id
-               LEFT JOIN users u ON u.user_id = l.user_id 
-               WHERE l.lab_id = $lab_id AND u.status = 1 AND l.approve=1";
-$lab_result = mysqli_query($con, $lab_query);
-$lab = mysqli_fetch_assoc($lab_result);
+$lab = $lab_info;
+if (!$lab) {
+    header('Location: ' . BASE_URL . 'labs');
+    exit();
+}
+
 $user_id = (int)$lab['user_id'];
 
 // Calculate average rating from feedback table
@@ -52,11 +93,9 @@ $notes_query = "SELECT notes FROM notes WHERE user_id = $user_id LIMIT 1";
 $notes_result = mysqli_query($con, $notes_query);
 $notes_data = mysqli_fetch_assoc($notes_result);
 $lab_notes = isset($notes_data['notes']) ? trim($notes_data['notes']) : '';
-
-// Check condition: Show only if not empty and not just a dash '-'
 $show_notes_section = (!empty($lab_notes) && $lab_notes !== '-');
 
-//---Working in Hospitals
+// Working in Hospitals
 $working_in_q = mysqli_query($con, "SELECT h.hospital_id, h.hospital_name, h.hospital_phone, c.city_name
     from assign_hospital asg
     LEFT JOIN hospitals h ON h.hospital_id=asg.hospital_id
@@ -76,17 +115,18 @@ $working_in_q = mysqli_query($con, "SELECT h.hospital_id, h.hospital_name, h.hos
             <div class="row align-items-center">
                 <div class="col-lg-4 col-md-5">
                     <div class="lab-image-wrapper">
-                        <?php if (!empty($lab['lab_pic']) && file_exists(BASE_URL.'admin/inc/uploads/labs/' . $lab['lab_pic'])): ?>
-                            <img src="<?php echo BASE_URL; ?>admin/inc/uploads/labs/<?php echo $lab['lab_pic']; ?>" alt="<?php echo $lab['lab_name']; ?>" class="lab-image">
+                        <?php if (!empty($lab['lab_pic']) && file_exists(BASE_PATH.'/admin/inc/uploads/labs/' . $lab['lab_pic'])): ?>
+                            <img src="<?php echo BASE_URL; ?>admin/inc/uploads/labs/<?php echo $lab['lab_pic']; ?>" alt="<?php echo htmlspecialchars($lab['lab_name']); ?> in <?php echo htmlspecialchars($lab['city_name']); ?>" class="lab-image">
                         <?php else: ?>
-                            <img src="<?php echo BASE_URL; ?>admin/inc/uploads/default/lab.jpg" alt="<?php echo $lab['lab_name']; ?>" class="lab-image">
+                            <img src="<?php echo BASE_URL; ?>admin/inc/uploads/default/lab.jpg" alt="<?php echo htmlspecialchars($lab['lab_name']); ?>" class="lab-image">
                         <?php endif; ?>
                     </div>
                 </div>
                 <div class="col-lg-8 col-md-7">
                     <div class="lab-info">
                         <div class="lab-header">
-                            <h1 class="lab-name"><?php echo $lab['lab_name']; ?></h1>
+                            <!-- SEO: H1 properly added -->
+                            <h1 class="lab-name"><?php echo htmlspecialchars($lab['lab_name']); ?></h1>
                             <div class="lab-rating">
                                 <div class="stars">
                                     <?php 
@@ -108,7 +148,7 @@ $working_in_q = mysqli_query($con, "SELECT h.hospital_id, h.hospital_name, h.hos
                                 <i class="fas fa-map-marker-alt"></i>
                                 <div class="detail-content">
                                     <span class="detail-label">Address</span>
-                                    <span class="detail-value "><?php echo $lab['lab_address']; ?>, <?php echo $lab['city_name']; ?></span>
+                                    <span class="detail-value "><?php echo htmlspecialchars($lab['lab_address']); ?>, <?php echo htmlspecialchars($lab['city_name']); ?></span>
                                 </div>
                             </div>
                             
@@ -116,7 +156,7 @@ $working_in_q = mysqli_query($con, "SELECT h.hospital_id, h.hospital_name, h.hos
                                 <i class="fas fa-phone"></i>
                                 <div class="detail-content">
                                     <span class="detail-label">Contact</span>
-                                    <span class="detail-value"><?php echo $lab['lab_phone']; ?></span>
+                                    <span class="detail-value"><?php echo htmlspecialchars($lab['lab_phone']); ?></span>
                                 </div>
                             </div>
                             
@@ -124,7 +164,7 @@ $working_in_q = mysqli_query($con, "SELECT h.hospital_id, h.hospital_name, h.hos
                                 <i class="fas fa-envelope"></i>
                                 <div class="detail-content">
                                     <span class="detail-label">Email</span>
-                                    <span class="detail-value"><?php echo $lab['lab_email']; ?></span>
+                                    <span class="detail-value"><?php echo htmlspecialchars($lab['lab_email']); ?></span>
                                 </div>
                             </div>
                             
@@ -150,7 +190,15 @@ $working_in_q = mysqli_query($con, "SELECT h.hospital_id, h.hospital_name, h.hos
     </div>
 </section>
 
-<!-- NEW SECTION: Lab Notes / Message (Shows only if condition met) -->
+<!-- Ad Space 1 -->
+<div class="container my-4" data-aos="fade-up">
+    <div class="ad-slot text-center" style="min-height:90px; background:#f8f9fa; border:1px dashed #dee2e6; border-radius:8px; display:flex; align-items:center; justify-content:center;">
+        <!-- SpeedyAds Code Yahan Paste Karein -->
+        <span class="text-muted small">Advertisement Space</span>
+    </div>
+</div>
+
+<!-- NEW SECTION: Lab Notes / Message -->
 <?php if ($show_notes_section): ?>
 <section class="lab-notes-section section-padding bg-light">
     <div class="container">
@@ -159,7 +207,7 @@ $working_in_q = mysqli_query($con, "SELECT h.hospital_id, h.hospital_name, h.hos
                 <i class="fas fa-info-circle"></i>
             </div>
             <div class="notes-content">
-                <h3 class="notes-title">Message from <?php echo htmlspecialchars($lab['lab_name']); ?></h3>
+                <h2 class="notes-title">Message from <?php echo htmlspecialchars($lab['lab_name']); ?></h2>
                 <div class="notes-text">
                     <?php echo nl2br(htmlspecialchars($lab_notes)); ?>
                 </div>
@@ -180,7 +228,7 @@ $working_in_q = mysqli_query($con, "SELECT h.hospital_id, h.hospital_name, h.hos
 
         <div class="info-card" data-aos="fade-up">
             <div class="info-card-header">
-                <h5><i class="fas fa-hospital-alt"></i> Working in </h5>
+                <h3><i class="fas fa-hospital-alt"></i> Associated Hospitals </h3>
             </div>
             <div class="info-card-body">
                 <?php while ($h = mysqli_fetch_assoc($working_in_q)): ?>
@@ -209,7 +257,7 @@ $working_in_q = mysqli_query($con, "SELECT h.hospital_id, h.hospital_name, h.hos
 <section class="lab-tests-section section-padding bg-white">
     <div class="container">
         <div class="section-header">
-            <h2 class="section-title">Available Tests</h2>
+            <h2 class="section-title">Available Tests & Prices</h2>
             <p class="section-subtitle">Tests offered by <?php echo htmlspecialchars($lab['lab_name']); ?></p>
         </div>
 
@@ -284,12 +332,20 @@ $working_in_q = mysqli_query($con, "SELECT h.hospital_id, h.hospital_name, h.hos
     </div>
 </section>
 
+<!-- Ad Space 2 -->
+<div class="container my-4" data-aos="fade-up">
+    <div class="ad-slot text-center" style="min-height:90px; background:#f8f9fa; border:1px dashed #dee2e6; border-radius:8px; display:flex; align-items:center; justify-content:center;">
+        <!-- SpeedyAds Code Yahan Paste Karein -->
+        <span class="text-muted small">Advertisement Space</span>
+    </div>
+</div>
+
 <!-- Lab Reviews Section -->
 <section class="lab-reviews-section section-padding bg-light">
     <div class="container">
         <div class="section-header">
             <h2 class="section-title">Patient Reviews</h2>
-            <p class="section-subtitle">What patients are saying about <?php echo $lab['lab_name']; ?></p>
+            <p class="section-subtitle">What patients are saying about <?php echo htmlspecialchars($lab['lab_name']); ?></p>
         </div>
         
         <!-- Review Submission Form -->
@@ -415,7 +471,7 @@ $working_in_q = mysqli_query($con, "SELECT h.hospital_id, h.hospital_name, h.hos
                 <div class="no-reviews">
                     <i class="fas fa-comments"></i>
                     <h3>No Reviews Yet</h3>
-                    <p>Be the first to share your experience at <?php echo $lab['lab_name']; ?></p>
+                    <p>Be the first to share your experience at <?php echo htmlspecialchars($lab['lab_name']); ?></p>
                 </div>
             <?php endif; ?>
         </div>

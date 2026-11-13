@@ -1,7 +1,7 @@
-<?php include '../config.php'; 
+<?php include_once '../config.php'; 
 include BASE_PATH.'/tracking.php'; 
 include 'colors.php'; 
-$city_id =0 ;
+$city_id = 0;
 ?>
 <script>
 // Check if we already tried to get location in this session
@@ -12,7 +12,7 @@ if(!sessionStorage.getItem('locationAttempted')) {
     navigator.geolocation.getCurrentPosition(
       function(position) {
 
-        fetch('includes/get-city.php', {
+        fetch('<?php echo BASE_URL; ?>includes/get-city.php', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -31,7 +31,6 @@ if(!sessionStorage.getItem('locationAttempted')) {
       },
       function(error) {
         console.log("Location denied", error);
-        // location.reload();
       }
     );
   }
@@ -42,110 +41,112 @@ if(!sessionStorage.getItem('locationAttempted')) {
 if(isset($_SESSION['city']) && !empty($_SESSION['city'])) {
         $city = mysqli_real_escape_string($con, $_SESSION['city']);
         
-        $check = mysqli_query($con, "SELECT * FROM cities WHERE city_name = '$city'");
+        $check = mysqli_query($con, "SELECT * FROM cities WHERE city_name LIKE '%$city%'");
         if(mysqli_num_rows($check) == 0){
-            mysqli_query($con, "INSERT INTO cities (city_name) VALUES ('$city')");
-            $last_id = $con->insert_id;                 // یہ پراپرٹی last ID دیتی ہے
-            $_SESSION['city_id'] = $last_id;
+            // mysqli_query($con, "INSERT INTO cities (city_name) VALUES ('$city')");
+            // $last_id = $con->insert_id;
+            // $_SESSION['city_id'] = $last_id;
         }else{
             $city_id = mysqli_fetch_assoc($check)['city_id'];
             $_SESSION['city_id'] = $city_id;
         }
 }
 
-   $city_id = 0;
+$city_id = 0;
 if(isset($_SESSION['city_id']) && !empty($_SESSION['city_id'])) {
     $city_id = $_SESSION['city_id'];
 }
 
+// ============================================================
+// SEO: $GLOBALS se values uthayein (agar page ne set ki hon)
+// ============================================================
+$page_title       = $GLOBALS['page_title']       ?? "SehatNexa — Pakistan's Trusted Healthcare Directory";
+$page_description = $GLOBALS['page_description'] ?? "Find verified doctors, hospitals, laboratories, radiology centers and blood banks across Pakistan. Read patient reviews, check timings and contact details — all in one place.";
+$page_image       = $GLOBALS['page_image']       ?? BASE_URL . "admin/inc/uploads/default/hosp.jpg";
+$page_canonical   = $GLOBALS['page_canonical']   ?? strtok(BASE_URL . ltrim($_SERVER['REQUEST_URI'] ?? '', '/'), '?');
+$page_robots      = $GLOBALS['page_robots']      ?? "index, follow";
+$page_schema      = $GLOBALS['page_schema']      ?? '';
 
-// // Display city if set in session
-// if(isset($_SESSION['city']) && !empty($_SESSION['city'])) {
-//     echo "Your city: ".$_SESSION['city'];
-//     error_log("City found in session: " . $_SESSION['city']);
-//     // exit;
-// } else {
-//     error_log("No city found in session. Session ID: " . session_id());
-//     error_log("Session data: " . print_r($_SESSION, true));
-// }
+// Active menu detect
+$current_page = basename($_SERVER['PHP_SELF'], '.php');
 
-// Handle search and filters
-$search = isset($_GET['search']) ? mysqli_real_escape_string($con, $_GET['search']) : '';
-$hospital = isset($_GET['hospital']) ? (int)$_GET['hospital'] : '';
-$specialization = isset($_GET['specialization']) ? (int)$_GET['specialization'] : '';
-$city = isset($_GET['city']) ? (int)$_GET['city'] : '';
-$doctor_type = isset($_GET['doctor_type']) ? (int)$_GET['doctor_type'] : '';
-$experience = isset($_GET['experience']) ? $_GET['experience'] : '';
-$lady_doctor = isset($_GET['lady_doctor']) ? 1 : 0;
 
-// Pagination
-$page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
-$per_page = 10;
-$offset = ($page - 1) * $per_page;
-
-// Build query with filters (status users table se, alias: u)
-$where_conditions = ["u.status = 1"];
-
-if (!empty($search)) {
-    $where_conditions[] = "(d.doctor_name LIKE '%$search%' OR dct.type LIKE '%$search%')";
-}
-
-if (!empty($hospital)) {
-    $where_conditions[] = "d.hospital_id = $hospital";
-}
-
-if (!empty($specialization)) {
-    $where_conditions[] = "d.cat_type_id = $specialization";
-}
-
-if (!empty($city)) {
-    $where_conditions[] = "d.city_id = $city";
-}
-
-if (!empty($doctor_type)) {
-    $where_conditions[] = "d.doctor_type = $doctor_type";
-}
-
-if (!empty($experience)) {
-    if ($experience === '0-5') {
-        $where_conditions[] = "d.experience_years <= 5";
-    } elseif ($experience === '6-10') {
-        $where_conditions[] = "d.experience_years BETWEEN 6 AND 10";
-    } elseif ($experience === '11-15') {
-        $where_conditions[] = "d.experience_years BETWEEN 11 AND 15";
-    } elseif ($experience === '16+') {
-        $where_conditions[] = "d.experience_years >= 16";
-    }
-}
-
-if ($lady_doctor) {
-    // Note: This would need a gender field in database for proper implementation
-    // For now, we'll use a placeholder condition
-    $where_conditions[] = "(d.doctor_name LIKE '%Dr.%' OR d.doctor_name LIKE '%Miss%' OR d.doctor_name LIKE '%Mrs.%')";
-}
-
-$where_clause = "WHERE " . implode(" AND ", $where_conditions);
-
-// Get total doctors count for pagination
-$count_query = "SELECT COUNT(*) as total 
-                FROM doctors d 
-                LEFT JOIN dr_cat_types dct ON d.cat_type_id = dct.dr_cat_id 
-                LEFT JOIN cities c ON d.city_id = c.city_id 
-                LEFT JOIN users u ON u.user_id = d.user_id 
-                LEFT JOIN hospitals h ON d.hospital_id = h.hospital_id 
-                $where_clause";
-
-$count_result = mysqli_query($con, $count_query);
-$total_doctors = mysqli_fetch_assoc($count_result)['total'];
-$total_pages = ceil($total_doctors / $per_page);
-
+// BY DEFAULT CITY KOHAT
+$city_id = 1;
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Our Doctors - <?php echo SITE_TITLE; ?></title>
+
+    <!-- ===== SEO: Title & Meta Description ===== -->
+    <title><?= htmlspecialchars($page_title) ?></title>
+    <meta name="description" content="<?= htmlspecialchars($page_description) ?>">
+    <meta name="robots" content="<?= htmlspecialchars($page_robots) ?>">
+
+    <!-- ===== SEO: Canonical ===== -->
+    <link rel="canonical" href="<?= htmlspecialchars($page_canonical) ?>">
+
+    <!-- ===== Open Graph (Social Media) ===== -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="<?= htmlspecialchars($page_title) ?>">
+    <meta property="og:description" content="<?= htmlspecialchars($page_description) ?>">
+    <meta property="og:image" content="<?= htmlspecialchars($page_image) ?>">
+    <meta property="og:url" content="<?= htmlspecialchars($page_canonical) ?>">
+    <meta property="og:site_name" content="SehatNexa">
+
+    <!-- ===== Twitter Card ===== -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="<?= htmlspecialchars($page_title) ?>">
+    <meta name="twitter:description" content="<?= htmlspecialchars($page_description) ?>">
+    <meta name="twitter:image" content="<?= htmlspecialchars($page_image) ?>">
+
+    <!-- ===== Schema: Organization + WebSite (sab pages par) ===== -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@graph": [
+            {
+                "@type": "Organization",
+                "@id": "<?= BASE_URL ?>#organization",
+                "name": "SehatNexa",
+                "url": "<?= BASE_URL ?>",
+                "logo": "<?= BASE_URL ?>includes/uploads/logo.png",
+                "description": "Pakistan's trusted healthcare directory for doctors, hospitals, labs, radiology centers and blood banks.",
+                "contactPoint": {
+                    "@type": "ContactPoint",
+                    "telephone": "+92-337-1320001",
+                    "contactType": "customer service",
+                    "areaServed": "PK",
+                    "availableLanguage": ["English", "Urdu"]
+                },
+                "sameAs": [
+                    "https://www.facebook.com/sohail.fixit",
+                    "https://www.tiktok.com/@sehatnexa.official"
+                ]
+            },
+            {
+                "@type": "WebSite",
+                "@id": "<?= BASE_URL ?>#website",
+                "url": "<?= BASE_URL ?>",
+                "name": "SehatNexa",
+                "publisher": { "@id": "<?= BASE_URL ?>#organization" },
+                "potentialAction": {
+                    "@type": "SearchAction",
+                    "target": "<?= BASE_URL ?>doctors?search={search_term_string}",
+                    "query-input": "required name=search_term_string"
+                }
+            }
+        ]
+    }
+    </script>
+
+    <!-- Page-specific schema (agar kisi page ne set kiya ho) -->
+    <?php if (!empty($page_schema)): ?>
+        <script type="application/ld+json"><?= $page_schema ?></script>
+    <?php endif; ?>
+
     <link rel="icon" type="image/jpeg" href="<?php echo BASE_URL; ?>includes/fav.jpg">
     <link rel="shortcut icon" type="image/jpeg" href="<?php echo BASE_URL; ?>includes/uploads/fav.jpg">
     <!-- Bootstrap 5 CSS -->
@@ -160,18 +161,6 @@ $total_pages = ceil($total_doctors / $per_page);
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
     <style>
-        /* :root {
-            --primary: #0D6EFD;
-            --primary-dark: #4f46e5;
-            --secondary: #fff;
-            --accent: #198754;
-            --dark: #1e293b;
-            --dark-blue: #782a54;
-            --light: #f8fafc;
-            --gradient: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-            --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            --hover-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-        } */
       :root {
   /* SehatNexa Brand Colors */
   --primary    : #1C3F8F;   /* deep navy */
@@ -193,10 +182,7 @@ $total_pages = ceil($total_doctors / $per_page);
   --hover-shadow: 0 16px 32px rgba(28,63,143,0.14), 0 6px 12px rgba(0,168,204,0.1);
 }
 
-        
-        html {
-            overflow-x: hidden;
-        }
+        html { overflow-x: hidden; }
 
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -247,13 +233,8 @@ $total_pages = ceil($total_doctors / $per_page);
             transition: color 0.2s;
         }
         
-        .nav-link:hover {
-            color: #1C3F8F !important;
-        }
-        
-        .nav-link.active {
-            color: #1C3F8F !important;
-        }
+        .nav-link:hover { color: #1C3F8F !important; }
+        .nav-link.active { color: #1C3F8F !important; }
         
         .btn-login {
             background: linear-gradient(135deg, #1C3F8F 0%, #00A8CC 100%);
@@ -356,9 +337,7 @@ $total_pages = ceil($total_doctors / $per_page);
         }
 
         /* Pagination Styles */
-        .pagination-container {
-            margin-top: 40px;
-        }
+        .pagination-container { margin-top: 40px; }
         
         .pagination {
             justify-content: center;
@@ -406,35 +385,11 @@ $total_pages = ceil($total_doctors / $per_page);
             margin-bottom: 40px !important;
         }
     
-        @media (min-width: 1200px) {
-            .doctors-grid {
-                grid-template-columns: repeat(3, 1fr) !important;
-            }
-        }
-    
-        @media (min-width: 992px) and (max-width: 1199px) {
-            .doctors-grid {
-                grid-template-columns: repeat(4, 1fr) !important;
-            }
-        }
-    
-        @media (min-width: 768px) and (max-width: 991px) {
-            .doctors-grid {
-                grid-template-columns: repeat(3, 1fr) !important;
-            }
-        }
-    
-        @media (min-width: 576px) and (max-width: 767px) {
-            .doctors-grid {
-                grid-template-columns: repeat(2, 1fr) !important;
-            }
-        }
-    
-        @media (max-width: 575px) {
-            .doctors-grid {
-                grid-template-columns: 1fr !important;
-            }
-        }
+        @media (min-width: 1200px) { .doctors-grid { grid-template-columns: repeat(3, 1fr) !important; } }
+        @media (min-width: 992px) and (max-width: 1199px) { .doctors-grid { grid-template-columns: repeat(4, 1fr) !important; } }
+        @media (min-width: 768px) and (max-width: 991px) { .doctors-grid { grid-template-columns: repeat(3, 1fr) !important; } }
+        @media (min-width: 576px) and (max-width: 767px) { .doctors-grid { grid-template-columns: repeat(2, 1fr) !important; } }
+        @media (max-width: 575px) { .doctors-grid { grid-template-columns: 1fr !important; } }
 
         /* Override Bootstrap row behavior */
         .doctors-grid .col-lg-4,
@@ -462,9 +417,7 @@ $total_pages = ceil($total_doctors / $per_page);
         .doctor-card::before {
             content: '';
             position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
+            top: 0; left: 0; right: 0;
             height: 4px;
             background: var(--gradient);
             opacity: 0;
@@ -476,9 +429,7 @@ $total_pages = ceil($total_doctors / $per_page);
             box-shadow: var(--hover-shadow);
         }
         
-        .doctor-card:hover::before {
-            opacity: 1;
-        }
+        .doctor-card:hover::before { opacity: 1; }
         
         .doctor-img-wrapper {
             height: 180px;
@@ -490,10 +441,7 @@ $total_pages = ceil($total_doctors / $per_page);
         .doctor-img-wrapper::after {
             content: '';
             position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
+            top: 0; left: 0; right: 0; bottom: 0;
             background: linear-gradient(to bottom, transparent 60%, rgba(0,0,0,0.3));
             opacity: 0.8;
         }
@@ -505,9 +453,7 @@ $total_pages = ceil($total_doctors / $per_page);
             transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
         }
         
-        .doctor-card:hover .doctor-img-wrapper img {
-            transform: scale(1.1);
-        }
+        .doctor-card:hover .doctor-img-wrapper img { transform: scale(1.1); }
         
         .doctor-info {
             padding: 20px 16px;
@@ -523,9 +469,7 @@ $total_pages = ceil($total_doctors / $per_page);
             line-height: 1.3;
         }
         
-        .doctor-card:hover .doctor-name {
-            color: var(--primary);
-        }
+        .doctor-card:hover .doctor-name { color: var(--primary); }
         
         .doctor-spec {
             color: var(--dark-blue);
@@ -566,15 +510,7 @@ $total_pages = ceil($total_doctors / $per_page);
             font-size: 0.8rem;
         }
         
-        .doctor-hospital {
-            margin-bottom: 12px;
-        }
-        
-        /* .doctor-hospital span {
-            color: var(--dark-blue);
-            font-size: 0.75rem;
-            font-weight: 500;
-        } */
+        .doctor-hospital { margin-bottom: 12px; }
         
         .btn-appointment {
             background: var(--gradient);
@@ -622,7 +558,7 @@ $total_pages = ceil($total_doctors / $per_page);
             color: var(--secondary);
             font-weight: 500;
         }
-        
+
         /* Footer */
         .footer {
             background: rgba(30, 41, 59, 0.95);
@@ -635,29 +571,15 @@ $total_pages = ceil($total_doctors / $per_page);
             z-index: 1;
         }
         
-        .footer p {
-            margin-bottom: 0;
-            font-weight: 500;
-        }
-        
-        .footer a {
-            color: #cbd5e1;
-            text-decoration: none;
-            font-weight: 500;
-            transition: color 0.2s;
-        }
-        
-        .footer a:hover {
-            color: white;
-        }
+        .footer p { margin-bottom: 0; font-weight: 500; }
+        .footer a { color: #cbd5e1; text-decoration: none; font-weight: 500; transition: color 0.2s; }
+        .footer a:hover { color: white; }
 
         /* Preloader Styles */
         #preloader {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
             background: linear-gradient(135deg, #1C3F8F 0%, #00A8CC 60%, #27C96A 100%);
             z-index: 9999;
             display: flex;
@@ -666,37 +588,18 @@ $total_pages = ceil($total_doctors / $per_page);
             transition: opacity 0.5s ease;
         }
 
-        .preloader-content {
-            text-align: center;
-            animation: fadeInUp 0.8s ease;
-        }
-
-        .preloader-spinner {
-            display: flex;
-            justify-content: center;
-            gap: 8px;
-            margin-bottom: 30px;
-        }
+        .preloader-content { text-align: center; animation: fadeInUp 0.8s ease; }
+        .preloader-spinner { display: flex; justify-content: center; gap: 8px; margin-bottom: 30px; }
 
         .spinner-circle {
-            width: 12px;
-            height: 12px;
+            width: 12px; height: 12px;
             border-radius: 50%;
             background: white;
             animation: bounce 1.4s infinite ease-in-out both;
         }
-
-        .spinner-circle:nth-child(1) {
-            animation-delay: -0.32s;
-        }
-
-        .spinner-circle:nth-child(2) {
-            animation-delay: -0.16s;
-        }
-
-        .spinner-circle:nth-child(3) {
-            animation-delay: 0s;
-        }
+        .spinner-circle:nth-child(1) { animation-delay: -0.32s; }
+        .spinner-circle:nth-child(2) { animation-delay: -0.16s; }
+        .spinner-circle:nth-child(3) { animation-delay: 0s; }
 
         .preloader-text {
             color: white;
@@ -705,47 +608,22 @@ $total_pages = ceil($total_doctors / $per_page);
             animation: fadeInUp 0.8s ease 0.2s both;
         }
 
-        .preloader-text i {
-            color: #ff6b6b;
-            margin-right: 10px;
-            animation: pulse 1.5s ease-in-out infinite;
-        }
+        .preloader-text i { color: #ff6b6b; margin-right: 10px; animation: pulse 1.5s ease-in-out infinite; }
 
-        /* Preloader Animations */
         @keyframes bounce {
-            0%, 80%, 100% {
-                transform: scale(0);
-            }
-            40% {
-                transform: scale(1);
-            }
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
         }
-
         @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
         }
-
         @keyframes pulse {
-            0%, 100% {
-                transform: scale(1);
-            }
-            50% {
-                transform: scale(1.1);
-            }
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
         }
 
-        /* Hide preloader when page loads */
-        .loaded #preloader {
-            opacity: 0;
-            pointer-events: none;
-        }
+        .loaded #preloader { opacity: 0; pointer-events: none; }
     </style>
 </head>
 <body>

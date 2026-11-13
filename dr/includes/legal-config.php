@@ -5,8 +5,8 @@
    data lete hain. Sirf yahan apni details likh dein.
    ========================================================== */
 
-$site_name       = 'Your Website Name';        // <-- apni website ka naam
-$contact_email   = 'info@yourwebsite.com';     // <-- apna email
+$site_name       = 'SehatNexa';        // <-- apni website ka naam
+$contact_email   = 'info@sehatnexa.com';     // <-- apna email
 $contact_phone   = '+92 337 1320001';          // <-- apna phone
 $contact_address = 'Kohat, Pakistan';      // <-- apna address
 $court_city      = 'Kohat';                    // <-- Terms mein kis shehar ki courts ka zikr ho

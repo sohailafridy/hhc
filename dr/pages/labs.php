@@ -1,11 +1,17 @@
-<?php include '../includes/header.php'; ?>
+<?php 
+// ============================================================
+// 1. SEO FIX: Title aur Description set karein
+// ============================================================
+$GLOBALS['page_title'] = "Laboratories & Diagnostic Labs in Pakistan | SehatNexa";
+$GLOBALS['page_description'] = "Find the best medical laboratories and diagnostic centers near you. Check lab tests, prices, contact details, and patient reviews on SehatNexa.";
 
+// 2. Header Include karein
+include '../includes/header.php'; 
+?>
 <?php
-   
-    
     // Handle search and filters
     $search = isset($_GET['search']) ? mysqli_real_escape_string($con, $_GET['search']) : '';
-    $city = isset($_GET['city']) ? (int)$_GET['city'] : $city_id; // Default to Kohat if not set
+    $city = isset($_GET['city']) ? (int)$_GET['city'] : $city_id; // Default to session city if not set
 
     // Pagination
     $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
@@ -45,10 +51,8 @@
     $result = mysqli_query($con, $query);
 ?>
 
-
 <link rel="stylesheet" href="<?= BASE_URL ?>style/lab-list.css?v=<?= @filemtime(__DIR__ . '/style/lab-list.css') ?: time() ?>">
 <link rel="stylesheet" href="<?= BASE_URL ?>style/entity-card.css?v=<?= @filemtime(__DIR__ . '/style/entity-card.css') ?: time() ?>">
-
 
 <body>
 
@@ -60,18 +64,8 @@
         <div class="container position-relative">
             <div class="row">
                 <div class="col-lg-12 text-center">
-                    <!-- Page Header -->
-                    <section class="page-header">
-                        <div class="container position-relative">
-                            <div class="row">
-                                <div class="col-lg-12 text-center">
-                                    <h1 class="display-4 fw-bold mb-3" data-aos="fade-up">Our Laboratories</h1><br>
+                    <h1 class="display-4 fw-bold mb-3" data-aos="fade-up">Our Laboratories</h1><br>
                     <p class="lead mb-0" data-aos="fade-up" data-aos-delay="200">Find quality diagnostic laboratories near you</p>
-                                </div>
-                            </div>
-                        </div>
-                    </section>
-                    
                 </div>
             </div>
         </div>
@@ -97,7 +91,7 @@
                                 $city_result = mysqli_query($con, $city_query);
                                 while($city_row = mysqli_fetch_assoc($city_result)) {
                                     $selected = ($city == $city_row['city_id']) ? 'selected' : '';
-                                    echo '<option value="'.$city_row['city_id'].'" '.$selected.'>'.$city_row['city_name'].'</option>';
+                                    echo '<option value="'.$city_row['city_id'].'" '.$selected.'>'.htmlspecialchars($city_row['city_name']).'</option>';
                                 }
                                 ?>
                             </select>
@@ -107,13 +101,21 @@
                                 <button type="submit" class="btn-search-custom">
                                     <i class="fas fa-search"></i> Search Laboratories
                                 </button>
-                                <a href="laboratories" class="btn-reset-custom">
+                                <a href="labs" class="btn-reset-custom">
                                     <i class="fas fa-redo"></i> Reset All
                                 </a>
                             </div>
                         </div>
                     </div>
                 </form>
+            </div>
+
+            <!-- Ad Space 1 -->
+            <div class="my-4" data-aos="fade-up">
+                <div class="ad-slot text-center" style="min-height:90px; background:#f8f9fa; border:1px dashed #dee2e6; border-radius:8px; display:flex; align-items:center; justify-content:center;">
+                    <!-- SpeedyAds Code Yahan Paste Karein -->
+                    <span class="text-muted small">Advertisement Space</span>
+                </div>
             </div>
 
             <!-- Laboratories Grid -->
@@ -154,7 +156,8 @@
                     </div>
                     <div class="e-card-body">
                         <div class="e-type"><i class="fas fa-microscope"></i> Laboratory</div>
-                        <h4 class="e-name"><?= htmlspecialchars($row['lab_name']) ?></h4>
+                        <!-- H4 ko H3 kiya gaya hai SEO ke liye -->
+                        <h3 class="e-name"><?= htmlspecialchars($row['lab_name']) ?></h3>
                         <ul class="e-meta">
                             <li><i class="fas fa-map-marker-alt"></i><span><?= htmlspecialchars($row['city_name']) ?></span></li>
                             <?php if (!empty($row['lab_phone'])): ?>
@@ -182,6 +185,14 @@
                         <p>No laboratories match your search criteria.</p>
                     </div>
                 <?php } ?>
+            </div>
+
+            <!-- Ad Space 2 -->
+            <div class="my-4" data-aos="fade-up">
+                <div class="ad-slot text-center" style="min-height:90px; background:#f8f9fa; border:1px dashed #dee2e6; border-radius:8px; display:flex; align-items:center; justify-content:center;">
+                    <!-- SpeedyAds Code Yahan Paste Karein -->
+                    <span class="text-muted small">Advertisement Space</span>
+                </div>
             </div>
 
             <!-- Pagination -->
@@ -262,6 +273,7 @@
 
     <!-- Footer -->
    <?php include BASE_PATH.'/includes/footer.php';?>
+   
  <script>
 $(document).ready(function() {
     $('#citySelect').select2({

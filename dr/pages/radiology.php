@@ -1,9 +1,18 @@
-<?php include '../includes/header.php'; ?>
+<?php 
+// ============================================================
+// 1. SEO FIX: Title aur Description set karein
+// ============================================================
+$GLOBALS['page_title'] = "Radiology Centers & Diagnostic Imaging in Pakistan | SehatNexa";
+$GLOBALS['page_description'] = "Find the best radiology centers, MRI, CT scan, X-Ray, and ultrasound facilities near you. Check timings, contact details, and patient reviews on SehatNexa.";
+
+// 2. Header Include karein
+include '../includes/header.php'; 
+?>
 
 <?php
     // Handle search and filters
     $search = isset($_GET['search']) ? mysqli_real_escape_string($con, $_GET['search']) : '';
-    $city = isset($_GET['city']) ? (int)$_GET['city'] : $city_id; // Default to session city if not set
+    $city = isset($_GET['city']) ? (int)$_GET['city'] : $city_id; 
 
     // Pagination
     $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
@@ -56,16 +65,9 @@
         <div class="container position-relative">
             <div class="row">
                 <div class="col-lg-12 text-center">
-                    <section class="page-header">
-                        <div class="container position-relative">
-                            <div class="row">
-                                <div class="col-lg-12 text-center">
-                                    <h1 class="display-4 fw-bold mb-3" data-aos="fade-up">Our Radiology Centers</h1><br>
-                                    <p class="lead mb-0" data-aos="fade-up" data-aos-delay="200">Find top imaging and diagnostic centers near you</p>
-                                </div>
-                            </div>
-                        </div>
-                    </section>
+                    <!-- SEO: Only one H1 -->
+                    <h1 class="display-4 fw-bold mb-3" data-aos="fade-up">Our Radiology Centers</h1><br>
+                    <p class="lead mb-0" data-aos="fade-up" data-aos-delay="200">Find top imaging and diagnostic centers near you</p>
                 </div>
             </div>
         </div>
@@ -91,7 +93,7 @@
                                 $city_result = mysqli_query($con, $city_query);
                                 while($city_row = mysqli_fetch_assoc($city_result)) {
                                     $selected = ($city == $city_row['city_id']) ? 'selected' : '';
-                                    echo '<option value="'.$city_row['city_id'].'" '.$selected.'>'.$city_row['city_name'].'</option>';
+                                    echo '<option value="'.$city_row['city_id'].'" '.$selected.'>'.htmlspecialchars($city_row['city_name']).'</option>';
                                 }
                                 ?>
                             </select>
@@ -108,6 +110,14 @@
                         </div>
                     </div>
                 </form>
+            </div>
+
+            <!-- Ad Space 1 -->
+            <div class="my-4" data-aos="fade-up">
+                <div class="ad-slot text-center" style="min-height:90px; background:#f8f9fa; border:1px dashed #dee2e6; border-radius:8px; display:flex; align-items:center; justify-content:center;">
+                    <!-- SpeedyAds Code Yahan Paste Karein -->
+                    <span class="text-muted small">Advertisement Space</span>
+                </div>
             </div>
 
             <!-- Radiology Grid -->
@@ -148,7 +158,8 @@
                     </div>
                     <div class="e-card-body">
                         <div class="e-type"><i class="fas fa-x-ray"></i> Radiology Center</div>
-                        <h4 class="e-name"><?= htmlspecialchars($row['rad_name']) ?></h4>
+                        <!-- SEO: H4 to H3 -->
+                        <h3 class="e-name"><?= htmlspecialchars($row['rad_name']) ?></h3>
                         <ul class="e-meta">
                             <li><i class="fas fa-map-marker-alt"></i><span><?= htmlspecialchars($row['city_name']) ?></span></li>
                             <?php if (!empty($row['rad_phone'])): ?>
@@ -177,6 +188,14 @@
                         <p>No radiology centers match your search criteria.</p>
                     </div>
                 <?php } ?>
+            </div>
+
+            <!-- Ad Space 2 -->
+            <div class="my-4" data-aos="fade-up">
+                <div class="ad-slot text-center" style="min-height:90px; background:#f8f9fa; border:1px dashed #dee2e6; border-radius:8px; display:flex; align-items:center; justify-content:center;">
+                    <!-- SpeedyAds Code Yahan Paste Karein -->
+                    <span class="text-muted small">Advertisement Space</span>
+                </div>
             </div>
 
             <!-- Pagination -->

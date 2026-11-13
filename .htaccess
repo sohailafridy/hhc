@@ -1,5 +1,10 @@
 RewriteEngine On
 
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css application/javascript
+</IfModule>
+
+
 #website urls
 RewriteRule ^$ index.php [L]
 RewriteRule ^home$ index.php [L]

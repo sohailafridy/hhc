@@ -1,4 +1,12 @@
-<?php include '../includes/header.php'; 
+<?php 
+// ============================================================
+// 1. SEO FIX: Title aur Description set karein
+// ============================================================
+$GLOBALS['page_title'] = "All Medical Specialities & Diseases — Find Specialists | SehatNexa";
+$GLOBALS['page_description'] = "Browse a complete list of medical specialities, departments, and diseases in Pakistan. Find the right specialist doctor for your condition in your city.";
+
+// 2. Header Include karein
+include '../includes/header.php'; 
 $city_id = (int)$city_id;
 
 // Fetch all categories, types, and treatments
@@ -88,7 +96,7 @@ if ($result) {
         font-size: 1.8rem;
         color: #1C3F8F;
     }
-    .category-title-box h3 {
+    .category-title-box h2 {
         margin: 0;
         font-size: 1.5rem;
         font-weight: 700;
@@ -187,6 +195,14 @@ if ($result) {
             </div>
         </div>
 
+        <!-- Ad Space 1 -->
+        <div class="my-4" data-aos="fade-up">
+            <div class="ad-slot text-center" style="min-height:90px; background:#f8f9fa; border:1px dashed #dee2e6; border-radius:8px; display:flex; align-items:center; justify-content:center;">
+                <!-- SpeedyAds Code Yahan Paste Karein -->
+                <span class="text-muted small">Advertisement Space</span>
+            </div>
+        </div>
+
         <div id="directoryContainer">
             <?php if (!empty($all_specialities)): ?>
                 <?php foreach ($all_specialities as $cat_id => $data): ?>
@@ -198,7 +214,8 @@ if ($result) {
                             <!-- Category Heading -->
                             <div class="category-title-box" data-aos="fade-right">
                                 <i class="fas fa-stethoscope"></i>
-                                <h3><?= htmlspecialchars($data['cat_name']) ?></h3>
+                                <!-- SEO: H3 to H2 -->
+                                <h2><?= htmlspecialchars($data['cat_name']) ?></h2>
                             </div>
 
                             <!-- Diseases / Treatments Grid -->
@@ -245,6 +262,14 @@ if ($result) {
 
     </div>
 </section>
+
+<!-- Ad Space 2 -->
+<div class="container my-4" data-aos="fade-up">
+    <div class="ad-slot text-center" style="min-height:90px; background:#f8f9fa; border:1px dashed #dee2e6; border-radius:8px; display:flex; align-items:center; justify-content:center;">
+        <!-- SpeedyAds Code Yahan Paste Karein -->
+        <span class="text-muted small">Advertisement Space</span>
+    </div>
+</div>
 
 <!-- Footer -->
 <?php include BASE_PATH.'/includes/footer.php'; ?>

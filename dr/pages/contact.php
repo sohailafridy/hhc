@@ -1,7 +1,14 @@
-<?php include '../includes/header.php'; ?>
-<?php include BASE_PATH.'/includes/menu.php'; ?>
+<?php 
+// ============================================================
+// 1. SEO FIX: Title aur Description set karein
+// ============================================================
+$GLOBALS['page_title'] = "Contact Us — Help & Support | SehatNexa";
+$GLOBALS['page_description'] = "Get in touch with SehatNexa. Have questions about doctors, hospitals, labs, or listing your facility? Contact our 24/7 support team via email, phone, or WhatsApp.";
 
-<?php
+// 2. Header Include karein
+include '../includes/header.php'; 
+include BASE_PATH.'/includes/menu.php'; 
+
 $success_msg = '';
 $error_msg   = '';
 
@@ -53,9 +60,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="hero-badge">
                 <i class="fas fa-headset"></i> 24/7 Support Available
             </div>
+            <!-- SEO: H1 properly added without <br> -->
             <h1>
-                Get in <br>
-                <span class="highlight">Touch</span>
+                Get in Touch with <span class="highlight">SehatNexa</span>
             </h1>
             <p class="hero-subtitle">
                 Have questions about our services? Need medical assistance? Our team is always ready to help you find the best healthcare solutions for your needs.
@@ -85,7 +92,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <!-- Email -->
             <div class="contact-card-glass" data-aos="fade-up" data-aos-delay="0">
                 <div class="icon-box"><i class="fas fa-envelope"></i></div>
-                <h4>Email Us</h4>
+                <h3>Email Us</h3>
                 <p class="card-desc">Send us an email and we'll respond within 24 hours</p>
                 <a href="mailto:sohail.it99@gmail.com" class="card-link">
                     sohail.it99@gmail.com <i class="fas fa-arrow-right"></i>
@@ -95,7 +102,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <!-- Phone -->
             <div class="contact-card-glass" data-aos="fade-up" data-aos-delay="100">
                 <div class="icon-box"><i class="fas fa-phone"></i></div>
-                <h4>Call Us</h4>
+                <h3>Call Us</h3>
                 <p class="card-desc">Available 24/7 for emergency and general inquiries</p>
                 <a href="tel:+923371320001" class="card-link">
                     +92 337 1320 001 <i class="fas fa-arrow-right"></i>
@@ -105,7 +112,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <!-- WhatsApp -->
             <div class="contact-card-glass" data-aos="fade-up" data-aos-delay="200">
                 <div class="icon-box"><i class="fab fa-whatsapp"></i></div>
-                <h4>WhatsApp</h4>
+                <h3>WhatsApp</h3>
                 <p class="card-desc">Quick support via WhatsApp for instant responses</p>
                 <a href="https://wa.me/+923371320001" class="card-link" target="_blank">
                     Chat Now <i class="fas fa-arrow-right"></i>
@@ -114,6 +121,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
     </div>
 </section>
+
+<!-- Ad Space 1 -->
+<div class="container my-4" data-aos="fade-up">
+    <div class="ad-slot text-center" style="min-height:90px; background:#f8f9fa; border:1px dashed #dee2e6; border-radius:8px; display:flex; align-items:center; justify-content:center;">
+        <!-- SpeedyAds Code Yahan Paste Karein -->
+        <span class="text-muted small">Advertisement Space</span>
+    </div>
+</div>
 
 <!-- ======================================== -->
 <!-- CONTACT FORM + INFO SECTION -->
@@ -127,7 +142,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <div class="section-label-light">
                         <i class="fas fa-pen"></i> Send a Message
                     </div>
-                    <h3>Let's Talk</h3>
+                    <h2>Let's Talk</h2>
                     <p class="form-desc">Fill out the form below and we'll get back to you as soon as possible</p>
 
                     <form method="POST" action="" id="contact">

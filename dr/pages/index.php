@@ -1,18 +1,23 @@
-<?php include '../includes/header.php'; 
+<?php 
+// ============================================================
+// 1. SEO FIX: Title aur Description set karein
+// ============================================================
+$GLOBALS['page_title'] = "SehatNexa — Find Trusted Doctors, Hospitals, Labs & Blood Banks";
+$GLOBALS['page_description'] = "Pakistan's trusted healthcare directory. Find verified doctors, hospitals, labs, radiology centers and blood banks. Read reviews, check timings and contact details.";
+
+// ============================================================
+// 2. Header Include karein
+// ============================================================
+include '../includes/header.php'; 
 $city_id = (int)$city_id;
 
-// Brand colors from colors.php (already included in header)
-// $color1 = Deep Navy Blue, $color2 = Sky Teal, $color3 = Bright Green, $color4 = Teal Green
-
-
-// 1. QUERY UPDATE: treatment column add kiya gaya hai
+// Categories Query
 $categories_query = "SELECT dc.dr_cat_id, dc.cat_name, dct.dr_cat_type_id, dct.type, dct.treatment 
                    FROM dr_categories dc 
                    LEFT JOIN dr_cat_types dct ON dc.dr_cat_id = dct.dr_cat_id 
                    ORDER BY dc.cat_name, dct.type";
 $categories_result = mysqli_query($con, $categories_query);
 
-// 2. ARRAY UPDATE: treatment ko categories_data me save kiya gaya hai
 $categories_data = [];
 if ($categories_result) {
     while ($row = mysqli_fetch_assoc($categories_result)) {
@@ -26,47 +31,141 @@ if ($categories_result) {
             $categories_data[$row['dr_cat_id']]['types'][] = [
                 'dr_cat_type_id' => $row['dr_cat_type_id'],
                 'type' => $row['type'],
-                'treatment' => $row['treatment'] // Naya column yahan add hua
+                'treatment' => $row['treatment']
             ];
         }
     }
 }
 
-
-
-
-
-
-
-// Sirf specific types fetch karne ke liye query
+// Specialities Query
 $specific_types = "'Cardiologist (Heart Specialist)', 'Neurologist', 'Pulmonologist', 'Nephrologist', 'Rheumatologist', 'ENT Specialist'";
-
 $categories_query = "SELECT dct.dr_cat_type_id, dct.type 
                      FROM dr_cat_types dct 
                      WHERE dct.type IN ($specific_types)
                      ORDER BY dct.dr_cat_type_id ASC";
-
 $categories_result = mysqli_query($con, $categories_query);
-
-
-
-
-
 ?>
 
 <style>
-    /* Urdu dropdown styling for better readability */
-    .urdu-text {
-        font-family: 'Jameel Noori Nastaleeq', 'Noto Nastaliq Urdu', 'Arial', sans-serif;
-        font-size: 1.1rem;
-        text-align: right;
-        direction: rtl;
+    /* Urdu dropdown styling */
+    .urdu-text { font-family: 'Jameel Noori Nastaleeq', 'Noto Nastaliq Urdu', 'Arial', sans-serif; font-size: 1.1rem; text-align: right; direction: rtl; }
+    .eng-subtext { text-align: left; direction: ltr; display: block; font-size: 0.75rem; }
+
+    /* ==========================================
+       SEHATNEXA BRAND THEME (Based on Logo)
+       Navy Blue: #0D2B6E | Green: #27C96A
+       ========================================== */
+    
+    .section-bg-light { background-color: #F8FAFC; } /* Very light slate */
+    .section-bg-white { background-color: #FFFFFF; }
+
+    .brand-heading { color: #0D2B6E !important; font-weight: 800; }
+    .brand-subheading { color: #64748b !important; font-weight: 500; }
+
+    /* Modern Brand Cards */
+    .brand-card {
+        background: #fff;
+        border-radius: 20px;
+        border: 1px solid #E2E8F0;
+        box-shadow: 0 4px 20px rgba(13, 43, 110, 0.03);
+        transition: all 0.3s ease;
+        overflow: hidden;
+        height: 100%;
     }
-    .eng-subtext {
-        text-align: left;
-        direction: ltr;
+    
+    .brand-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 15px 35px rgba(13, 43, 110, 0.1);
+        border-color: #27C96A; /* Green Border on hover */
+    }
+
+    .brand-card-body {
+        padding: 24px 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        height: 100%;
+    }
+
+    .brand-icon-box {
+        width: 65px; height: 65px;
+        border-radius: 16px;
+        display: flex; align-items: center; justify-content: center;
+        margin-bottom: 16px;
+        font-size: 1.8rem;
+        background: linear-gradient(135deg, rgba(13,43,110,0.05) 0%, rgba(39,201,106,0.1) 100%);
+        color: #0D2B6E;
+        transition: all 0.3s ease;
+    }
+
+    .brand-card:hover .brand-icon-box {
+        background: linear-gradient(135deg, #0D2B6E 0%, #27C96A 100%);
+        color: #fff;
+    }
+
+    .brand-title {
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 10px;
+        line-height: 1.4;
+    }
+
+    .brand-meta {
+        font-size: 0.85rem;
+        color: #64748b;
+        margin-bottom: 15px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .brand-btn {
+        margin-top: auto;
+        width: 100%;
+        padding: 10px;
+        border-radius: 10px;
+        background: #F1F5F9;
+        color: #0D2B6E;
+        font-weight: 700;
+        font-size: 0.85rem;
+        text-decoration: none;
+        transition: 0.2s;
+        display: inline-flex; align-items: center; justify-content: center; gap: 5px;
+    }
+
+    .brand-card:hover .brand-btn {
+        background: #0D2B6E;
+        color: #fff;
+    }
+
+    /* Service Cards (Top) */
+    .service-card-new {
+        background: #fff;
+        border-radius: 20px;
+        border: 1px solid #E2E8F0;
+        transition: 0.3s;
         display: block;
-        font-size: 0.75rem;
+        height: 100%;
+    }
+    .service-card-new:hover {
+        border-color: #0D2B6E;
+        box-shadow: 0 10px 30px rgba(13,43,110,0.08);
+    }
+    .service-card-new .icon-wrap {
+        width: 60px; height: 60px;
+        border-radius: 50%;
+        background: rgba(39,201,106,0.1);
+        color: #27C96A;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.5rem;
+        margin-bottom: 15px;
+        transition: 0.3s;
+    }
+    .service-card-new:hover .icon-wrap {
+        background: #27C96A;
+        color: #fff;
     }
 </style>
 
@@ -75,9 +174,8 @@ $categories_result = mysqli_query($con, $categories_query);
 
 <link rel="stylesheet" href="<?= BASE_URL ?>style/home.css?v=<?= @filemtime(__DIR__ . '/style/home.css') ?: time() ?>">
 
-
 <style>
-/* SehatNexa Brand Colors — injected from colors.php */
+/* Brand Root Colors */
 :root {
     --brand-navy:       <?= $color1 ?>;
     --brand-teal:       <?= $color2 ?>;
@@ -86,23 +184,21 @@ $categories_result = mysqli_query($con, $categories_query);
     --brand-dark:       <?= $color5 ?>;
     --brand-light-blue: <?= $color6 ?>;
     --brand-light-green:<?= $color7 ?>;
-    --brand-gradient:   <?= $gradient_primary ?>;
-    --brand-gradient-green: <?= $gradient_green ?>;
-    --brand-gradient-full:  <?= $gradient_full ?>;
 }
 </style>
-    <!-- Hero Section -->
+
+    <!-- Hero Section (Kept same as before) -->
     <div class="hero-section">
         <div class="hero-background">
-            <img src="<?php echo BASE_URL; ?>admin/inc/uploads/default/hosp.jpg" alt="Healthcare" class="hero-image">
+            <img src="<?php echo BASE_URL; ?>admin/inc/uploads/default/hosp.jpg" alt="SehatNexa Healthcare Directory" class="hero-image">
             <div class="hero-overlay"></div>
         </div>
         <div class="hero-content">
             <div class="container">
                 <div class="row gy-4">
                     <div class="col-lg-7">
-                        <span class="badge bg-white text-primary mb-3 px-3 py-2 rounded-pill" data-aos="fade-down">WELCOME TO DOCTORAPP</span>
-                        <h1 class="hero-title" data-aos="fade-up" data-aos-delay="200">We Care About <br>Your Health</h1>
+                        <span class="badge bg-white text-primary mb-3 px-3 py-2 rounded-pill" data-aos="fade-down">WELCOME TO SEHATNEXA</span>
+                        <h1 class="hero-title" data-aos="fade-up" data-aos-delay="200">Find Trusted Doctors, <br>Hospitals &amp; Labs</h1>
                         <p class="hero-text" data-aos="fade-up" data-aos-delay="400">Experience world-class healthcare with our team of expert doctors and state-of-the-art facilities designed for your comfort and recovery.</p>
                         <div data-aos="fade-up" data-aos-delay="600">
                             <div class="hero-city-wrap me-3">
@@ -155,19 +251,11 @@ $categories_result = mysqli_query($con, $categories_query);
                                         <label class="form-label">Filter by Disease / Treatment</label>
                                         <div class="input-with-icon position-relative">
                                             <input type="text" class="form-control" id="specializationSearch" placeholder="Search disease (e.g., دل)..." autocomplete="off" dir="auto" style="padding-right:36px;">
-                                            <i class="fas fa-times" id="specializationClear"
-                                               title="Clear"
-                                               style="position:absolute; right:12px; top:50%; transform:translateY(-50%);
-                                                      cursor:pointer; color:#94a3b8; font-size:0.85rem; z-index:10;
-                                                      display:none; transition:color 0.2s;"
-                                               onmouseover="this.style.color='#ef4444'"
-                                               onmouseout="this.style.color='#94a3b8'"></i>
-                                            <input type="hidden" name="specialization" id="specializationValue" value="<?php echo $specialization; ?>">
-                                            <div class="position-absolute w-100 bg-white border border-top-0 shadow-sm" id="specializationDropdown" style="display: none; z-index: 1000; max-height: 250px; overflow-y: auto;">
-                                            </div>
+                                            <i class="fas fa-times" id="specializationClear" title="Clear" style="position:absolute; right:12px; top:50%; transform:translateY(-50%); cursor:pointer; color:#94a3b8; font-size:0.85rem; z-index:10; display:none; transition:color 0.2s;" onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='#94a3b8'"></i>
+                                            <input type="hidden" name="specialization" id="specializationValue" value="<?php echo $specialization ?? ''; ?>">
+                                            <div class="position-absolute w-100 bg-white border border-top-0 shadow-sm" id="specializationDropdown" style="display: none; z-index: 1000; max-height: 250px; overflow-y: auto;"></div>
                                         </div>
                                     </div>
-
                                 </div>
                                 <button type="submit" class="btn btn-primary w-100 rounded-pill py-3 fw-bold mt-3">
                                     <i class="fas fa-search me-2"></i>Search Doctors
@@ -180,67 +268,51 @@ $categories_result = mysqli_query($con, $categories_query);
         </div>
     </div>
 
-    <!-- Services Tabs Section -->
-    <section id="top-services" class="section-padding" style="background: var(--brand-light-blue);">
+    <!-- Services Section -->
+    <section class="section-padding section-bg-light">
         <div class="container">
-            <div class="section-header" data-aos="fade-up">
-                <h2 class="section-title heading-color">Our Healthcare Services</h2>
-                <p class="section-subtitle normal-color">Comprehensive medical care at your fingertips</p>
+            <div class="text-center mb-5" data-aos="fade-up">
+                <h2 class="brand-heading mb-2">Our Healthcare Services</h2>
+                <p class="brand-subheading">Comprehensive medical care at your fingertips</p>
             </div>
             <div class="row g-4 justify-content-center" data-aos="fade-up" data-aos-delay="200">
+                <!-- Service 1 -->
                 <div class="col-lg-3 col-md-6">
-                    <a href="<?=BASE_URL?>hospitals" class="service-card text-decoration-none">
-                        <div class="service-card-body">
-                            <div class="service-icon-wrapper">
-                                <i class="fas fa-hospital"></i>
-                            </div>
-                            <h4 class="service-title">Hospitals</h4>
-                            <p class="service-description">Find top-rated hospitals with advanced medical facilities</p>
-                            <div class="service-arrow">
-                                <i class="fas fa-arrow-right"></i>
-                            </div>
+                    <a href="<?=BASE_URL?>hospitals" class="text-decoration-none">
+                        <div class="service-card-new p-4">
+                            <div class="icon-wrap"><i class="fas fa-hospital"></i></div>
+                            <h3 class="brand-title">Hospitals</h3>
+                            <p class="text-muted small mb-0">Find top-rated hospitals with advanced medical facilities</p>
                         </div>
                     </a>
                 </div>
+                <!-- Service 2 -->
                 <div class="col-lg-3 col-md-6">
-                    <a href="<?=BASE_URL?>doctors" class="service-card text-decoration-none">
-                        <div class="service-card-body">
-                            <div class="service-icon-wrapper">
-                                <i class="fas fa-user-md"></i>
-                            </div>
-                            <h4 class="service-title">Doctors</h4>
-                            <p class="service-description">Connect with experienced medical specialists</p>
-                            <div class="service-arrow">
-                                <i class="fas fa-arrow-right"></i>
-                            </div>
+                    <a href="<?=BASE_URL?>doctors" class="text-decoration-none">
+                        <div class="service-card-new p-4">
+                            <div class="icon-wrap"><i class="fas fa-user-md"></i></div>
+                            <h3 class="brand-title">Doctors</h3>
+                            <p class="text-muted small mb-0">Connect with experienced medical specialists</p>
                         </div>
                     </a>
                 </div>
+                <!-- Service 3 -->
                 <div class="col-lg-3 col-md-6">
-                    <a href="<?=BASE_URL?>labs" class="service-card text-decoration-none">
-                        <div class="service-card-body">
-                            <div class="service-icon-wrapper">
-                                <i class="fas fa-flask"></i>
-                            </div>
-                            <h4 class="service-title">Laboratories</h4>
-                            <p class="service-description">Advanced diagnostic and testing services</p>
-                            <div class="service-arrow">
-                                <i class="fas fa-arrow-right"></i>
-                            </div>
+                    <a href="<?=BASE_URL?>labs" class="text-decoration-none">
+                        <div class="service-card-new p-4">
+                            <div class="icon-wrap"><i class="fas fa-flask"></i></div>
+                            <h3 class="brand-title">Laboratories</h3>
+                            <p class="text-muted small mb-0">Advanced diagnostic and testing services</p>
                         </div>
                     </a>
                 </div>
+                <!-- Service 4 -->
                 <div class="col-lg-3 col-md-6">
-                    <a href="<?=BASE_URL?>blood-banks" class="service-card text-decoration-none">
-                        <div class="service-card-body">
-                            <div class="service-icon-wrapper">
-                                <i class="fas fa-tint"></i>
-                            </div>
-                            <h4 class="service-title">Blood Banks</h4>
-                            <p class="service-description">Life-saving blood donation and services</p>
-                            <div class="service-arrow">
-                                <i class="fas fa-arrow-right"></i>
-                            </div>
+                    <a href="<?=BASE_URL?>blood-banks" class="text-decoration-none">
+                        <div class="service-card-new p-4">
+                            <div class="icon-wrap"><i class="fas fa-tint"></i></div>
+                            <h3 class="brand-title">Blood Banks</h3>
+                            <p class="text-muted small mb-0">Life-saving blood donation and services</p>
                         </div>
                     </a>
                 </div>
@@ -248,457 +320,324 @@ $categories_result = mysqli_query($con, $categories_query);
         </div>
     </section>
 
-    <!-- Specialities Section -->
-<section class="section-padding" style="background: var(--brand-light-blue);">
-    <div class="container">
-        <div class="section-header" data-aos="fade-up">
-            <h2 class="section-title heading-color"><i class="fas fa-stethoscope me-3"></i>Specialities</h2>
-            <p class="section-subtitle normal-color">Explore our specialized medical departments</p>
+    <!-- Ad Space 1 -->
+    <div class="container my-4" data-aos="fade-up">
+        <div class="ad-slot text-center" style="min-height:90px; background:#f8f9fa; border:1px dashed #dee2e6; border-radius:8px; display:flex; align-items:center; justify-content:center;">
+            <span class="text-muted small">Advertisement Space</span>
         </div>
-        <div class="row g-3 justify-content-center" data-aos="fade-up" data-aos-delay="200">
-            
-            <?php 
-            // Colors aur Emojis ka array (taake har card alag dikhe)
-            $bg_colors = ['#E8F7FF', '#F0FFF8', '#EFF6FF', '#F0FDFA', '#EEF2FF', '#E8F7FF', '#F0FFF8', '#EFF6FF'];
-            $emojis = ['👴', '❤️', '🧠', '🧪', '🫁', '🫀', '🦴', '👁️', '🦷', '👶'];
-            
-            $index = 0;
-            // Check karein ke result empty to nahi
-            if ($categories_result && mysqli_num_rows($categories_result) > 0) {
-                // Agar pehle se fetch ho chuka hai to pointer reset karein (agar zaroorat ho)
-                // mysqli_data_seek($categories_result, 0); 
-                
-                while($spec = mysqli_fetch_assoc($categories_result)) {
-                    $cat_id = $spec['dr_cat_type_id'];
-                    $cat_name = $spec['type'];
-                    
-                    // Index ke hisaab se color aur emoji uthayen
-                    $bg_color = $bg_colors[$index % count($bg_colors)];
-                    $emoji = $emojis[$index % count($emojis)];
-                    $index++;
-            ?>
-                <div class="col-lg-2 col-md-4 col-6">
-                    <div class="speciality-card">
-                        <div class="speciality-card-body" style="background-color: <?= $bg_color ?>;">
-                            <div class="speciality-icon">
-                                <span class="speciality-emoji"><?= $emoji ?></span>
+    </div>
+
+    <!-- Specialities Section -->
+    <section class="section-padding section-bg-white">
+        <div class="container">
+            <div class="text-center mb-5" data-aos="fade-up">
+                <h2 class="brand-heading mb-2"><i class="fas fa-stethoscope text-success me-2"></i>Specialities</h2>
+                <p class="brand-subheading">Explore our specialized medical departments</p>
+            </div>
+            <div class="row g-3 justify-content-center" data-aos="fade-up" data-aos-delay="200">
+                <?php 
+                if ($categories_result && mysqli_num_rows($categories_result) > 0) {
+                    while($spec = mysqli_fetch_assoc($categories_result)) {
+                        $cat_id = $spec['dr_cat_type_id'];
+                        $cat_name = $spec['type'];
+                ?>
+                    <div class="col-lg-2 col-md-4 col-6">
+                        <div class="brand-card">
+                            <div class="brand-card-body">
+                                <div class="brand-icon-box">
+                                    <i class="fas fa-heartbeat"></i>
+                                </div>
+                                <h3 class="brand-title" title="<?= htmlspecialchars($cat_name) ?>">
+                                    <?= htmlspecialchars($cat_name) ?>
+                                </h3>
+                                <a href="<?=BASE_URL?>doctors?search=&city=<?=$city_id?>&hospital=&specialization=<?= $cat_id ?>" class="brand-btn">
+                                    DEPARTMENT <i class="fas fa-arrow-right"></i>
+                                </a>
                             </div>
-                            <!-- Title dynamically set ho raha hai -->
-                            <h4 class="speciality-title" title="<?= htmlspecialchars($cat_name) ?>">
-                                <?= htmlspecialchars($cat_name) ?>
-                            </h4>
-                            <!-- Link me ID dynamically ja rahi hai -->
-                            <a href="<?=BASE_URL?>doctors?search=&city=<?=$city_id?>&hospital=&specialization=<?= $cat_id ?>" class="speciality-btn">
-                                <i class="fas fa-heart"></i>
-                                DEPARTMENT
-                            </a>
                         </div>
                     </div>
-                </div>
-            <?php 
-                } 
-            } else {
-                echo '<div class="col-12 text-center"><p>No Specialities Found</p></div>';
-            }
-            ?>
-            
+                <?php } } else { echo '<div class="col-12 text-center text-muted">No Specialities Found</div>'; } ?>
+            </div>
         </div>
-    </div>
-    <div class="text-center mt-4" data-aos="fade-up">
-        <a href="<?=BASE_URL?>all-specialities" class="btn-view-all btn-view-specialities">
-            <i class="fas fa-stethoscope"></i>
-            Explore All Specialities
-        </a>
-    </div>
-</section>
+        <div class="text-center mt-5" data-aos="fade-up">
+            <a href="<?=BASE_URL?>all-specialities" class="btn btn-outline-primary rounded-pill px-4 fw-bold">
+                Explore All Specialities
+            </a>
+        </div>
+    </section>
 
     <!-- Top Hospitals Section -->
-    <section class="modern-cards section-padding" style="background: var(--brand-light-green);">
+    <section class="section-padding section-bg-light">
         <div class="container">
-            <div class="section-header" data-aos="fade-up">
-                <h2 class="section-title heading-color"><i class="fas fa-hospital-alt me-3"></i>Top Hospitals</h2>
-                <p class="section-subtitle normal-color">Find the best healthcare facilities in your area</p>
+            <div class="text-center mb-5" data-aos="fade-up">
+                <h2 class="brand-heading mb-2"><i class="fas fa-hospital-alt text-primary me-2"></i>Top Hospitals</h2>
+                <p class="brand-subheading">Find the best healthcare facilities in your area</p>
             </div>
-            <div class="row g-3 justify-content-center">
+            <div class="row g-4 justify-content-center">
                 <?php
-                $hospital_card_colors = ['#E8F7FF', '#F0FFF8', '#EFF6FF', '#F0FDFA', '#E8F7FF', '#F0FFF8'];
                 if($city_id > 0){
                     $hospitals_query = "SELECT h.*, c.city_name FROM hospitals h LEFT JOIN cities c ON h.city_id = c.city_id LEFT JOIN users u ON u.user_id = h.user_id WHERE u.status = 1 AND h.approve = 1 AND h.city_id = $city_id ORDER BY h.hospital_id DESC LIMIT 6";
                 }else{
                     $hospitals_query = "SELECT h.*, c.city_name FROM hospitals h LEFT JOIN cities c ON h.city_id = c.city_id LEFT JOIN users u ON u.user_id = h.user_id WHERE u.status = 1 AND h.approve = 1 ORDER BY h.hospital_id DESC LIMIT 6";
                 }
-                  
-                 $hospitals_result = mysqli_query($con, $hospitals_query);
-                $hospital_index = 0;
+                $hospitals_result = mysqli_query($con, $hospitals_query);
                 $has_hospitals = $hospitals_result && mysqli_num_rows($hospitals_result) > 0;
                 if ($has_hospitals) {
                 while($hospital = mysqli_fetch_assoc($hospitals_result)) {
                     $hosp_stars_q = mysqli_query($con, "SELECT AVG(stars) as stars FROM `feedback` WHERE user_id='". $hospital['user_id'] ."'");
-                    $hosp_stars = mysqli_fetch_assoc($hosp_stars_q);
-                    $hosp_stars = $hosp_stars['stars'];
+                    $hosp_stars = mysqli_fetch_assoc($hosp_stars_q)['stars'];
                     $hospital_rating = $hosp_stars ? number_format((float)$hosp_stars, 1) : 'New';
-                    $hospital_bg = $hospital_card_colors[$hospital_index % count($hospital_card_colors)];
-                    $hospital_index++;
                 ?>
-                <div class="col-lg-2 col-md-4 col-6" data-aos="fade-up" data-aos-delay="<?php echo 100 + ($hospital_index * 80); ?>">
-                    <div class="speciality-card hospital-mini-card">
-                        <div class="speciality-card-body" style="background-color: <?php echo $hospital_bg; ?>;">
-                            <div class="speciality-icon">
+                <div class="col-lg-3 col-md-4 col-6" data-aos="fade-up">
+                    <div class="brand-card">
+                        <div class="brand-card-body">
+                            <div class="brand-icon-box">
                                 <i class="fas fa-hospital-alt"></i>
                             </div>
-                            <h4 class="speciality-title"><?php echo htmlspecialchars(substr($hospital['hospital_name'], 0, 25)); ?></h4>
-                            <p class="hospital-mini-location">
-                                <i class="fas fa-map-marker-alt"></i><?php echo htmlspecialchars($hospital['city_name']); ?>
-                            </p>
-                            <div class="hospital-mini-rating">
-                                <i class="fas fa-star text-warning"></i><?php echo $hospital_rating; ?> Rating
+                            <h3 class="brand-title text-truncate w-100"><?php echo htmlspecialchars($hospital['hospital_name']); ?></h3>
+                            <div class="brand-meta">
+                                <span><i class="fas fa-map-marker-alt text-danger"></i> <?php echo htmlspecialchars($hospital['city_name']); ?></span>
+                                <span class="text-warning fw-bold"><i class="fas fa-star"></i> <?php echo $hospital_rating; ?> Rating</span>
                             </div>
-                            <a href="hospital-detail?hospital_id=<?php echo $hospital['hospital_id']; ?>" class="speciality-btn">
-                                <i class="fas fa-arrow-right"></i>
-                                DETAILS
+                            <a href="hospital-detail?hospital_id=<?php echo $hospital['hospital_id']; ?>" class="brand-btn">
+                                VIEW DETAILS
                             </a>
                         </div>
                     </div>
                 </div>
-                <?php }
-                } else { ?>
-                <div class="col-12">
-                    <div class="no-record-found">No Record Found</div>
-                </div>
-                <?php } ?>
+                <?php } } else { echo '<div class="col-12 text-center text-muted">No Hospitals Found</div>'; } ?>
             </div>
             <?php if ($has_hospitals): ?>
-            <div class="text-center mt-4" data-aos="fade-up">
-                <a href="hospitals" class="btn-view-all btn-view-hospitals">
-                    <i class="fas fa-hospital-alt"></i>
-                    View All Hospitals
-                </a>
+            <div class="text-center mt-5" data-aos="fade-up">
+                <a href="hospitals" class="btn btn-outline-primary rounded-pill px-4 fw-bold">View All Hospitals</a>
             </div>
             <?php endif; ?>
         </div>
     </section>
 
+    <!-- Ad Space 2 -->
+    <div class="container my-4" data-aos="fade-up">
+        <div class="ad-slot text-center" style="min-height:90px; background:#f8f9fa; border:1px dashed #dee2e6; border-radius:8px; display:flex; align-items:center; justify-content:center;">
+            <span class="text-muted small">Advertisement Space</span>
+        </div>
+    </div>
+
     <!-- Top Doctors Section -->
-    <section class="modern-cards section-padding" style="background: var(--brand-light-blue);">
+    <section class="section-padding section-bg-white">
         <div class="container">
-            <div class="section-header" data-aos="fade-up">
-                <h2 class="section-title heading-color">Top Doctors</h2>
-                <p class="section-subtitle normal-color">Connect with experienced medical professionals</p>
+            <div class="text-center mb-5" data-aos="fade-up">
+                <h2 class="brand-heading mb-2">Top Doctors</h2>
+                <p class="brand-subheading">Connect with experienced medical professionals</p>
             </div>
-            <div class="row g-3 justify-content-center">
+            <div class="row g-4 justify-content-center">
                 <?php
-                $doctor_card_colors = ['#E8F7FF', '#F0FFF8', '#EFF6FF', '#F0FDFA', '#EEF2FF', '#F0F9FF'];
                 if($city_id > 0){
-                     $doctors_query = "SELECT d.*, c.city_name, dct.type as specialization FROM doctors d LEFT JOIN cities c ON d.city_id = c.city_id LEFT JOIN dr_cat_types dct ON d.cat_type_id = dct.dr_cat_id LEFT JOIN users u ON d.user_id = u.user_id WHERE u.status = 1 AND d.approve=1 AND d.city_id=$city_id ORDER BY d.doctor_id DESC LIMIT 4";
+                     $doctors_query = "SELECT d.*, c.city_name, dct.type as specialization FROM doctors d LEFT JOIN cities c ON d.city_id = c.city_id LEFT JOIN dr_cat_types dct ON d.cat_type_id = dct.dr_cat_id LEFT JOIN users u ON d.user_id = u.user_id WHERE u.status = 1 AND d.approve=1 AND d.city_id=$city_id ORDER BY d.doctor_id DESC LIMIT 6";
                 }else{
                      $doctors_query = "SELECT d.*, c.city_name, dct.type as specialization FROM doctors d LEFT JOIN cities c ON d.city_id = c.city_id LEFT JOIN dr_cat_types dct ON d.cat_type_id = dct.dr_cat_id LEFT JOIN users u ON d.user_id = u.user_id WHERE u.status = 1 AND d.approve=1 ORDER BY d.doctor_id DESC LIMIT 6";
                 }
-                
                 $doctors_result = mysqli_query($con, $doctors_query);
-                $doctor_index = 0;
                 $has_doctors = $doctors_result && mysqli_num_rows($doctors_result) > 0;
                 if ($has_doctors) {
                 while($doctor = mysqli_fetch_assoc($doctors_result)) {
                     $doct_stars_q = mysqli_query($con, "SELECT AVG(stars) as stars FROM `feedback` WHERE user_id='". $doctor['user_id'] ."'");
-                    $doct_stars = mysqli_fetch_assoc($doct_stars_q);
-                    $doct_stars = $doct_stars['stars'];
-                    $doctor_index++;
+                    $doct_stars = mysqli_fetch_assoc($doct_stars_q)['stars'];
                     $doctor_rating = $doct_stars ? number_format((float)$doct_stars, 1) : 'New';
                     $doctor_specialization = !empty($doctor['specialization']) ? $doctor['specialization'] : 'Medical Specialist';
-                    $doctor_bg = $doctor_card_colors[($doctor_index - 1) % count($doctor_card_colors)];
                 ?>
-                <div class="col-lg-2 col-md-3 col-6" data-aos="fade-up" data-aos-delay="<?php echo 100 + ($doctor_index * 80); ?>">
-                    <div class="speciality-card doctor-mini-card">
-                        <div class="speciality-card-body" style="background-color: <?php echo $doctor_bg; ?>;">
-                            <div class="doctor-mini-media">
+                <div class="col-lg-3 col-md-4 col-6" data-aos="fade-up">
+                    <div class="brand-card">
+                        <div class="brand-card-body">
+                            <!-- Doctor Image Instead of Icon -->
+                            <div class="mb-3" style="width: 80px; height: 80px; border-radius: 50%; overflow: hidden; border: 3px solid rgba(39,201,106,0.2);">
                                 <?php if (!empty($doctor['doctor_pic'])): ?>
-                                    <img src="<?php echo BASE_URL; ?>admin/inc/uploads/doctors/<?php echo $doctor['doctor_pic']; ?>" 
-                                        alt="<?php echo $doctor['doctor_name']; ?>" class="img-fluid">
+                                    <img src="<?php echo BASE_URL; ?>admin/inc/uploads/doctors/<?php echo $doctor['doctor_pic']; ?>" alt="<?php echo $doctor['doctor_name']; ?>" style="width: 100%; height: 100%; object-fit: cover;">
                                 <?php else: ?>
-                                    <div class="doctor-mini-icon-wrap">
-                                        <i class="fas fa-user-md doctor-mini-icon"></i>
-                                    </div>
+                                    <div class="w-100 h-100 d-flex align-items-center justify-content-center bg-light text-primary"><i class="fas fa-user-md fs-3"></i></div>
                                 <?php endif; ?>
                             </div>
-                            <div class="doctor-mini-content">
-                                <div class="doctor-mini-specialty">
-                                    <i class="fas fa-user-md"></i><?php echo htmlspecialchars($doctor_specialization); ?>
-                                </div>
-                                <h4 class="speciality-title"><?php echo htmlspecialchars($doctor['doctor_name']); ?></h4>
-                                <div class="doctor-mini-meta">
-                                    <i class="fas fa-location-dot"></i><?php echo htmlspecialchars($doctor['city_name']); ?>
-                                </div>
-                                <div class="doctor-mini-rating">
-                                    <i class="fas fa-star text-warning"></i><?php echo $doctor_rating; ?> Rating
-                                </div>
-                                <a href="doctor-detail?doctor_id=<?php echo $doctor['doctor_id']; ?>" class="speciality-btn">
-                                    <i class="fas fa-stethoscope"></i>
-                                    PROFILE
-                                </a>
+                            <div class="badge bg-light text-dark border mb-2"><?php echo htmlspecialchars($doctor_specialization); ?></div>
+                            <h3 class="brand-title text-truncate w-100"><?php echo htmlspecialchars($doctor['doctor_name']); ?></h3>
+                            <div class="brand-meta">
+                                <span><i class="fas fa-map-marker-alt text-primary"></i> <?php echo htmlspecialchars($doctor['city_name']); ?></span>
+                                <span class="text-warning fw-bold"><i class="fas fa-star"></i> <?php echo $doctor_rating; ?> Rating</span>
                             </div>
+                            <a href="doctor-detail?doctor_id=<?php echo $doctor['doctor_id']; ?>" class="brand-btn">
+                                VIEW PROFILE
+                            </a>
                         </div>
                     </div>
                 </div>
-                <?php }
-                } else { ?>
-                <div class="col-12">
-                    <div class="no-record-found">No Record Found</div>
-                </div>
-                <?php } ?>
+                <?php } } else { echo '<div class="col-12 text-center text-muted">No Doctors Found</div>'; } ?>
             </div>
             <?php if ($has_doctors): ?>
-            <div class="text-center mt-4" data-aos="fade-up">
-                <a href="doctors" class="btn-view-all btn-view-doctors">
-                    <i class="fas fa-user-md"></i>
-                    View All Doctors
-                </a>
+            <div class="text-center mt-5" data-aos="fade-up">
+                <a href="doctors" class="btn btn-outline-primary rounded-pill px-4 fw-bold">View All Doctors</a>
             </div>
             <?php endif; ?>
         </div>
     </section>
 
     <!-- Laboratories Section -->
-    <section class="modern-cards section-padding" style="background: var(--brand-light-green);">
+    <section class="section-padding section-bg-light">
         <div class="container">
-            <div class="section-header" data-aos="fade-up">
-                <h2 class="section-title heading-color">Laboratories</h2>
-                <p class="section-subtitle normal-color">Advanced diagnostic and testing services</p>
+            <div class="text-center mb-5" data-aos="fade-up">
+                <h2 class="brand-heading mb-2">Laboratories</h2>
+                <p class="brand-subheading">Advanced diagnostic and testing services</p>
             </div>
-            <div class="row g-3 justify-content-center">
+            <div class="row g-4 justify-content-center">
                 <?php
-                $lab_card_colors = ['#F0FFF8', '#E8F7FF', '#EFF6FF', '#F0FDFA', '#E8F7FF', '#F0FFF8'];
                 if($city_id > 0){
                     $labs_query = "SELECT l.*, c.city_name FROM laboratories l LEFT JOIN cities c ON l.city_id = c.city_id LEFT JOIN users u ON u.user_id = l.user_id WHERE u.status = 1 AND l.approve = 1 AND l.city_id=$city_id ORDER BY l.lab_id DESC LIMIT 6";
                 }else{
                     $labs_query = "SELECT l.*, c.city_name FROM laboratories l LEFT JOIN cities c ON l.city_id = c.city_id LEFT JOIN users u ON u.user_id = l.user_id WHERE u.status = 1 AND l.approve = 1 ORDER BY l.lab_id DESC LIMIT 6";
                 }
-                
                 $labs_result = mysqli_query($con, $labs_query);
-                $lab_index = 0;
                 $has_labs = $labs_result && mysqli_num_rows($labs_result) > 0;
                 if ($has_labs) {
                 while($lab = mysqli_fetch_assoc($labs_result)) {
                     $lab_stars_q = mysqli_query($con, "SELECT AVG(stars) as stars FROM `feedback` WHERE user_id='". $lab['user_id'] ."'");
-                    $lab_stars = mysqli_fetch_assoc($lab_stars_q);
-                    $lab_stars = $lab_stars['stars'];
-                    $lab_index++;
+                    $lab_stars = mysqli_fetch_assoc($lab_stars_q)['stars'];
                     $lab_rating = $lab_stars ? number_format((float)$lab_stars, 1) : 'New';
-                    $lab_bg = $lab_card_colors[($lab_index - 1) % count($lab_card_colors)];
                 ?>
-                <div class="col-lg-2 col-md-4 col-6" data-aos="fade-up" data-aos-delay="<?php echo 100 + ($lab_index * 80); ?>">
-                    <div class="speciality-card service-mini-card lab-mini-card">
-                        <div class="speciality-card-body" style="background-color: <?php echo $lab_bg; ?>;">
-                            <div class="service-mini-media">
-                                <?php if (!empty($lab['lab_pic'])): ?>
-                                    <img src="<?php echo BASE_URL; ?>admin/inc/uploads/labs/<?php echo $lab['lab_pic']; ?>" 
-                                        alt="<?php echo $lab['lab_name']; ?>" class="img-fluid">
-                                <?php else: ?>
-                                    <div class="service-mini-icon-wrap">
-                                        <i class="fas fa-flask service-mini-icon"></i>
-                                    </div>
-                                <?php endif; ?>
+                <div class="col-lg-3 col-md-4 col-6" data-aos="fade-up">
+                    <div class="brand-card">
+                        <div class="brand-card-body">
+                            <div class="brand-icon-box" style="color:#27C96A;">
+                                <i class="fas fa-flask"></i>
                             </div>
-                            <div class="service-mini-content">
-                                <div class="service-mini-badge">
-                                    <i class="fas fa-flask"></i>LABORATORY
-                                </div>
-                                <h4 class="speciality-title"><?php echo htmlspecialchars($lab['lab_name']); ?></h4>
-                                <div class="service-mini-meta">
-                                    <i class="fas fa-location-dot"></i><?php echo htmlspecialchars($lab['city_name']); ?>
-                                </div>
-                                <div class="service-mini-rating">
-                                    <i class="fas fa-star text-warning"></i><?php echo $lab_rating; ?> Rating
-                                </div>
-                                <a href="lab-detail?lab_id=<?php echo $lab['lab_id']; ?>" class="speciality-btn">
-                                    <i class="fas fa-vial"></i>
-                                    DETAILS
-                                </a>
+                            <h3 class="brand-title text-truncate w-100"><?php echo htmlspecialchars($lab['lab_name']); ?></h3>
+                            <div class="brand-meta">
+                                <span><i class="fas fa-map-marker-alt text-success"></i> <?php echo htmlspecialchars($lab['city_name']); ?></span>
+                                <span class="text-warning fw-bold"><i class="fas fa-star"></i> <?php echo $lab_rating; ?> Rating</span>
                             </div>
+                            <a href="lab-detail?lab_id=<?php echo $lab['lab_id']; ?>" class="brand-btn">
+                                VIEW DETAILS
+                            </a>
                         </div>
                     </div>
                 </div>
-                <?php }
-                } else { ?>
-                <div class="col-12">
-                    <div class="no-record-found">No Record Found</div>
-                </div>
-                <?php } ?>
+                <?php } } else { echo '<div class="col-12 text-center text-muted">No Labs Found</div>'; } ?>
             </div>
             <?php if ($has_labs): ?>
-            <div class="text-center mt-4" data-aos="fade-up">
-                <a href="labs" class="btn-view-all btn-view-labs">
-                    <i class="fas fa-flask"></i>
-                    View All Laboratories
-                </a>
+            <div class="text-center mt-5" data-aos="fade-up">
+                <a href="labs" class="btn btn-outline-primary rounded-pill px-4 fw-bold">View All Laboratories</a>
             </div>
             <?php endif; ?>
         </div>
     </section>
 
-        <!-- Radiology Section -->
-    <section class="modern-cards section-padding" style="background: var(--brand-light-blue);">
+    <!-- Radiology Section -->
+    <section class="section-padding section-bg-white">
         <div class="container">
-            <div class="section-header" data-aos="fade-up">
-                <h2 class="section-title heading-color">Radiology Centers</h2>
-                <p class="section-subtitle normal-color">Advanced imaging and diagnostic services</p>
+            <div class="text-center mb-5" data-aos="fade-up">
+                <h2 class="brand-heading mb-2">Radiology Centers</h2>
+                <p class="brand-subheading">Advanced imaging and diagnostic services</p>
             </div>
-            <div class="row g-3 justify-content-center">
+            <div class="row g-4 justify-content-center">
                 <?php
-                $rad_card_colors = ['#E8F7FF', '#F0FFF8', '#EFF6FF', '#F0FDFA', '#EEF2FF', '#F0F9FF'];
                 if($city_id > 0){
                     $rad_query = "SELECT r.*, c.city_name FROM radiology r LEFT JOIN cities c ON r.city_id = c.city_id LEFT JOIN users u ON u.user_id = r.user_id WHERE u.status = 1 AND r.approve = 1 AND r.city_id=$city_id ORDER BY r.rad_id DESC LIMIT 6";
                 }else{
                     $rad_query = "SELECT r.*, c.city_name FROM radiology r LEFT JOIN cities c ON r.city_id = c.city_id LEFT JOIN users u ON u.user_id = r.user_id WHERE u.status = 1 AND r.approve = 1 ORDER BY r.rad_id DESC LIMIT 6";
                 }
-                
                 $rad_result = mysqli_query($con, $rad_query);
-                $rad_index = 0;
                 $has_rad = $rad_result && mysqli_num_rows($rad_result) > 0;
                 if ($has_rad) {
                 while($rad = mysqli_fetch_assoc($rad_result)) {
                     $rad_stars_q = mysqli_query($con, "SELECT AVG(stars) as stars FROM `feedback` WHERE user_id='". $rad['user_id'] ."'");
-                    $rad_stars = mysqli_fetch_assoc($rad_stars_q);
-                    $rad_stars = $rad_stars['stars'];
-                    $rad_index++;
+                    $rad_stars = mysqli_fetch_assoc($rad_stars_q)['stars'];
                     $rad_rating = $rad_stars ? number_format((float)$rad_stars, 1) : 'New';
-                    $rad_bg = $rad_card_colors[($rad_index - 1) % count($rad_card_colors)];
                 ?>
-                <div class="col-lg-2 col-md-4 col-6" data-aos="fade-up" data-aos-delay="<?php echo 100 + ($rad_index * 80); ?>">
-                    <div class="speciality-card service-mini-card rad-mini-card">
-                        <div class="speciality-card-body" style="background-color: <?php echo $rad_bg; ?>;">
-                            <div class="service-mini-media">
-                                <?php if (!empty($rad['rad_pic'])): ?>
-                                    <img src="<?php echo BASE_URL; ?>admin/inc/uploads/radiology/<?php echo $rad['rad_pic']; ?>" 
-                                        alt="<?php echo $rad['rad_name']; ?>" class="img-fluid">
-                                <?php else: ?>
-                                    <div class="service-mini-icon-wrap">
-                                        <i class="fas fa-camera service-mini-icon"></i>
-                                    </div>
-                                <?php endif; ?>
+                <div class="col-lg-3 col-md-4 col-6" data-aos="fade-up">
+                    <div class="brand-card">
+                        <div class="brand-card-body">
+                            <div class="brand-icon-box" style="color:#0D2B6E;">
+                                <i class="fas fa-x-ray"></i>
                             </div>
-                            <div class="service-mini-content">
-                                <div class="service-mini-badge">
-                                    <i class="fas fa-camera"></i>RADIOLOGY
-                                </div>
-                                <h4 class="speciality-title"><?php echo htmlspecialchars($rad['rad_name']); ?></h4>
-                                <div class="service-mini-meta">
-                                    <i class="fas fa-location-dot"></i><?php echo htmlspecialchars($rad['city_name']); ?>
-                                </div>
-                                <div class="service-mini-rating">
-                                    <i class="fas fa-star text-warning"></i><?php echo $rad_rating; ?> Rating
-                                </div>
-                                <!-- Link 'radiology-detail' page par ja raha hai -->
-                                <a href="radiology-detail?rad_id=<?php echo $rad['rad_id']; ?>" class="speciality-btn">
-                                    <i class="fas fa-x-ray"></i>
-                                    DETAILS
-                                </a>
+                            <h3 class="brand-title text-truncate w-100"><?php echo htmlspecialchars($rad['rad_name']); ?></h3>
+                            <div class="brand-meta">
+                                <span><i class="fas fa-map-marker-alt text-primary"></i> <?php echo htmlspecialchars($rad['city_name']); ?></span>
+                                <span class="text-warning fw-bold"><i class="fas fa-star"></i> <?php echo $rad_rating; ?> Rating</span>
                             </div>
+                            <a href="radiology-detail?rad_id=<?php echo $rad['rad_id']; ?>" class="brand-btn">
+                                VIEW DETAILS
+                            </a>
                         </div>
                     </div>
                 </div>
-                <?php }
-                } else { ?>
-                <div class="col-12">
-                    <div class="no-record-found">No Record Found</div>
-                </div>
-                <?php } ?>
+                <?php } } else { echo '<div class="col-12 text-center text-muted">No Centers Found</div>'; } ?>
             </div>
             <?php if ($has_rad): ?>
-            <div class="text-center mt-4" data-aos="fade-up">
-                <!-- Link 'radiology' list page par ja raha hai -->
-                <a href="radiology-list" class="btn-view-all btn-view-labs">
-                    <i class="fas fa-camera"></i>
-                    View All Radiology Centers
-                </a>
+            <div class="text-center mt-5" data-aos="fade-up">
+                <a href="radiology-list" class="btn btn-outline-primary rounded-pill px-4 fw-bold">View All Radiology Centers</a>
             </div>
             <?php endif; ?>
         </div>
     </section>
 
     <!-- Blood Banks Section -->
-    <section class="modern-cards section-padding" style="background: var(--brand-light-blue);">
+    <section class="section-padding section-bg-light">
         <div class="container">
-            <div class="section-header" data-aos="fade-up">
-                <h2 class="section-title heading-color">Blood Banks</h2>
-                <p class="section-subtitle normal-color">Life-saving blood donation and supply services</p>
+            <div class="text-center mb-5" data-aos="fade-up">
+                <h2 class="brand-heading mb-2">Blood Banks</h2>
+                <p class="brand-subheading">Life-saving blood donation and supply services</p>
             </div>
-            <div class="row g-3 justify-content-center">
+            <div class="row g-4 justify-content-center">
                 <?php
-                $blood_card_colors = ['#E8F7FF', '#F0FFF8', '#EFF6FF', '#F0FDFA', '#EEF2FF', '#F0F9FF'];
                 if($city_id > 0){
                     $blood_banks_query = "SELECT bb.*, c.city_name FROM blood_bank bb LEFT JOIN cities c ON bb.city_id = c.city_id LEFT JOIN users u ON u.user_id = bb.user_id WHERE u.status = 1 AND bb.approve = 1 AND bb.city_id=$city_id ORDER BY bb.bb_id DESC LIMIT 6";
                 }else{
                     $blood_banks_query = "SELECT bb.*, c.city_name FROM blood_bank bb LEFT JOIN cities c ON bb.city_id = c.city_id LEFT JOIN users u ON u.user_id = bb.user_id WHERE u.status = 1 AND bb.approve = 1 ORDER BY bb.bb_id DESC LIMIT 6";
                 }
-                
                 $blood_banks_result = mysqli_query($con, $blood_banks_query);
-                $blood_index = 0;
                 $has_blood_banks = $blood_banks_result && mysqli_num_rows($blood_banks_result) > 0;
                 if ($has_blood_banks) {
                 while($blood_bank = mysqli_fetch_assoc($blood_banks_result)) {
                     $bb_stars_q = mysqli_query($con, "SELECT AVG(stars) as stars FROM `feedback` WHERE user_id='". $blood_bank['user_id'] ."'");
-                    $bb_stars = mysqli_fetch_assoc($bb_stars_q);
-                    $bb_stars = $bb_stars['stars'];
-                    $blood_index++;
+                    $bb_stars = mysqli_fetch_assoc($bb_stars_q)['stars'];
                     $blood_rating = $bb_stars ? number_format((float)$bb_stars, 1) : 'New';
-                    $blood_bg = $blood_card_colors[($blood_index - 1) % count($blood_card_colors)];
                 ?>
-                <div class="col-lg-2 col-md-4 col-6" data-aos="fade-up" data-aos-delay="<?php echo 100 + ($blood_index * 80); ?>">
-                    <div class="speciality-card service-mini-card blood-mini-card">
-                        <div class="speciality-card-body" style="background-color: <?php echo $blood_bg; ?>;">
-                            <div class="service-mini-media">
-                                <?php if (!empty($blood_bank['bb_pic'])): ?>
-                                    <img src="<?php echo BASE_URL; ?>admin/inc/uploads/blood-banks/<?php echo $blood_bank['bb_pic']; ?>" 
-                                        alt="<?php echo $blood_bank['bb_name']; ?>" class="img-fluid">
-                                <?php else: ?>
-                                    <div class="service-mini-icon-wrap">
-                                        <i class="fas fa-tint service-mini-icon"></i>
-                                    </div>
-                                <?php endif; ?>
+                <div class="col-lg-3 col-md-4 col-6" data-aos="fade-up">
+                    <div class="brand-card">
+                        <div class="brand-card-body">
+                            <div class="brand-icon-box" style="color:#EF4444;">
+                                <i class="fas fa-tint"></i>
                             </div>
-                            <div class="service-mini-content">
-                                <div class="service-mini-badge">
-                                    <i class="fas fa-tint"></i>BLOOD BANK
-                                </div>
-                                <h4 class="speciality-title"><?php echo htmlspecialchars($blood_bank['bb_name']); ?></h4>
-                                <div class="service-mini-meta">
-                                    <i class="fas fa-location-dot"></i><?php echo htmlspecialchars($blood_bank['city_name']); ?>
-                                </div>
-                                <div class="service-mini-rating">
-                                    <i class="fas fa-star text-warning"></i><?php echo $blood_rating; ?> Rating
-                                </div>
-                                <a href="blood-bank-detail?blood_bankid=<?php echo $blood_bank['bb_id']; ?>" class="speciality-btn">
-                                    <i class="fas fa-droplet"></i>
-                                    DETAILS
-                                </a>
+                            <h3 class="brand-title text-truncate w-100"><?php echo htmlspecialchars($blood_bank['bb_name']); ?></h3>
+                            <div class="brand-meta">
+                                <span><i class="fas fa-map-marker-alt text-danger"></i> <?php echo htmlspecialchars($blood_bank['city_name']); ?></span>
+                                <span class="text-warning fw-bold"><i class="fas fa-star"></i> <?php echo $blood_rating; ?> Rating</span>
                             </div>
+                            <a href="blood-bank-detail?blood_bankid=<?php echo $blood_bank['bb_id']; ?>" class="brand-btn">
+                                VIEW DETAILS
+                            </a>
                         </div>
                     </div>
                 </div>
-                <?php }
-                } else { ?>
-                <div class="col-12">
-                    <div class="no-record-found">No Record Found</div>
-                </div>
-                <?php } ?>
+                <?php } } else { echo '<div class="col-12 text-center text-muted">No Blood Banks Found</div>'; } ?>
             </div>
             <?php if ($has_blood_banks): ?>
-            <div class="text-center mt-4" data-aos="fade-up">
-                <a href="blood-banks" class="btn-view-all btn-view-blood">
-                    <i class="fas fa-tint"></i>
-                    View All Blood Banks
-                </a>
+            <div class="text-center mt-5" data-aos="fade-up">
+                <a href="blood-banks" class="btn btn-outline-primary rounded-pill px-4 fw-bold">View All Blood Banks</a>
             </div>
             <?php endif; ?>
         </div>
     </section>
 
+    <!-- Ad Space 3 -->
+    <div class="container my-4" data-aos="fade-up">
+        <div class="ad-slot text-center" style="min-height:90px; background:#f8f9fa; border:1px dashed #dee2e6; border-radius:8px; display:flex; align-items:center; justify-content:center;">
+            <span class="text-muted small">Advertisement Space</span>
+        </div>
+    </div>
+
     <!-- Reviews Section -->
-    <section class="section-padding d-none" id="reviews" style="background-color: var(--light);">
+    <section class="section-padding d-none" id="reviews" style="background-color: #F8FAFC;">
         <div class="container">
-            <div class="section-header" data-aos="fade-up">
-                <h2 class="section-title heading-color">Patient Reviews</h2>
-                <p class="section-subtitle normal-color">What our patients say about their experience</p>
+            <div class="text-center mb-5" data-aos="fade-up">
+                <h2 class="brand-heading mb-2">Patient Reviews</h2>
+                <p class="brand-subheading">What our patients say about their experience</p>
             </div>
             
             <!-- Reviews Carousel -->
@@ -708,61 +647,36 @@ $categories_result = mysqli_query($con, $categories_query);
                     $reviews_query = "SELECT dr.* FROM feedback dr WHERE dr.status = 1 and user_id=1 ORDER BY dr.feedback_id DESC LIMIT 6";
                     $reviews_result = mysqli_query($con, $reviews_query);
                     $reviews_array = [];
-                    while($review = mysqli_fetch_assoc($reviews_result)) {
-                        $reviews_array[] = $review;
-                    }
-                    
-                    // Group reviews in sets of 3
+                    while($review = mysqli_fetch_assoc($reviews_result)) { $reviews_array[] = $review; }
                     $grouped_reviews = array_chunk($reviews_array, 3);
                     foreach($grouped_reviews as $index => $review_group) {
                         $active_class = $index == 0 ? 'active' : '';
                     ?>
                     <div class="carousel-item <?php echo $active_class; ?>">
-                        <div class="row">
+                        <div class="row justify-content-center">
                             <?php foreach($review_group as $review) { ?>
                             <div class="col-lg-4 col-md-6 mb-4">
-                                <div class="review-card text-center h-100">
-                                    <div class="review-header justify-content-center">
-                                        <div class="review-avatar">
+                                <div class="brand-card p-4 text-center">
+                                    <div class="d-flex align-items-center justify-content-center mb-3">
+                                        <div class="text-white rounded-circle d-flex align-items-center justify-content-center fw-bold fs-4 me-3" style="width: 50px; height: 50px; background: #0D2B6E;">
                                             <?php echo strtoupper(substr($review['commenter_name'], 0, 1)); ?>
                                         </div>
-                                        <div class="review-info">
-                                            <h5><?php echo htmlspecialchars($review['commenter_name']); ?></h5>
-                                            <div class="review-rating">
+                                        <div class="text-start">
+                                            <h5 class="mb-0 fw-bold text-dark"><?php echo htmlspecialchars($review['commenter_name']); ?></h5>
+                                            <div class="text-warning small">
                                                 <?php for($i = 1; $i <= 5; $i++) { ?>
-                                                    <i class="fas fa-star <?php echo $i <= $review['stars'] ? 'text-warning' : 'text-muted'; ?>"></i>
+                                                    <i class="fas fa-star <?php echo $i <= $review['stars'] ? '' : 'text-muted opacity-25'; ?>"></i>
                                                 <?php } ?>
                                             </div>
                                         </div>
                                     </div>
-                                    <p class="review-text">"<?php echo htmlspecialchars($review['comment']); ?>"</p>
-                                    <small class="text-muted"><?php echo date('M d, Y', strtotime($review['created_at'])); ?></small>
+                                    <p class="text-muted fst-italic mb-3">"<?php echo htmlspecialchars($review['comment']); ?>"</p>
+                                    <small class="text-secondary fw-semibold mt-auto"><?php echo date('M d, Y', strtotime($review['created_at'])); ?></small>
                                 </div>
                             </div>
                             <?php } ?>
                         </div>
                     </div>
-                    <?php } ?>
-                </div>
-                
-                <!-- Carousel Controls -->
-                <button class="carousel-control-prev" type="button" data-bs-target="#reviewsCarousel" data-bs-slide="prev">
-                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                    <span class="visually-hidden">Previous</span>
-                </button>
-                <button class="carousel-control-next" type="button" data-bs-target="#reviewsCarousel" data-bs-slide="next">
-                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                    <span class="visually-hidden">Next</span>
-                </button>
-                
-                <!-- Carousel Indicators -->
-                <div class="carousel-indicators">
-                    <?php 
-                    $total_groups = count($grouped_reviews);
-                    for($i = 0; $i < $total_groups; $i++) { 
-                        $active_class = $i == 0 ? 'active' : '';
-                    ?>
-                    <button type="button" data-bs-target="#reviewsCarousel" data-bs-slide-to="<?php echo $i; ?>" class="<?php echo $active_class; ?>" aria-current="true" aria-label="Slide <?php echo $i + 1; ?>"></button>
                     <?php } ?>
                 </div>
             </div>
@@ -771,96 +685,54 @@ $categories_result = mysqli_query($con, $categories_query);
 
     <!-- Footer -->
     <?php include BASE_PATH.'/includes/footer.php';?>
+
+<!-- Scripts -->
 <script>
 $(document).ready(function() {
-    $('#cityselect').select2({
-        theme: 'bootstrap-5',
-        placeholder: 'Search city...',
-        allowClear: true,
-        width: '100%'
-    });
-
-    $('#heroCitySelect').select2({
-        theme: 'bootstrap-5',
-        placeholder: 'Select City',
-        allowClear: false,
-        width: '100%',
-        minimumResultsForSearch: 0,
-        dropdownCssClass: 'hero-city-dropdown'
-    }).on('change', function() {
+    $('#cityselect').select2({ theme: 'bootstrap-5', placeholder: 'Search city...', allowClear: true, width: '100%' });
+    $('#heroCitySelect').select2({ theme: 'bootstrap-5', placeholder: 'Select City', allowClear: false, width: '100%', minimumResultsForSearch: 0, dropdownCssClass: 'hero-city-dropdown' }).on('change', function() {
         var cityId = $(this).val();
         if (!cityId) return;
-
         fetch('<?php echo BASE_URL; ?>includes/set-city.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ city_id: parseInt(cityId) })
-        })
-        .then(function(response) { return response.json(); })
-        .then(function(data) {
-            if (data.success) {
-                location.reload();
-            }
-        });
+        }).then(function(response) { return response.json(); }).then(function(data) { if (data.success) { location.reload(); } });
     });
 });
 </script>
 
-
 <script>
-// 3. JAVASCRIPT UPDATE: Treatment show karne aur search karne ke liye update kiya gaya hai
 const specializationSearch = document.getElementById('specializationSearch');
 const specializationValue = document.getElementById('specializationValue');
 const specializationDropdown = document.getElementById('specializationDropdown');
 let allOptions = [];
 
-// Initialize options
 function initializeSpecializationOptions() {
     allOptions = [];
-    
-    // Build options from PHP data
     <?php foreach ($categories_data as $category_id => $category): ?>
         <?php foreach ($category['types'] as $type): ?>
             allOptions.push({
                 value: '<?php echo $type['dr_cat_type_id']; ?>',
-                // Yahan text me treatment de diya hai jo ke urdu me hai
                 text: '<?php echo addslashes($type['treatment']); ?>',
-                // Search filter ke liye dataText me Speciality aur English Type rakh diya hai
                 dataText: '<?php echo addslashes($category['cat_name'] . ' - ' . $type['type']); ?>' 
             });
         <?php endforeach; ?>
     <?php endforeach; ?>
-    
-    // Set initial value if selected
-    const currentSpecialization = '<?php echo $specialization; ?>';
+    const currentSpecialization = '<?php echo $specialization ?? ''; ?>';
     if (currentSpecialization) {
         const selectedOption = allOptions.find(option => option.value === currentSpecialization);
-        if (selectedOption) {
-            specializationSearch.value = selectedOption.text;
-        }
+        if (selectedOption) { specializationSearch.value = selectedOption.text; }
     }
 }
 
-// Filter options based on search
 function filterSpecializations(searchTerm) {
-    const filtered = allOptions.filter(option => 
-        option.text.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        option.dataText.toLowerCase().includes(searchTerm.toLowerCase()) // Ye line ensure karegi ke English type se bhi search ho jaye
-    );
-    
-    if (searchTerm === '') {
-        specializationDropdown.style.display = 'none';
-        return;
-    }
-    
+    const filtered = allOptions.filter(option => option.text.toLowerCase().includes(searchTerm.toLowerCase()) || option.dataText.toLowerCase().includes(searchTerm.toLowerCase()));
+    if (searchTerm === '') { specializationDropdown.style.display = 'none'; return; }
     if (filtered.length > 0) {
         let html = '';
         filtered.forEach(option => {
-            // UI me urdu text right align aur english text left align kiya gaya hai
-            html += `<div class="dropdown-item py-2 px-3" style="cursor: pointer;" data-value="${option.value}" data-text="${option.text}">
-                        <div class="fw-bold urdu-text mb-1">${option.text}</div>
-                        <small class="text-muted eng-subtext">${option.dataText}</small>
-                    </div>`;
+            html += `<div class="dropdown-item py-2 px-3" style="cursor: pointer;" data-value="${option.value}" data-text="${option.text}"><div class="fw-bold urdu-text mb-1">${option.text}</div><small class="text-muted eng-subtext">${option.dataText}</small></div>`;
         });
         specializationDropdown.innerHTML = html;
         specializationDropdown.style.display = 'block';
@@ -870,44 +742,31 @@ function filterSpecializations(searchTerm) {
     }
 }
 
-// Handle search input
 specializationSearch.addEventListener('input', function() {
     filterSpecializations(this.value);
     document.getElementById('specializationClear').style.display = this.value ? 'block' : 'none';
 });
 
-// Handle dropdown item click
 specializationDropdown.addEventListener('click', function(e) {
     const item = e.target.closest('.dropdown-item');
     if (item) {
-        const value = item.getAttribute('data-value');
-        const text = item.getAttribute('data-text');
-        
-        specializationSearch.value = text;
-        specializationValue.value = value;
+        specializationSearch.value = item.getAttribute('data-text');
+        specializationValue.value = item.getAttribute('data-value');
         specializationDropdown.style.display = 'none';
     }
 });
 
-// Hide dropdown when clicking outside
 document.addEventListener('click', function(e) {
-    if (!e.target.closest('.position-relative')) {
-        specializationDropdown.style.display = 'none';
-    }
+    if (!e.target.closest('.position-relative')) { specializationDropdown.style.display = 'none'; }
 });
 
-// Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
     initializeSpecializationOptions();
-
     var clearBtn = document.getElementById('specializationClear');
-    if (specializationSearch.value) {
-        clearBtn.style.display = 'block';
-    }
-
+    if (specializationSearch.value) { clearBtn.style.display = 'block'; }
     clearBtn.addEventListener('click', function() {
         specializationSearch.value = '';
-        specializationValue.value  = '';
+        specializationValue.value = '';
         specializationDropdown.style.display = 'none';
         clearBtn.style.display = 'none';
         specializationSearch.focus();

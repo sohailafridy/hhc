@@ -1,4 +1,13 @@
-<?php include '../includes/header.php'; ?>
+<?php 
+// ============================================================
+// 1. SEO FIX: Title aur Description set karein
+// ============================================================
+$GLOBALS['page_title'] = "About Us — Pakistan's Trusted Healthcare Directory | SehatNexa";
+$GLOBALS['page_description'] = "Learn about SehatNexa's mission to make healthcare accessible in Pakistan. Meet our team and discover how we connect patients with verified doctors, hospitals, and labs.";
+
+// 2. Header Include karein
+include '../includes/header.php'; 
+?>
 
 <?php
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -123,6 +132,14 @@ $average_rating = $review_count > 0 ? number_format($total_stars / $review_count
         </div>
     </div>
 </section>
+
+<!-- Ad Space 1 -->
+<div class="container my-4" data-aos="fade-up">
+    <div class="ad-slot text-center" style="min-height:90px; background:#f8f9fa; border:1px dashed #dee2e6; border-radius:8px; display:flex; align-items:center; justify-content:center;">
+        <!-- SpeedyAds Code Yahan Paste Karein -->
+        <span class="text-muted small">Advertisement Space</span>
+    </div>
+</div>
 
 <!-- ══ TEAM SECTION ═════════════════════════════════════════ -->
 <section class="section-padding">
@@ -365,19 +382,20 @@ $average_rating = $review_count > 0 ? number_format($total_stars / $review_count
                             <p>Board photos aur listing details direct WhatsApp par bhejein.</p>
                             <strong>+92 304 9744263</strong>
                         </a>
-                        <!-- <a href="https://wa.me/+923450333089" class="contact-action-card about-parallax-card">
-                            <div class="contact-action-icon"><i class="fas fa-handshake-angle"></i></div>
-                            <span class="mini-label">Community Support</span>
-                            <h4>Support Fixit Kohat</h4>
-                            <p>Collaboration aur local help ke liye alternate channel.</p>
-                            <strong>+92 345 0333089</strong>
-                        </a> -->
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </section>
+
+<!-- Ad Space 2 -->
+<div class="container my-4" data-aos="fade-up">
+    <div class="ad-slot text-center" style="min-height:90px; background:#f8f9fa; border:1px dashed #dee2e6; border-radius:8px; display:flex; align-items:center; justify-content:center;">
+        <!-- SpeedyAds Code Yahan Paste Karein -->
+        <span class="text-muted small">Advertisement Space</span>
+    </div>
+</div>
 
 <!-- ══ REVIEWS ═══════════════════════════════════════════════ -->
 <section class="reviews-section section-padding" id="reviews">

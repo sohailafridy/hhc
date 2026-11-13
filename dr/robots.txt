@@ -1,0 +1,18 @@
+User-agent: *
+# Admin, API aur system files ko block karein
+Disallow: /admin/
+Disallow: /api/
+Disallow: /includes/
+
+# Sensitive PHP files ko block karein
+Disallow: /config.php
+Disallow: /check_auth.php
+Disallow: /login.php
+Disallow: /login-process.php
+Disallow: /logout.php
+Disallow: /sample.php
+Disallow: /tracking.php
+Disallow: /api_list.html
+
+# Sitemap ka link (Baad mein banayenge)
+Sitemap: https://sehatnexa.com/sitemap.xml

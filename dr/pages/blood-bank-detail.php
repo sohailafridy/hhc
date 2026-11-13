@@ -1,8 +1,50 @@
-<?php include '../includes/header.php'; ?>
-
-<?php
-// Get blood bank ID from URL
+<?php 
+// ============================================================
+// 1. DB se Blood Bank ki info nikalna (Title & Schema ke liye)
+// ============================================================
+include_once '../config.php'; 
 $bb_id = isset($_GET['blood_bankid']) ? (int)$_GET['blood_bankid'] : 0;
+
+$bb_query = "SELECT bb.*, c.city_name
+               FROM blood_bank bb
+               LEFT JOIN cities c ON bb.city_id = c.city_id
+               LEFT JOIN users u ON u.user_id = bb.user_id
+               WHERE bb.bb_id = $bb_id AND u.status = 1 AND bb.approve = 1";
+$bb_result = mysqli_query($con, $bb_query);
+$bb_info = mysqli_fetch_assoc($bb_result);
+
+// ============================================================
+// 2. SEO Title, Description aur Schema set karna
+// ============================================================
+$bb_name_for_seo = $bb_info ? htmlspecialchars($bb_info['bb_name']) : 'Blood Bank';
+$city_name_for_seo = $bb_info ? htmlspecialchars($bb_info['city_name']) : 'Pakistan';
+
+$GLOBALS['page_title'] = "$bb_name_for_seo — Blood Bank Details & Reviews | SehatNexa";
+$GLOBALS['page_description'] = "Check available blood stock, contact details, and patient reviews for $bb_name_for_seo in $city_name_for_seo. Save lives by finding the nearest blood bank.";
+$GLOBALS['page_image'] = ($bb_info && !empty($bb_info['bb_pic'])) ? BASE_URL.'admin/inc/uploads/blood-banks/'.$bb_info['bb_pic'] : BASE_URL.'admin/inc/uploads/default/bb.jpg';
+
+if ($bb_info) {
+    // Schema Markup for Google
+    $schema = [
+        "@context" => "https://schema.org",
+        "@type" => "MedicalClinic", // Blood bank is a type of medical facility
+        "name" => $bb_info['bb_name'],
+        "image" => $GLOBALS['page_image'],
+        "telephone" => $bb_info['bb_contact'],
+        "address" => [
+            "@type" => "PostalAddress",
+            "streetAddress" => $bb_info['bb_address'],
+            "addressLocality" => $bb_info['city_name'],
+            "addressCountry" => "PK"
+        ]
+    ];
+    $GLOBALS['page_schema'] = json_encode($schema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+}
+
+// ============================================================
+// 3. Header Include karein
+// ============================================================
+include '../includes/header.php'; 
 
 // submit review
 if (isset($_POST['user_id']) && (int)$_POST['user_id'] != 0) {
@@ -22,14 +64,7 @@ if (isset($_POST['user_id']) && (int)$_POST['user_id'] != 0) {
     $feedback_run = mysqli_query($con, $insert_query);
 }
 
-// Fetch blood bank details (status users table se)
-$bb_query = "SELECT bb.*, c.city_name
-               FROM blood_bank bb
-               LEFT JOIN cities c ON bb.city_id = c.city_id
-               LEFT JOIN users u ON u.user_id = bb.user_id
-               WHERE bb.bb_id = $bb_id AND u.status = 1 AND bb.approve = 1";
-$bb_result = mysqli_query($con, $bb_query);
-$bb = mysqli_fetch_assoc($bb_result);
+$bb = $bb_info;
 
 // Blood bank na mile (ya inactive ho) to page yahin band
 if (!$bb) {
@@ -41,7 +76,7 @@ if (!$bb) {
 
 $user_id = (int)$bb['user_id'];
 
-// Calculate average rating from feedback table
+// Calculate average rating
 $rating_query = "SELECT AVG(stars) as avg_rating, COUNT(feedback_id) as total_reviews
                  FROM feedback
                  WHERE user_id = $user_id AND status = 1";
@@ -50,9 +85,7 @@ $rating_data = mysqli_fetch_assoc($rating_result);
 $avg_rating = $rating_data['avg_rating'] ? round($rating_data['avg_rating'], 1) : 0;
 $total_reviews = $rating_data['total_reviews'] ? $rating_data['total_reviews'] : 0;
 
-// ============================================
-// FETCH BLOOD STOCK (Available Blood Bags)
-// ============================================
+// Fetch Blood Stock
 $stock_query = "SELECT bb_available_blood.avail_b_id, bb_available_blood.stock, blood_groups.bg_name AS blood_group
                 FROM bb_available_blood
                 LEFT JOIN blood_groups ON blood_groups.bg_id = bb_available_blood.bg_id
@@ -60,14 +93,10 @@ $stock_query = "SELECT bb_available_blood.avail_b_id, bb_available_blood.stock, 
                 ORDER BY blood_groups.bg_id ASC";
 $stock_result = mysqli_query($con, $stock_query);
 
-// ============================================
-// FETCH BLOOD BANK NOTES (Admin Message)
-// ============================================
+// Fetch Blood Bank Notes
 $notes_query = "SELECT * FROM notes WHERE user_id = $user_id LIMIT 1";
 $notes_result = mysqli_query($con, $notes_query);
 $bb_note = ($notes_result && mysqli_num_rows($notes_result) > 0) ? mysqli_fetch_assoc($notes_result) : null;
-
-// Check condition for notes: show only if not empty and not just dash '-'
 $show_notes = ($bb_note && !empty(trim($bb_note['notes'])) && trim($bb_note['notes']) !== '-');
 ?>
 
@@ -84,7 +113,7 @@ $show_notes = ($bb_note && !empty(trim($bb_note['notes'])) && trim($bb_note['not
                 <div class="col-lg-4 col-md-5">
                     <div class="bb-image-wrapper">
                         <?php if (!empty($bb['bb_pic']) && file_exists(BASE_PATH.'/admin/inc/uploads/blood-banks/' . $bb['bb_pic'])): ?>
-                            <img src="<?php echo BASE_URL; ?>admin/inc/uploads/blood-banks/<?php echo htmlspecialchars($bb['bb_pic']); ?>" alt="<?php echo htmlspecialchars($bb['bb_name']); ?>" class="bb-image">
+                            <img src="<?php echo BASE_URL; ?>admin/inc/uploads/blood-banks/<?php echo htmlspecialchars($bb['bb_pic']); ?>" alt="<?php echo htmlspecialchars($bb['bb_name']); ?> in <?php echo htmlspecialchars($bb['city_name']); ?>" class="bb-image">
                         <?php else: ?>
                             <img src="<?php echo BASE_URL; ?>admin/inc/uploads/default/bb.jpg" alt="<?php echo htmlspecialchars($bb['bb_name']); ?>" class="bb-image">
                         <?php endif; ?>
@@ -93,6 +122,7 @@ $show_notes = ($bb_note && !empty(trim($bb_note['notes'])) && trim($bb_note['not
                 <div class="col-lg-8 col-md-7">
                     <div class="bb-info">
                         <div class="bb-header">
+                            <!-- SEO: H1 properly added -->
                             <h1 class="bb-name txt-color"><?php echo htmlspecialchars($bb['bb_name']); ?></h1>
                             <div class="bb-rating">
                                 <div class="stars">
@@ -137,10 +167,11 @@ $show_notes = ($bb_note && !empty(trim($bb_note['notes'])) && trim($bb_note['not
                         </div>
 
                         <div class="bb-actions">
-                            <a href="tel:+923371320001" class="btn btn-outline-primary btn-call-large">
+                            <!-- BUG FIX: Hardcoded number changed to dynamic bb_contact -->
+                            <a href="tel:<?php echo htmlspecialchars($bb['bb_contact']); ?>" class="btn btn-outline-primary btn-call-large">
                                 <i class="fas fa-phone-alt"></i>
                                 Emergency Call
-                                </a>
+                            </a>
                             <button class="btn btn-outline-primary btn-call-large">
                                 <i class="fas fa-tint"></i>
                                 Donate Blood
@@ -153,9 +184,15 @@ $show_notes = ($bb_note && !empty(trim($bb_note['notes'])) && trim($bb_note['not
     </div>
 </section>
 
-<!-- ============================================ -->
-<!-- NEW SECTION: Available Blood Bags            -->
-<!-- ============================================ -->
+<!-- Ad Space 1 -->
+<div class="container my-4" data-aos="fade-up">
+    <div class="ad-slot text-center" style="min-height:90px; background:#f8f9fa; border:1px dashed #dee2e6; border-radius:8px; display:flex; align-items:center; justify-content:center;">
+        <!-- SpeedyAds Code Yahan Paste Karein -->
+        <span class="text-muted small">Advertisement Space</span>
+    </div>
+</div>
+
+<!-- Available Blood Bags -->
 <section class="bb-stock-section section-padding bg-white">
     <div class="container">
         <div class="section-header">
@@ -193,9 +230,7 @@ $show_notes = ($bb_note && !empty(trim($bb_note['notes'])) && trim($bb_note['not
     </div>
 </section>
 
-<!-- ============================================ -->
-<!-- NEW SECTION: Blood Bank Admin Message        -->
-<!-- ============================================ -->
+<!-- Blood Bank Admin Message -->
 <?php if ($show_notes): ?>
 <section class="bb-notes-section section-padding">
     <div class="container">
@@ -204,7 +239,7 @@ $show_notes = ($bb_note && !empty(trim($bb_note['notes'])) && trim($bb_note['not
                 <i class="fas fa-bullhorn"></i>
             </div>
             <div class="notes-content-bb">
-                <h3 class="notes-title-bb">Message from Admin</h3>
+                <h2 class="notes-title-bb">Message from Admin</h2>
                 <div class="notes-text-bb">
                     <?php echo nl2br(htmlspecialchars($bb_note['notes'])); ?>
                 </div>
@@ -358,11 +393,19 @@ $show_notes = ($bb_note && !empty(trim($bb_note['notes'])) && trim($bb_note['not
     </div>
 </section>
 
+<!-- Ad Space 2 -->
+<div class="container my-4" data-aos="fade-up">
+    <div class="ad-slot text-center" style="min-height:90px; background:#f8f9fa; border:1px dashed #dee2e6; border-radius:8px; display:flex; align-items:center; justify-content:center;">
+        <!-- SpeedyAds Code Yahan Paste Karein -->
+        <span class="text-muted small">Advertisement Space</span>
+    </div>
+</div>
+
 <!-- Footer -->
 <?php include BASE_PATH.'/includes/footer.php';?>
 
 <script>
-// (Aapka purana JavaScript code yahan waise hi rahega)
+// Star Rating Functionality
 document.addEventListener('DOMContentLoaded', function() {
     const stars = document.querySelectorAll('.star-rating .star');
     const ratingText = document.querySelector('.rating-text');
@@ -391,16 +434,18 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    document.querySelector('.star-rating').addEventListener('mouseleave', function() {
-        const checkedInput = document.querySelector('.star-rating input[type="radio"]:checked');
-        if (checkedInput) {
-            updateStarDisplay(checkedInput.value);
-            ratingText.textContent = ratingTexts[checkedInput.value];
-        } else {
-            updateStarDisplay(0);
-            ratingText.textContent = 'Click to rate';
-        }
-    });
+    if(document.querySelector('.star-rating')) {
+        document.querySelector('.star-rating').addEventListener('mouseleave', function() {
+            const checkedInput = document.querySelector('.star-rating input[type="radio"]:checked');
+            if (checkedInput) {
+                updateStarDisplay(checkedInput.value);
+                ratingText.textContent = ratingTexts[checkedInput.value];
+            } else {
+                updateStarDisplay(0);
+                ratingText.textContent = 'Click to rate';
+            }
+        });
+    }
 
     function updateStarDisplay(rating) {
         stars.forEach((star, index) => {
@@ -555,4 +600,4 @@ document.addEventListener('DOMContentLoaded', function() {
         return card;
     }
 });
-</script>
+</script>s
