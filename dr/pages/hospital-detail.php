@@ -368,9 +368,59 @@ if ($av['type'] === '247') {
 .btn-load-more:disabled { opacity: .5; cursor: not-allowed; }
 .btn-load-more .spinner-border { width: 16px; height: 16px; border-width: 2px; }
 
+/* ============================================================
+   PAGE SEARCH BAR
+   ============================================================ */
+.page-search-wrap {
+    position: sticky; top: 70px; z-index: 50;
+    margin: 14px 0 20px;
+}
+.page-search-box {
+    display: flex; align-items: center; gap: 10px;
+    background: #fff; border: 2px solid #e2e8f0;
+    border-radius: 14px; padding: 10px 16px;
+    box-shadow: 0 6px 18px rgba(13,43,110,.08);
+    transition: border-color .2s ease, box-shadow .2s ease;
+}
+.page-search-box:focus-within {
+    border-color: #00A8CC;
+    box-shadow: 0 6px 22px rgba(0,168,204,.18);
+}
+.page-search-box i.search-icon { color: #1C3F8F; font-size: 1.05rem; }
+.page-search-box input {
+    flex: 1; border: none; outline: none; background: transparent;
+    font-size: .95rem; font-weight: 600; color: #0D2B6E;
+}
+.page-search-box input::placeholder { color: #94a3b8; font-weight: 500; }
+.page-search-clear {
+    border: none; background: #f1f5f9; color: #64748b;
+    width: 30px; height: 30px; border-radius: 50%;
+    cursor: pointer; display: none; align-items: center; justify-content: center;
+    transition: all .2s ease;
+}
+.page-search-clear:hover { background: #e2e8f0; color: #1C3F8F; }
+.page-search-clear.show { display: flex; }
+.page-search-count {
+    font-size: .72rem; font-weight: 700; color: #64748b;
+    padding: 3px 10px; border-radius: 20px; background: #f1f5f9;
+    white-space: nowrap;
+}
+.page-search-count.has-results { background: #dcfce7; color: #15803d; }
+.page-search-count.no-results  { background: #fee2e2; color: #b91c1c; }
+
+/* Search highlight + hide */
+.search-hidden { display: none !important; }
+mark.search-hit {
+    background: #fef08a; color: #854d0e;
+    padding: 1px 3px; border-radius: 3px;
+}
+.info-card.search-empty-card { display: none !important; }
+
 @media (max-width: 576px) {
     .hero-avail { width: 100%; }
     .avail-main .am-title { font-size: 1.1rem; }
+    .page-search-wrap { position: relative; top: auto; }
+    .page-search-count { display: none; }
 }
 </style>
 
@@ -423,6 +473,23 @@ if ($av['type'] === '247') {
         </div>
     </div>
 </section>
+
+<!-- ===== PAGE SEARCH BAR ===== -->
+<div class="container">
+    <div class="page-search-wrap">
+        <div class="page-search-box">
+            <i class="fas fa-search search-icon"></i>
+            <input type="text" id="pageSearchInput" 
+                   placeholder="Search doctors, labs, facilities, reviews, address..." 
+                   autocomplete="off"
+                   aria-label="Search this page">
+            <span class="page-search-count" id="pageSearchCount">0 results</span>
+            <button type="button" class="page-search-clear" id="pageSearchClear" aria-label="Clear search">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    </div>
+</div>
 
 <!-- ===== STATS BAR ===== -->
 <div class="container">
@@ -587,8 +654,7 @@ if ($av['type'] === '247') {
                     </div>
                 </div>
 
-
-                 <!-- REGISTERED LABS -->
+                <!-- REGISTERED LABS -->
                 <div class="info-card">
                     <div class="info-card-header">
                         <h2><i class="fas fa-flask"></i> Registered Labs (<?php echo $total_labs; ?>)</h2>
@@ -658,7 +724,6 @@ if ($av['type'] === '247') {
                     </div>
                 </div>
 
-
                 <!-- Doctors -->
                 <div class="info-card">
                     <div class="info-card-header">
@@ -688,8 +753,6 @@ if ($av['type'] === '247') {
                         <?php endif; ?>
                     </div>
                 </div>
-
-               
 
             </div>
 
@@ -796,55 +859,224 @@ if ($av['type'] === '247') {
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+
+    /* =========================================================
+       LOAD MORE REVIEWS
+       ========================================================= */
     const loadBtn = document.getElementById('loadMoreReviews');
-    if (!loadBtn) return;
+    if (loadBtn) {
+        loadBtn.addEventListener('click', function() {
+            const btn = this;
+            const userId = btn.dataset.userId;
+            let offset = parseInt(btn.dataset.offset, 10);
+            const total = parseInt(btn.dataset.total, 10);
+            const limit = 5;
 
-    loadBtn.addEventListener('click', function() {
-        const btn = this;
-        const userId = btn.dataset.userId;
-        let offset = parseInt(btn.dataset.offset, 10);
-        const total = parseInt(btn.dataset.total, 10);
-        const limit = 5;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Loading...';
 
-        btn.disabled = true;
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Loading...';
-
-        const xhr = new XMLHttpRequest();
-        xhr.open('POST', '<?php echo BASE_URL; ?>ajax/load-reviews.php', true);
-        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-        xhr.onload = function() {
-            if (xhr.status === 200) {
-                try {
-                    const res = JSON.parse(xhr.responseText);
-                    if (res.success && res.html) {
-                        const list = document.getElementById('reviews-list');
-                        list.insertAdjacentHTML('beforeend', res.html);
-                        offset += limit;
-                        btn.dataset.offset = offset;
-                        btn.disabled = false;
-                        if (offset >= total) {
-                            btn.remove();
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', '<?php echo BASE_URL; ?>ajax/load-reviews.php', true);
+            xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+            xhr.onload = function() {
+                if (xhr.status === 200) {
+                    try {
+                        const res = JSON.parse(xhr.responseText);
+                        if (res.success && res.html) {
+                            const list = document.getElementById('reviews-list');
+                            list.insertAdjacentHTML('beforeend', res.html);
+                            offset += limit;
+                            btn.dataset.offset = offset;
+                            btn.disabled = false;
+                            if (offset >= total) {
+                                btn.remove();
+                            } else {
+                                btn.innerHTML = '<i class="fas fa-chevron-down"></i> Load More Reviews';
+                            }
                         } else {
+                            btn.disabled = false;
                             btn.innerHTML = '<i class="fas fa-chevron-down"></i> Load More Reviews';
                         }
-                    } else {
+                    } catch (e) {
                         btn.disabled = false;
                         btn.innerHTML = '<i class="fas fa-chevron-down"></i> Load More Reviews';
                     }
-                } catch (e) {
+                } else {
                     btn.disabled = false;
                     btn.innerHTML = '<i class="fas fa-chevron-down"></i> Load More Reviews';
                 }
-            } else {
+            };
+            xhr.onerror = function() {
                 btn.disabled = false;
                 btn.innerHTML = '<i class="fas fa-chevron-down"></i> Load More Reviews';
+            };
+            xhr.send('user_id=' + encodeURIComponent(userId) + '&offset=' + offset + '&limit=' + limit);
+        });
+    }
+
+    /* =========================================================
+       PAGE SEARCH (client-side, highlights + filters)
+       ========================================================= */
+    const searchInput = document.getElementById('pageSearchInput');
+    const searchClear = document.getElementById('pageSearchClear');
+    const searchCount = document.getElementById('pageSearchCount');
+
+    if (!searchInput) return;
+
+    // Target elements we search through
+    const searchSelectors = [
+        '.doctor-mini-card',          // doctors, labs, radiology
+        '.feedback-item',             // reviews
+        '.facility-item',             // facilities
+        '.bed-item',                  // beds
+        '.avail-tag',                 // availability tags
+        '.info-card p',               // address / notes / paragraphs
+        '.info-card-header h2',       // section headings
+        '.avail-main .am-title',
+        '.avail-main .am-sub'
+    ];
+
+    // Card-level selectors we hide if all children hidden
+    const containerSelectors = [
+        '.info-card',
+        '.avail-card'
+    ];
+
+    // Save original HTML for clearing
+    const nodes = [];
+    document.querySelectorAll(searchSelectors.join(',')).forEach(el => {
+        if (el.dataset.searchOriginal === undefined) {
+            el.dataset.searchOriginal = el.innerHTML;
+        }
+        nodes.push(el);
+    });
+
+    // Escape regex
+    function escapeRegex(str) {
+        return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
+    // Strip existing <mark> safely
+    function stripMarks(el) {
+        if (el.dataset.searchOriginal !== undefined) {
+            el.innerHTML = el.dataset.searchOriginal;
+        }
+    }
+
+    // Highlight matches inside element (only for text nodes)
+    function highlight(el, term) {
+        if (!term) return;
+        const regex = new RegExp('(' + escapeRegex(term) + ')', 'gi');
+        const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, null);
+        const textNodes = [];
+        let n;
+        while (n = walker.nextNode()) {
+            // Skip script/style/input/textarea content
+            const tag = n.parentNode.tagName;
+            if (tag === 'SCRIPT' || tag === 'STYLE' || tag === 'INPUT' || tag === 'TEXTAREA') continue;
+            if (n.nodeValue.trim() === '') continue;
+            textNodes.push(n);
+        }
+        textNodes.forEach(node => {
+            const val = node.nodeValue;
+            if (!regex.test(val)) return;
+            regex.lastIndex = 0;
+            const span = document.createElement('span');
+            span.innerHTML = val.replace(regex, '<mark class="search-hit">$1</mark>');
+            node.parentNode.replaceChild(span, node);
+        });
+    }
+
+    // Perform search
+    function runSearch(rawTerm) {
+        const term = rawTerm.trim();
+        const lower = term.toLowerCase();
+
+        // Reset all
+        nodes.forEach(el => {
+            el.classList.remove('search-hidden');
+            stripMarks(el);
+        });
+
+        // Clear previous empty-state
+        document.querySelectorAll('.search-no-results-msg').forEach(e => e.remove());
+        document.querySelectorAll('.info-card.search-empty-card').forEach(e => e.classList.remove('search-empty-card'));
+
+        if (!term) {
+            searchClear.classList.remove('show');
+            searchCount.textContent = '0 results';
+            searchCount.classList.remove('has-results', 'no-results');
+            return;
+        }
+
+        searchClear.classList.add('show');
+
+        let matchCount = 0;
+
+        nodes.forEach(el => {
+            const text = (el.textContent || '').toLowerCase();
+            if (text.indexOf(lower) !== -1) {
+                matchCount++;
+                el.classList.remove('search-hidden');
+                highlight(el, term);
+            } else {
+                el.classList.add('search-hidden');
             }
-        };
-        xhr.onerror = function() {
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-chevron-down"></i> Load More Reviews';
-        };
-        xhr.send('user_id=' + encodeURIComponent(userId) + '&offset=' + offset + '&limit=' + limit);
+        });
+
+        // Hide cards where everything is hidden
+        document.querySelectorAll(containerSelectors.join(',')).forEach(card => {
+            const visibleKids = card.querySelectorAll(
+                '.doctor-mini-card:not(.search-hidden), .feedback-item:not(.search-hidden), .facility-item:not(.search-hidden), .bed-item:not(.search-hidden), .avail-tag:not(.search-hidden), p:not(.search-hidden), h2:not(.search-hidden)'
+            );
+            if (visibleKids.length === 0 && matchCount > 0) {
+                // Only hide container if it's a list-like card
+                const isListCard = card.querySelector('.doctor-mini-card, .feedback-item, .facility-item');
+                if (isListCard) card.classList.add('search-empty-card');
+            }
+        });
+
+        // Update count badge
+        searchCount.textContent = matchCount + ' result' + (matchCount === 1 ? '' : 's');
+        searchCount.classList.remove('has-results', 'no-results');
+        searchCount.classList.add(matchCount > 0 ? 'has-results' : 'no-results');
+
+        // Global no-results message
+        if (matchCount === 0) {
+            const grid = document.querySelector('.detail-grid');
+            if (grid && !grid.querySelector('.search-no-results-msg')) {
+                const msg = document.createElement('div');
+                msg.className = 'search-no-results-msg text-center py-5';
+                msg.innerHTML = '<i class="fas fa-search fa-2x text-muted mb-3"></i>' +
+                                '<h4 class="fw-bold" style="color:#0D2B6E;">No results found</h4>' +
+                                '<p class="text-muted mb-0">No content on this page matches "<strong>' +
+                                term.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</strong>".</p>';
+                grid.parentNode.insertBefore(msg, grid);
+            }
+        }
+    }
+
+    // Debounce
+    let debounceTimer;
+    searchInput.addEventListener('input', function() {
+        clearTimeout(debounceTimer);
+        const val = this.value;
+        debounceTimer = setTimeout(() => runSearch(val), 200);
+    });
+
+    // Clear button
+    searchClear.addEventListener('click', function() {
+        searchInput.value = '';
+        runSearch('');
+        searchInput.focus();
+    });
+
+    // Esc key clears
+    searchInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            searchInput.value = '';
+            runSearch('');
+        }
     });
 });
 </script>
