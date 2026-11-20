@@ -3,7 +3,7 @@ include BASE_PATH.'/tracking.php';
 include 'colors.php'; 
 $city_id = 0;
 ?>
-<script>
+<!-- <script>
 // Check if we already tried to get location in this session
 if(!sessionStorage.getItem('locationAttempted')) {
   sessionStorage.setItem('locationAttempted', 'true');
@@ -35,7 +35,7 @@ if(!sessionStorage.getItem('locationAttempted')) {
     );
   }
 }
-</script>
+</script> -->
 <?php
 
 if(isset($_SESSION['city']) && !empty($_SESSION['city'])) {
