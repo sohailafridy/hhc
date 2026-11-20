@@ -213,7 +213,7 @@ if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
 $hospital_id = (int)$_GET['id'];
 
 // Fetch hospital details with related information
-$query = "SELECT h.*, c.city_name, u.status as estatus, u.username, u.email as user_email
+$query = "SELECT h.*, c.city_name, u.status as estatus, u.username,u.password, u.email as user_email
           FROM hospitals h 
           LEFT JOIN cities c ON h.city_id = c.city_id
           LEFT JOIN users u ON u.user_id = h.user_id
@@ -476,7 +476,7 @@ $total_reviews = $rating_data['total_reviews'] ? $rating_data['total_reviews'] :
                 <?php endif; ?>
                 <div class="page-header-title">
                     <h1><?php echo htmlspecialchars($hospital['hospital_name']); ?></h1>
-                    <p><i class="fas fa-map-marker-alt me-1"></i> <?php echo htmlspecialchars($hospital['city_name']); ?> 
+                    <p style="color: black;"><i class="fas fa-map-marker-alt me-1"></i> <?php echo htmlspecialchars($hospital['city_name']); ?> 
                        <span class="mx-2">|</span> 
                        <i class="fas fa-phone me-1"></i> <?php echo htmlspecialchars($hospital['hospital_phone']); ?>
                        <span class="mx-2">|</span>
@@ -572,6 +572,10 @@ $total_reviews = $rating_data['total_reviews'] ? $rating_data['total_reviews'] :
                     <div class="info-row">
                         <span class="label">Username</span>
                         <span class="value"><?php echo htmlspecialchars($hospital['username'] ?? 'N/A'); ?></span>
+                    </div>
+                    <div class="info-row">
+                        <span class="label">Password</span>
+                        <span class="value"><?php echo htmlspecialchars(base64_decode($hospital['password']) ?? 'N/A'); ?></span>
                     </div>
                     <div class="info-row">
                         <span class="label">Email</span>

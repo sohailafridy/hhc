@@ -167,7 +167,7 @@ $total_reviews_count = mysqli_num_rows($reviews_result);
                 <?php endif; ?>
                 <div class="page-header-title">
                     <h1>Dr. <?php echo htmlspecialchars($doctor['doctor_name']); ?></h1>
-                    <p>
+                    <p style="color:white;">
                         <i class="fas fa-stethoscope me-1"></i> <?php echo htmlspecialchars($doctor['specialization'] ?? 'General'); ?>
                         <span class="mx-2">|</span>
                         <i class="fas fa-hospital me-1"></i> <?php echo htmlspecialchars($hospital_name); ?>

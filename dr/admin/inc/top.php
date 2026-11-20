@@ -1,4 +1,17 @@
 <?php
+$userType = '';
+$userType = $_SESSION['type'];
+
+if($userType == 'admin'){$dashboard = 'admin';}
+if($userType == 'doctor'){$dashboard = 'doctor';}
+if($userType == 'lab'){$dashboard = 'lab';}
+if($userType == 'hospital'){$dashboard = 'hospital';}
+if($userType == 'blood bank'){$dashboard = 'blood bank';}
+if($userType == 'radiology'){$dashboard = 'radiology';}
+
+
+
+
 if (!function_exists('admin_top_time_ago')) {
     function admin_top_time_ago($datetime)
     {
@@ -657,32 +670,31 @@ if (isset($_SESSION['type']) && $_SESSION['type'] == 'hospital' && isset($_SESSI
             <a href="#!" data-toggle="offcanvas" class="sidebar-toggle"></a>
             <ul class="top-nav lft-nav">
                <li>
-                  <a href="<?php echo BASE_URL; ?>admin" class="dropdown-toggle drop icon-circle drop-image">
+                  <a href="<?php echo BASE_URL.$dashboard; ?>" class="dropdown-toggle drop icon-circle drop-image">
                      <i class="ti-home"> </i><span> Dashboard</span>
                   </a>
                </li>
-               <li class="dropdown">
-                  <a href="#!" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false" class="dropdown-toggle drop icon-circle drop-image">
-                     <span>Quick Lists </span><i class=" icofont icofont-simple-down"></i>
-                  </a>
-                  <ul class="dropdown-menu settings-menu">
-                     <li><a href="<?php echo BASE_URL; ?>admin/doctors/list">Doctors (<?php echo $top_doctors_count; ?>)</a></li>
-                     <li><a href="<?php echo BASE_URL; ?>admin/hospitals/list">Hospitals (<?php echo $top_hospitals_count; ?>)</a></li>
-                     <li><a href="<?php echo BASE_URL; ?>admin/laboratories/list">Laboratories (<?php echo $top_labs_count; ?>)</a></li>
-                     <li><a href="<?php echo BASE_URL; ?>admin/blood-banks/list">Blood Banks (<?php echo $top_bb_count; ?>)</a></li>
-                     <li><a href="<?php echo BASE_URL; ?>admin/cities/list">Cities (<?php echo $top_cities_count; ?>)</a></li>
-                     <li><a href="<?php echo BASE_URL; ?>admin/users">Users (<?php echo $top_users_count; ?>)</a></li>
-                  </ul>
-               </li>
-               <li class="dropdown pc-rheader-submenu message-notification search-toggle">
-                  <a href="#!" id="morphsearch-search" class="drop icon-circle txt-white">
-                     <i class="ti-search"></i>
-                  </a>
-               </li>
+            <?php if($userType == 'admin'){ ?>
+                   <li class="dropdown">
+                      <a href="#!" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false" class="dropdown-toggle drop icon-circle drop-image">
+                         <span>Quick Lists </span><i class=" icofont icofont-simple-down"></i>
+                      </a>
+                      <ul class="dropdown-menu settings-menu">
+                         <li><a href="<?php echo BASE_URL; ?>admin/doctors/list">Doctors (<?php echo $top_doctors_count; ?>)</a></li>
+                         <li><a href="<?php echo BASE_URL; ?>admin/hospitals/list">Hospitals (<?php echo $top_hospitals_count; ?>)</a></li>
+                         <li><a href="<?php echo BASE_URL; ?>admin/laboratories/list">Laboratories (<?php echo $top_labs_count; ?>)</a></li>
+                         <li><a href="<?php echo BASE_URL; ?>admin/blood-banks/list">Blood Banks (<?php echo $top_bb_count; ?>)</a></li>
+                         <li><a href="<?php echo BASE_URL; ?>admin/cities/list">Cities (<?php echo $top_cities_count; ?>)</a></li>
+                         <li><a href="<?php echo BASE_URL; ?>admin/users">Users (<?php echo $top_users_count; ?>)</a></li>
+                      </ul>
+                   </li>
+            <?php } ?>
+               
             </ul>
 
             <!-- Navbar Right Menu (fixed: was a broken <ul"> tag) -->
             <ul class="top-nav rgt-nav">
+                <?php if($userType == 'admin'){ ?>
                   <!--Notification Menu-->
                   <li class="dropdown notification-menu">
                      <a href="#!" data-toggle="dropdown" aria-expanded="false" class="dropdown-toggle">
@@ -716,7 +728,7 @@ if (isset($_SESSION['type']) && $_SESSION['type'] == 'hospital' && isset($_SESSI
                         </li>
                      </ul>
                   </li>
-
+                  
                   <!-- recycle (desktop only) -->
                   <li class="pc-rheader-submenu hide-mobile">
                      <a href="<?php echo BASE_URL; ?>admin/recycle" class="drop icon-circle" title="Recycle Bin">
@@ -726,7 +738,7 @@ if (isset($_SESSION['type']) && $_SESSION['type'] == 'hospital' && isset($_SESSI
                         <?php endif; ?>
                      </a>
                   </li>
-
+                  <?php } ?>
                   <!-- window screen (desktop only) -->
                   <li class="pc-rheader-submenu hide-mobile">
                      <a href="#!" class="drop icon-circle" onclick="javascript:toggleFullScreen()">

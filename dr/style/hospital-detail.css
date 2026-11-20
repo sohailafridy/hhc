@@ -326,7 +326,9 @@
     box-shadow: 0 0 0 4px rgba(0,168,204,0.12);
     outline: none;
 }
-
+.btn-primary{
+    background: var(--grad-teal) !important;
+}
 .review-form-card .btn-submit {
     background: var(--grad-teal);
     color: white; border: none;

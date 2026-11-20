@@ -14,6 +14,14 @@ if (!isset($_SESSION['user_id']) || $_SESSION['type'] != 'hospital') {
 
 $user_id = $_SESSION['user_id'];
 
+// ============================================
+// ENSURE hospitals.availability COLUMN EXISTS
+// ============================================
+$col_check = mysqli_query($con, "SHOW COLUMNS FROM hospitals LIKE 'availability'");
+if ($col_check && mysqli_num_rows($col_check) == 0) {
+    mysqli_query($con, "ALTER TABLE hospitals ADD COLUMN availability VARCHAR(500) NULL DEFAULT NULL");
+}
+
 // Get hospital data
 $hospital_query = "SELECT h.*, c.city_name 
                    FROM hospitals h 
@@ -30,6 +38,155 @@ if (!$hospital_data) {
 
 $hospital_id = $hospital_data['hospital_id'];
 $entity_id   = $hospital_data['entity_id'];
+
+// ============================================
+// AVAILABILITY HELPERS
+// Stored format in hospitals.availability:
+//   "Open 24/7"
+//   "Mon - Fri | 09:00 AM - 05:00 PM"
+//   "Temporarily Closed"
+//   + optional " | Emergency 24/7"  + optional " | Note: text"
+// ============================================
+function av_days_order() {
+    return ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+}
+
+function av_days_label($days) {
+    $days = array_values(array_intersect(av_days_order(), $days));
+    if (count($days) == 7) return 'All Days';
+    if ($days == ['Mon', 'Tue', 'Wed', 'Thu', 'Fri']) return 'Mon - Fri';
+    if ($days == ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']) return 'Mon - Sat';
+    return implode(', ', $days);
+}
+
+function av_days_parse($label) {
+    $label = trim($label);
+    if ($label === 'All Days') return av_days_order();
+    if ($label === 'Mon - Fri') return ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
+    if ($label === 'Mon - Sat') return ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    $parts = array_map('trim', explode(',', $label));
+    return array_values(array_intersect(av_days_order(), $parts));
+}
+
+function av_time_label($t) {
+    $ts = strtotime($t);
+    return $ts ? date('h:i A', $ts) : '';
+}
+
+function av_build($type, $days, $from, $to, $emergency, $note) {
+    if ($type === '247') {
+        $str = 'Open 24/7';
+    } elseif ($type === 'closed') {
+        $str = 'Temporarily Closed';
+    } else {
+        $str = av_days_label($days) . ' | ' . av_time_label($from) . ' - ' . av_time_label($to);
+    }
+    if ($emergency) {
+        $str .= ' | Emergency 24/7';
+    }
+    if ($note !== '') {
+        $str .= ' | Note: ' . $note;
+    }
+    return $str;
+}
+
+function av_parse($raw) {
+    $view = [
+        'type'       => 'none',
+        'days'       => [],
+        'from'       => '09:00',
+        'to'         => '17:00',
+        'days_label' => '',
+        'time_label' => '',
+        'emergency'  => false,
+        'note'       => '',
+        'raw'        => (string)$raw
+    ];
+    $raw = trim((string)$raw);
+    if ($raw === '') return $view;
+
+    $segments = array_map('trim', explode(' | ', $raw));
+    $first = array_shift($segments);
+
+    if (strcasecmp($first, 'Open 24/7') === 0 || $first === '24/7') {
+        $view['type'] = '247';
+    } elseif (strcasecmp($first, 'Temporarily Closed') === 0) {
+        $view['type'] = 'closed';
+    } else {
+        $view['type'] = 'custom';
+        $view['days'] = av_days_parse($first);
+        $view['days_label'] = $first;
+        if (!empty($segments) && strpos($segments[0], ' - ') !== false && stripos($segments[0], 'Note:') !== 0 && stripos($segments[0], 'Emergency') !== 0) {
+            $time_seg = array_shift($segments);
+            $tp = explode(' - ', $time_seg);
+            $f = strtotime($tp[0]);
+            $t = isset($tp[1]) ? strtotime($tp[1]) : false;
+            if ($f) $view['from'] = date('H:i', $f);
+            if ($t) $view['to']   = date('H:i', $t);
+            $view['time_label'] = trim($time_seg);
+        }
+    }
+
+    foreach ($segments as $seg) {
+        if (stripos($seg, 'Emergency') === 0) {
+            $view['emergency'] = true;
+        } elseif (stripos($seg, 'Note:') === 0) {
+            $view['note'] = trim(substr($seg, 5));
+        }
+    }
+    return $view;
+}
+
+// ============================================
+// AJAX: SAVE AVAILABILITY
+// ============================================
+if (isset($_POST['action']) && $_POST['action'] == 'save_availability') {
+    header('Content-Type: application/json');
+
+    $type      = $_POST['av_type'] ?? '';
+    $days_in   = isset($_POST['days']) && is_array($_POST['days']) ? $_POST['days'] : [];
+    $days      = array_values(array_intersect(av_days_order(), $days_in));
+    $from      = trim($_POST['from_time'] ?? '');
+    $to        = trim($_POST['to_time'] ?? '');
+    $emergency = !empty($_POST['emergency']) && $_POST['emergency'] == '1';
+    $note      = trim($_POST['av_note'] ?? '');
+    $note      = trim(str_replace('|', '-', strip_tags($note)));
+    $note      = mb_substr($note, 0, 150);
+
+    if (!in_array($type, ['247', 'custom', 'closed'])) {
+        echo json_encode(['success' => false, 'message' => 'Please select an availability type.']);
+        exit();
+    }
+
+    if ($type === 'custom') {
+        if (empty($days)) {
+            echo json_encode(['success' => false, 'message' => 'Please select at least one day.']);
+            exit();
+        }
+        if (!preg_match('/^\d{2}:\d{2}$/', $from) || !preg_match('/^\d{2}:\d{2}$/', $to)) {
+            echo json_encode(['success' => false, 'message' => 'Please select opening and closing time.']);
+            exit();
+        }
+    }
+
+    $availability = av_build($type, $days, $from, $to, $emergency, $note);
+    $availability_esc = mysqli_real_escape_string($con, $availability);
+
+    $update = "UPDATE hospitals SET availability = '$availability_esc' WHERE hospital_id = $hospital_id";
+    if (mysqli_query($con, $update)) {
+        echo json_encode([
+            'success' => true,
+            'message' => 'Availability updated successfully!',
+            'time'    => date('d M Y, h:i A'),
+            'view'    => av_parse($availability)
+        ]);
+    } else {
+        echo json_encode(['success' => false, 'message' => 'Database error: ' . mysqli_error($con)]);
+    }
+    exit();
+}
+
+$availability_view = av_parse($hospital_data['availability'] ?? '');
 
 // ============================================
 // AJAX: REMOVE LAB FROM HOSPITAL
@@ -167,6 +324,7 @@ if (mysqli_num_rows($notes_tbl) == 0) {
 }
 
 if (isset($_POST['save_note'])) {
+    header('Content-Type: application/json');
     $note_text = mysqli_real_escape_string($con, trim($_POST['note_text'] ?? ''));
     
     $exists = mysqli_query($con, "SELECT note_id FROM notes WHERE user_id = $user_id LIMIT 1");
@@ -193,6 +351,20 @@ $recent_reviews_query = "SELECT * FROM feedback
                          WHERE user_id = $user_id AND status = 1
                          ORDER BY created_at DESC LIMIT 5";
 $recent_reviews_result = mysqli_query($con, $recent_reviews_query);
+
+// ============================================
+// VISITING CARD DATA
+// ============================================
+$vc_name     = $hospital_data['hospital_name'] ?? '';
+$vc_phone    = (!empty($hospital_data['hospital_phone'])   && $hospital_data['hospital_phone']   !== '0') ? $hospital_data['hospital_phone']   : '';
+$vc_email    = (!empty($hospital_data['hospital_email'])   && $hospital_data['hospital_email']   !== '0') ? $hospital_data['hospital_email']   : '';
+$vc_address  = (!empty($hospital_data['hospital_address']) && $hospital_data['hospital_address'] !== '0') ? $hospital_data['hospital_address'] : '';
+$vc_city     = $hospital_data['city_name'] ?? '';
+$vc_name_len = mb_strlen($vc_name);
+if ($vc_name_len > 38)      { $vc_name_size = 21; }
+elseif ($vc_name_len > 28)  { $vc_name_size = 25; }
+elseif ($vc_name_len > 20)  { $vc_name_size = 29; }
+else                        { $vc_name_size = 34; }
 ?>
 
 <?php include BASE_PATH . '/admin/inc/header.php'; ?>
@@ -202,6 +374,7 @@ $recent_reviews_result = mysqli_query($con, $recent_reviews_query);
 <!-- Libraries for Image & QR Generation -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
 <link rel="stylesheet" href="<?= BASE_URL ?>style/doctor-hospital-admin.css">
 
@@ -255,6 +428,116 @@ $recent_reviews_result = mysqli_query($con, $recent_reviews_query);
 .rad-list-item { border-left: 3px solid #4338ca; }
 .rad-avatar { background: #e0e7ff; color: #4338ca; }
 
+/* ============================================================
+   AVAILABILITY CARD
+   ============================================================ */
+.av-status {
+    border-radius: 14px; padding: 16px 18px; margin-bottom: 18px;
+    display: flex; align-items: center; gap: 14px;
+    border: 1.5px solid #e2e8f0; background: #f8fafc;
+}
+.av-status .av-ic {
+    width: 48px; height: 48px; border-radius: 14px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.25rem; color: #fff; background: #94a3b8;
+}
+.av-status .av-main { font-size: 1.02rem; font-weight: 800; color: #0D2B6E; line-height: 1.25; }
+.av-status .av-sub  { font-size: .8rem; font-weight: 600; color: #64748b; margin-top: 3px; }
+.av-status.s-247    { background: linear-gradient(135deg, #F0FFF8, #dcfce7); border-color: rgba(39,201,106,.5); }
+.av-status.s-247 .av-ic { background: linear-gradient(135deg, #27C96A, #00C9A7); box-shadow: 0 6px 16px rgba(39,201,106,.35); }
+.av-status.s-custom { background: linear-gradient(135deg, #E8F7FF, #dbeafe); border-color: rgba(0,168,204,.5); }
+.av-status.s-custom .av-ic { background: linear-gradient(135deg, #1C3F8F, #00A8CC); box-shadow: 0 6px 16px rgba(0,168,204,.35); }
+.av-status.s-closed { background: #fef2f2; border-color: rgba(239,68,68,.45); }
+.av-status.s-closed .av-ic { background: linear-gradient(135deg, #dc2626, #ef4444); box-shadow: 0 6px 16px rgba(239,68,68,.3); }
+
+.av-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.av-tag {
+    font-size: .68rem; font-weight: 700; padding: 3px 10px; border-radius: 20px;
+    letter-spacing: .4px; text-transform: uppercase;
+}
+.av-tag.em   { background: #fee2e2; color: #dc2626; border: 1px solid rgba(239,68,68,.35); }
+.av-tag.note { background: #fff7ed; color: #c2410c; border: 1px solid rgba(249,115,22,.35); text-transform: none; }
+
+.av-label { font-size: .75rem; font-weight: 800; color: #1C3F8F; letter-spacing: 1.2px; text-transform: uppercase; margin: 0 0 8px; }
+
+.av-types { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
+.av-type { position: relative; }
+.av-type input { position: absolute; opacity: 0; pointer-events: none; }
+.av-type label {
+    display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center;
+    padding: 12px 8px; border-radius: 12px; cursor: pointer;
+    border: 2px solid rgba(0,168,204,.2); background: #f0f9ff;
+    font-size: .8rem; font-weight: 700; color: #0D2B6E; transition: all .2s ease; margin: 0;
+}
+.av-type label i { font-size: 1.15rem; color: #00A8CC; transition: all .2s ease; }
+.av-type label:hover { border-color: #00A8CC; transform: translateY(-2px); }
+.av-type input:checked + label {
+    background: linear-gradient(135deg, #1C3F8F, #00A8CC); color: #fff;
+    border-color: transparent; box-shadow: 0 8px 18px rgba(0,168,204,.35);
+}
+.av-type input:checked + label i { color: #fff; }
+.av-type.t-247 input:checked + label { background: linear-gradient(135deg, #27C96A, #00C9A7); box-shadow: 0 8px 18px rgba(39,201,106,.35); }
+.av-type.t-closed input:checked + label { background: linear-gradient(135deg, #dc2626, #ef4444); box-shadow: 0 8px 18px rgba(239,68,68,.3); }
+
+.av-custom { display: none; background: #f0f9ff; border: 1.5px dashed rgba(0,168,204,.4); border-radius: 12px; padding: 14px; margin-bottom: 16px; }
+.av-custom.show { display: block; }
+
+.av-days { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 10px; }
+.av-day { position: relative; }
+.av-day input { position: absolute; opacity: 0; pointer-events: none; }
+.av-day span {
+    display: inline-block; min-width: 46px; text-align: center; padding: 7px 10px;
+    border-radius: 10px; font-size: .78rem; font-weight: 700; cursor: pointer;
+    background: #fff; border: 2px solid rgba(0,168,204,.25); color: #1C3F8F; transition: all .15s ease;
+}
+.av-day input:checked + span {
+    background: linear-gradient(135deg, #1C3F8F, #00A8CC); color: #fff; border-color: transparent;
+}
+.av-quick { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+.av-quick button {
+    border: 1px solid rgba(0,168,204,.4); background: #fff; color: #1C3F8F;
+    font-size: .7rem; font-weight: 700; padding: 4px 11px; border-radius: 20px; cursor: pointer; transition: all .15s ease;
+}
+.av-quick button:hover { background: #00A8CC; color: #fff; }
+
+.av-times { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.av-times label { display: block; font-size: .72rem; font-weight: 700; color: #64748b; margin-bottom: 4px; }
+.av-input {
+    width: 100%; padding: 10px 12px; border: 2px solid rgba(0,168,204,.2); border-radius: 10px;
+    font-size: .9rem; color: #0D2B6E; background: #fff; outline: none; font-family: inherit; transition: border-color .2s;
+}
+.av-input:focus { border-color: #00A8CC; }
+
+.av-emergency {
+    display: flex; align-items: center; gap: 10px; padding: 11px 14px; border-radius: 12px;
+    background: #fef2f2; border: 1.5px solid rgba(239,68,68,.3); margin-bottom: 14px; cursor: pointer;
+}
+.av-emergency input { width: 18px; height: 18px; accent-color: #ef4444; cursor: pointer; margin: 0; }
+.av-emergency span { font-size: .85rem; font-weight: 700; color: #b91c1c; }
+.av-emergency small { display: block; font-size: .7rem; font-weight: 500; color: #94a3b8; }
+
+.av-actions { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.av-save {
+    background: linear-gradient(135deg, #1C3F8F, #00A8CC); color: #fff; border: none;
+    padding: 10px 26px; border-radius: 10px; font-weight: 700; font-size: .88rem; cursor: pointer;
+    display: inline-flex; align-items: center; gap: 8px; transition: all .2s ease;
+}
+.av-save:hover { transform: translateY(-2px); box-shadow: 0 8px 18px rgba(0,168,204,.35); }
+.av-save:disabled { opacity: .7; cursor: wait; transform: none; box-shadow: none; }
+.av-badge {
+    display: none; align-items: center; gap: 6px; background: rgba(39,201,106,.12);
+    border: 1px solid rgba(39,201,106,.3); border-radius: 20px; padding: 5px 14px;
+    font-size: .82rem; font-weight: 700; color: #27C96A;
+}
+.av-error {
+    display: none; background: #fef2f2; border: 1px solid rgba(239,68,68,.35); color: #b91c1c;
+    padding: 9px 14px; border-radius: 10px; font-size: .82rem; font-weight: 600; margin-top: 10px;
+}
+@media (max-width: 480px) {
+    .av-types { grid-template-columns: 1fr; }
+    .av-times { grid-template-columns: 1fr; }
+}
+
 /* Modal Styles */
 .custom-modal {
     display: none; position: fixed; z-index: 9999;
@@ -276,30 +559,213 @@ $recent_reviews_result = mysqli_query($con, $recent_reviews_query);
     text-align: center; margin-top: 20px;
 }
 
-/* --- VISITING CARD DESIGN --- */
-#visitCardPreview {
-    width: 600px; height: 340px;
-    background: #fff; border-radius: 16px;
-    margin: 0 auto; box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    display: flex; overflow: hidden;
-    border: 2px solid #e2e8f0; position: relative;
+/* ============================================================
+   PREMIUM VISITING CARD  (Front + Back)  700 x 400
+   ============================================================ */
+.vc-modal-content {
+    background: linear-gradient(160deg, #0D2B6E 0%, #12358a 100%);
+    margin: 3% auto;
+    padding: 28px 24px 26px;
+    border-radius: 20px;
+    width: 94%;
+    max-width: 790px;
+    position: relative;
+    box-shadow: 0 25px 60px rgba(0,0,0,.45);
+    border: 1px solid rgba(255,255,255,.12);
 }
-#visitCardPreview .vc-left {
-    width: 40%; background: linear-gradient(135deg, #0D2B6E 0%, #1C3F8F 100%);
-    padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #fff;
+.vc-modal-content .close-modal { color: #fff; top: 12px; right: 18px; }
+.vc-modal-content .close-modal:hover { color: #27C96A; }
+
+.vc-modal-title {
+    color: #fff; text-align: center;
+    font-family: 'Poppins', sans-serif; font-weight: 700;
+    font-size: 1.15rem; margin: 0 0 4px;
 }
-#visitCardPreview .vc-logo {
-    width: 100px; height: 100px; border-radius: 50%;
-    background: #fff; padding: 10px; object-fit: contain; margin-bottom: 15px;
+.vc-modal-sub {
+    color: #9fd8ea; text-align: center;
+    font-family: 'Poppins', sans-serif; font-size: .8rem; margin: 0 0 8px;
 }
-#visitCardPreview .vc-right {
-    width: 60%; padding: 25px; position: relative; display: flex; flex-direction: column; justify-content: center;
+.vc-label {
+    color: #27C96A; font-family: 'Poppins', sans-serif;
+    font-size: .7rem; font-weight: 700; letter-spacing: 2px;
+    text-transform: uppercase; text-align: center; margin: 18px 0 10px;
 }
-#visitCardPreview .vc-name { font-size: 1.6rem; font-weight: 800; color: #0D2B6E; margin-bottom: 4px; }
-#visitCardPreview .vc-type { font-size: 0.95rem; color: #00A8CC; font-weight: 600; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 1px; }
-#visitCardPreview .vc-detail { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; font-size: 0.85rem; color: #475569; }
-#visitCardPreview .vc-detail i { color: #1C3F8F; width: 16px; text-align: center; }
-#visitCardPreview .vc-qr { position: absolute; bottom: 20px; right: 20px; padding: 5px; background: #fff; border-radius: 8px; border: 1px solid #e2e8f0; }
+.vc-scroll { overflow-x: auto; padding: 6px 0 10px; }
+
+.vc-card {
+    width: 700px; height: 400px;
+    margin: 0 auto;
+    border-radius: 22px;
+    position: relative; overflow: hidden;
+    font-family: 'Poppins', sans-serif;
+    box-shadow: 0 18px 40px rgba(0,0,0,.4);
+}
+
+/* ---------- FRONT ---------- */
+#visitCardFront {
+    background:
+        radial-gradient(circle at 88% 12%, rgba(255,255,255,.18) 0%, transparent 38%),
+        radial-gradient(circle at 8% 108%, rgba(39,201,106,.55) 0%, transparent 45%),
+        radial-gradient(circle at 60% 120%, rgba(0,201,167,.35) 0%, transparent 40%),
+        linear-gradient(135deg, #0D2B6E 0%, #1C3F8F 55%, #00A8CC 100%);
+    color: #fff;
+}
+#visitCardFront .vcf-ring { position: absolute; border-radius: 50%; border: 1.5px solid rgba(255,255,255,.14); }
+#visitCardFront .vcf-ring.r1 { width: 330px; height: 330px; right: -90px; top: -90px; }
+#visitCardFront .vcf-ring.r2 { width: 230px; height: 230px; right: -40px; top: -40px; border-color: rgba(255,255,255,.2); }
+#visitCardFront .vcf-ring.r3 { width: 130px; height: 130px; right: 10px; top: 10px; background: rgba(255,255,255,.08); }
+#visitCardFront .vcf-cross { position: absolute; right: 56px; top: 56px; width: 38px; height: 38px; }
+#visitCardFront .vcf-cross::before,
+#visitCardFront .vcf-cross::after { content: ''; position: absolute; background: #fff; border-radius: 4px; }
+#visitCardFront .vcf-cross::before { left: 14px; top: 0; width: 10px; height: 38px; }
+#visitCardFront .vcf-cross::after  { left: 0; top: 14px; width: 38px; height: 10px; }
+
+#visitCardFront .vcf-top {
+    position: absolute; left: 34px; top: 28px;
+    display: flex; align-items: center; gap: 14px;
+}
+#visitCardFront .vcf-logo-box {
+    width: 66px; height: 66px; border-radius: 18px;
+    background: #fff; padding: 8px;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 8px 20px rgba(0,0,0,.28);
+}
+#visitCardFront .vcf-logo-box img { width: 100%; height: 100%; object-fit: contain; }
+#visitCardFront .vcf-brand { font-size: 1.35rem; font-weight: 800; line-height: 1; letter-spacing: .3px; }
+#visitCardFront .vcf-brand span { color: #27C96A; }
+#visitCardFront .vcf-brand small {
+    display: block; margin-top: 6px; font-size: .62rem; font-weight: 500;
+    letter-spacing: 2px; text-transform: uppercase; color: rgba(255,255,255,.75);
+}
+
+#visitCardFront .vcf-main { position: absolute; left: 34px; top: 124px; width: 450px; }
+#visitCardFront .vcf-type {
+    display: inline-block; padding: 4px 14px; border-radius: 30px;
+    background: rgba(39,201,106,.18); border: 1px solid rgba(39,201,106,.55);
+    color: #8ef5b8; font-size: .66rem; font-weight: 700;
+    letter-spacing: 1.8px; text-transform: uppercase;
+}
+#visitCardFront .vcf-name {
+    margin: 12px 0 0; font-weight: 800; line-height: 1.12;
+    letter-spacing: -.3px; text-shadow: 0 2px 10px rgba(0,0,0,.25);
+}
+#visitCardFront .vcf-line {
+    width: 90px; height: 4px; border-radius: 4px; margin: 14px 0 16px;
+    background: linear-gradient(90deg, #27C96A, #00C9A7);
+}
+#visitCardFront .vcf-detail {
+    display: flex; align-items: center; gap: 12px;
+    font-size: .82rem; font-weight: 500; color: rgba(255,255,255,.95);
+    margin-bottom: 9px;
+}
+#visitCardFront .vcf-detail .ic {
+    width: 26px; height: 26px; border-radius: 8px; flex-shrink: 0;
+    background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: .68rem; color: #8ef5b8;
+}
+#visitCardFront .vcf-detail span {
+    overflow: hidden; text-overflow: ellipsis;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+}
+#visitCardFront .vcf-qr-wrap {
+    position: absolute; right: 30px; bottom: 34px;
+    text-align: center; background: #fff;
+    padding: 10px 10px 6px; border-radius: 16px;
+    box-shadow: 0 10px 26px rgba(0,0,0,.3);
+}
+#visitCardFront .vcf-qr-wrap .qrbox { width: 86px; height: 86px; }
+#visitCardFront .vcf-qr-wrap .qrbox img,
+#visitCardFront .vcf-qr-wrap .qrbox canvas { width: 86px !important; height: 86px !important; display: block; }
+#visitCardFront .vcf-qr-wrap small {
+    display: block; margin-top: 5px; font-size: .55rem; font-weight: 700;
+    color: #0D2B6E; letter-spacing: 1.2px; text-transform: uppercase;
+}
+#visitCardFront .vcf-strip {
+    position: absolute; left: 0; right: 0; bottom: 0; height: 8px;
+    background: linear-gradient(90deg, #27C96A, #00C9A7, #00A8CC, #1C3F8F);
+}
+
+/* ---------- BACK ---------- */
+#visitCardBack { background: #ffffff; display: flex; color: #0D2B6E; }
+#visitCardBack .vcb-left {
+    width: 42%; position: relative; overflow: hidden; color: #fff;
+    background:
+        radial-gradient(circle at 15% 90%, rgba(39,201,106,.55) 0%, transparent 50%),
+        radial-gradient(circle at 90% 10%, rgba(255,255,255,.2) 0%, transparent 40%),
+        linear-gradient(160deg, #0D2B6E 0%, #1C3F8F 60%, #00A8CC 100%);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; padding: 24px;
+}
+#visitCardBack .vcb-left::before {
+    content: ''; position: absolute; width: 260px; height: 260px; border-radius: 50%;
+    border: 1.5px solid rgba(255,255,255,.15); left: -90px; top: -90px;
+}
+#visitCardBack .vcb-left::after {
+    content: ''; position: absolute; width: 180px; height: 180px; border-radius: 50%;
+    border: 1.5px solid rgba(255,255,255,.15); right: -70px; bottom: -60px;
+}
+#visitCardBack .vcb-logo-box {
+    width: 108px; height: 108px; border-radius: 28px; background: #fff; padding: 14px;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 14px 30px rgba(0,0,0,.3); position: relative; z-index: 2;
+}
+#visitCardBack .vcb-logo-box img { width: 100%; height: 100%; object-fit: contain; }
+#visitCardBack .vcb-brand {
+    margin-top: 18px; font-size: 1.7rem; font-weight: 800; line-height: 1;
+    position: relative; z-index: 2;
+}
+#visitCardBack .vcb-brand span { color: #27C96A; }
+#visitCardBack .vcb-tag {
+    margin-top: 8px; font-size: .62rem; font-weight: 600; letter-spacing: 2.2px;
+    text-transform: uppercase; color: rgba(255,255,255,.8); position: relative; z-index: 2;
+}
+#visitCardBack .vcb-right {
+    width: 58%; padding: 30px 30px 26px; position: relative;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
+    background: linear-gradient(180deg, #ffffff 0%, #E8F7FF 100%);
+}
+#visitCardBack .vcb-hname { font-size: 1.05rem; font-weight: 800; color: #0D2B6E; line-height: 1.2; margin-bottom: 4px; }
+#visitCardBack .vcb-hcity { font-size: .72rem; font-weight: 600; color: #00A8CC; margin-bottom: 14px; }
+#visitCardBack .vcb-qr {
+    padding: 10px; background: #fff; border-radius: 18px;
+    border: 2px solid #E8F7FF; box-shadow: 0 10px 26px rgba(28,63,143,.15);
+}
+#visitCardBack .vcb-qr .qrbox { width: 120px; height: 120px; }
+#visitCardBack .vcb-qr .qrbox img,
+#visitCardBack .vcb-qr .qrbox canvas { width: 120px !important; height: 120px !important; display: block; }
+#visitCardBack .vcb-scan {
+    margin-top: 10px; font-size: .66rem; font-weight: 700; color: #1C3F8F;
+    letter-spacing: 1.6px; text-transform: uppercase;
+}
+#visitCardBack .vcb-web {
+    margin-top: 10px; padding: 6px 18px; border-radius: 30px; color: #fff;
+    font-size: .74rem; font-weight: 700; letter-spacing: .5px;
+    background: linear-gradient(135deg, #1C3F8F, #00A8CC);
+    box-shadow: 0 6px 16px rgba(0,168,204,.35);
+}
+#visitCardBack .vcb-chips { margin-top: 14px; display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+#visitCardBack .vcb-chips em {
+    font-style: normal; font-size: .56rem; font-weight: 700; padding: 3px 9px; border-radius: 20px;
+    background: #F0FFF8; color: #0a9d4c; border: 1px solid rgba(39,201,106,.4);
+    letter-spacing: .6px; text-transform: uppercase;
+}
+#visitCardBack .vcb-strip {
+    position: absolute; left: 0; right: 0; bottom: 0; height: 8px;
+    background: linear-gradient(90deg, #1C3F8F, #00A8CC, #00C9A7, #27C96A);
+}
+
+.vc-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 22px; }
+.vc-btn {
+    border: none; cursor: pointer; font-family: 'Poppins', sans-serif;
+    font-weight: 700; font-size: .84rem; padding: 11px 24px; border-radius: 12px;
+    display: inline-flex; align-items: center; gap: 8px; transition: all .2s ease;
+}
+.vc-btn:hover { transform: translateY(-2px); }
+.vc-btn.green { background: linear-gradient(135deg, #27C96A, #00C9A7); color: #fff; box-shadow: 0 8px 20px rgba(39,201,106,.4); }
+.vc-btn.blue  { background: linear-gradient(135deg, #00A8CC, #1C3F8F); color: #fff; box-shadow: 0 8px 20px rgba(0,168,204,.4); }
+.vc-btn.white { background: #fff; color: #0D2B6E; }
+.vc-btn:disabled { opacity: .7; cursor: wait; transform: none; }
 
 /* --- BANNER DESIGN --- */
 #bannerPreview {
@@ -398,6 +864,95 @@ $recent_reviews_result = mysqli_query($con, $recent_reviews_query);
                     <?php else: ?>
                         <p class="text-muted text-center py-2">No doctors registered yet.</p>
                     <?php endif; ?>
+                </div>
+            </div>
+
+            <!-- Availability -->
+            <div class="info-card">
+                <div class="info-card-header">
+                    <h5><i class="fas fa-clock"></i> Availability</h5>
+                    <small id="availLastSaved" style="color:#94a3b8; font-size:0.78rem; font-weight:600;"></small>
+                </div>
+                <div class="info-card-body">
+
+                    <!-- Current status display -->
+                    <div id="availStatus" class="av-status">
+                        <div class="av-ic"><i class="fas fa-clock"></i></div>
+                        <div>
+                            <div class="av-main">Availability not set yet</div>
+                            <div class="av-sub">Choose your hospital timing below</div>
+                        </div>
+                    </div>
+
+                    <!-- Type selector -->
+                    <div class="av-label">Availability Type</div>
+                    <div class="av-types">
+                        <div class="av-type t-247">
+                            <input type="radio" name="av_type" id="avType247" value="247">
+                            <label for="avType247"><i class="fas fa-infinity"></i> Open 24/7</label>
+                        </div>
+                        <div class="av-type t-custom">
+                            <input type="radio" name="av_type" id="avTypeCustom" value="custom">
+                            <label for="avTypeCustom"><i class="fas fa-calendar-alt"></i> Custom Hours</label>
+                        </div>
+                        <div class="av-type t-closed">
+                            <input type="radio" name="av_type" id="avTypeClosed" value="closed">
+                            <label for="avTypeClosed"><i class="fas fa-door-closed"></i> Temporarily Closed</label>
+                        </div>
+                    </div>
+
+                    <!-- Custom hours panel -->
+                    <div id="avCustomBox" class="av-custom">
+                        <div class="av-label">Working Days</div>
+                        <div class="av-days">
+                            <?php foreach (av_days_order() as $dy): ?>
+                                <label class="av-day">
+                                    <input type="checkbox" class="av-day-check" value="<?php echo $dy; ?>">
+                                    <span><?php echo $dy; ?></span>
+                                </label>
+                            <?php endforeach; ?>
+                        </div>
+                        <div class="av-quick">
+                            <button type="button" onclick="avQuickDays('weekdays')">Mon - Fri</button>
+                            <button type="button" onclick="avQuickDays('sixdays')">Mon - Sat</button>
+                            <button type="button" onclick="avQuickDays('all')">All Days</button>
+                            <button type="button" onclick="avQuickDays('none')">Clear</button>
+                        </div>
+                        <div class="av-times">
+                            <div>
+                                <label for="avFrom">Opening Time</label>
+                                <input type="time" id="avFrom" class="av-input" value="09:00">
+                            </div>
+                            <div>
+                                <label for="avTo">Closing Time</label>
+                                <input type="time" id="avTo" class="av-input" value="17:00">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Emergency -->
+                    <label class="av-emergency" for="avEmergency">
+                        <input type="checkbox" id="avEmergency">
+                        <div>
+                            <span><i class="fas fa-ambulance"></i> Emergency Services 24/7</span>
+                            <small>Emergency department is open round the clock</small>
+                        </div>
+                    </label>
+
+                    <!-- Note -->
+                    <div class="av-label">Extra Note (Optional)</div>
+                    <input type="text" id="avNote" class="av-input" maxlength="150" placeholder="e.g. OPD closed on public holidays">
+
+                    <div id="avError" class="av-error"></div>
+
+                    <div class="av-actions">
+                        <button id="avSaveBtn" class="av-save" onclick="saveAvailability()">
+                            <i class="fas fa-save"></i> Save Availability
+                        </button>
+                        <div id="avSavedBadge" class="av-badge">
+                            <i class="fas fa-check-circle"></i> <span id="avSavedText">Saved!</span>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -509,7 +1064,7 @@ $recent_reviews_result = mysqli_query($con, $recent_reviews_query);
                 </div>
             </div>
 
-            <!-- REGISTERED RADIOLOGY (NEW SECTION) -->
+            <!-- REGISTERED RADIOLOGY -->
             <div class="info-card">
                 <div class="info-card-header">
                     <h5><i class="fas fa-x-ray"></i> Registered Radiology (<?php echo $total_radiology; ?>)</h5>
@@ -580,54 +1135,116 @@ $recent_reviews_result = mysqli_query($con, $recent_reviews_query);
 
 
 <!-- ========================================== -->
-<!-- MODAL: VISITING CARD                       -->
+<!-- MODAL: VISITING CARD (FRONT + BACK)        -->
 <!-- ========================================== -->
 <div id="visitCardModal" class="custom-modal">
-    <div class="custom-modal-content">
+    <div class="vc-modal-content">
         <span class="close-modal" onclick="closeModal('visitCardModal')">&times;</span>
-        
-        <div id="visitCardPreview">
-            <div class="vc-left">
-                <img src="<?php echo BASE_URL; ?>includes/uploads/logo.png" alt="Logo" class="vc-logo">
-                <div style="text-align:center; color:rgba(255,255,255,0.7); font-size:0.8rem; margin-top:10px;">Scan to Visit<br>Hospital Profile</div>
-            </div>
-            <div class="vc-right">
-                <div class="vc-name"><?php echo htmlspecialchars($hospital_data['hospital_name']); ?></div>
-                <div class="vc-type">Hospital / Medical Center</div>
-                
-                <?php if (!empty($hospital_data['hospital_address']) && $hospital_data['hospital_address'] !== '0'): ?>
-                <div class="vc-detail">
-                    <i class="fas fa-map-marker-alt"></i> 
-                    <?php echo htmlspecialchars($hospital_data['hospital_address']); ?>
-                </div>
-                <?php endif; ?>
 
-                <?php if (!empty($hospital_data['hospital_phone']) && $hospital_data['hospital_phone'] !== '0'): ?>
-                <div class="vc-detail">
-                    <i class="fas fa-phone"></i> 
-                    <?php echo htmlspecialchars($hospital_data['hospital_phone']); ?>
-                </div>
-                <?php endif; ?>
+        <h3 class="vc-modal-title">Your Professional Visiting Card</h3>
+        <p class="vc-modal-sub">Premium design • Front &amp; Back • High quality PNG download</p>
 
-                <?php if (!empty($hospital_data['hospital_email']) && $hospital_data['hospital_email'] !== '0'): ?>
-                <div class="vc-detail">
-                    <i class="fas fa-envelope"></i> 
-                    <?php echo htmlspecialchars($hospital_data['hospital_email']); ?>
-                </div>
-                <?php endif; ?>
+        <!-- FRONT -->
+        <div class="vc-label">Front Side</div>
+        <div class="vc-scroll">
+            <div class="vc-card" id="visitCardFront">
+                <div class="vcf-ring r1"></div>
+                <div class="vcf-ring r2"></div>
+                <div class="vcf-ring r3"></div>
+                <div class="vcf-cross"></div>
 
-                <div class="vc-detail">
-                    <i class="fas fa-globe"></i> 
-                    www.sehatnexa.com
+                <div class="vcf-top">
+                    <div class="vcf-logo-box">
+                        <img src="<?php echo BASE_URL; ?>includes/uploads/logo.png" alt="SehatNexa" crossorigin="anonymous">
+                    </div>
+                    <div class="vcf-brand">Sehat<span>Nexa</span><small>Your Health, Our Network</small></div>
                 </div>
 
-                <div class="vc-qr" id="qrcode"></div>
+                <div class="vcf-main">
+                    <span class="vcf-type">Hospital &bull; Medical Center</span>
+                    <h2 class="vcf-name" style="font-size: <?php echo $vc_name_size; ?>px;"><?php echo htmlspecialchars($vc_name); ?></h2>
+                    <div class="vcf-line"></div>
+
+                    <?php if ($vc_phone !== ''): ?>
+                    <div class="vcf-detail">
+                        <div class="ic"><i class="fas fa-phone"></i></div>
+                        <span><?php echo htmlspecialchars($vc_phone); ?></span>
+                    </div>
+                    <?php endif; ?>
+
+                    <?php if ($vc_email !== ''): ?>
+                    <div class="vcf-detail">
+                        <div class="ic"><i class="fas fa-envelope"></i></div>
+                        <span><?php echo htmlspecialchars($vc_email); ?></span>
+                    </div>
+                    <?php endif; ?>
+
+                    <?php if ($vc_address !== '' || $vc_city !== ''): ?>
+                    <div class="vcf-detail">
+                        <div class="ic"><i class="fas fa-map-marker-alt"></i></div>
+                        <span><?php echo htmlspecialchars(trim($vc_address . ($vc_address !== '' && $vc_city !== '' ? ', ' : '') . $vc_city)); ?></span>
+                    </div>
+                    <?php endif; ?>
+
+                    <div class="vcf-detail">
+                        <div class="ic"><i class="fas fa-globe"></i></div>
+                        <span>www.sehatnexa.com</span>
+                    </div>
+                </div>
+
+                <div class="vcf-qr-wrap">
+                    <div class="qrbox" id="qrFront"></div>
+                    <small>Scan Profile</small>
+                </div>
+
+                <div class="vcf-strip"></div>
             </div>
         </div>
 
-        <div class="modal-actions">
-            <button onclick="downloadImage('visitCardPreview', 'Visiting_Card_<?php echo $hospital_id; ?>')" class="btn btn-success" style="padding:10px 24px; border-radius:8px; font-weight:bold;">
-                <i class="fas fa-download"></i> Download Visiting Card
+        <!-- BACK -->
+        <div class="vc-label">Back Side</div>
+        <div class="vc-scroll">
+            <div class="vc-card" id="visitCardBack">
+                <div class="vcb-left">
+                    <div class="vcb-logo-box">
+                        <img src="<?php echo BASE_URL; ?>includes/uploads/logo.png" alt="SehatNexa" crossorigin="anonymous">
+                    </div>
+                    <div class="vcb-brand">Sehat<span>Nexa</span></div>
+                    <div class="vcb-tag">Your Health, Our Network</div>
+                </div>
+
+                <div class="vcb-right">
+                    <div class="vcb-hname"><?php echo htmlspecialchars($vc_name); ?></div>
+                    <?php if ($vc_city !== ''): ?>
+                        <div class="vcb-hcity"><i class="fas fa-map-marker-alt"></i> <?php echo htmlspecialchars($vc_city); ?></div>
+                    <?php endif; ?>
+
+                    <div class="vcb-qr"><div class="qrbox" id="qrBack"></div></div>
+                    <div class="vcb-scan">Scan to view full profile</div>
+                    <div class="vcb-web">www.sehatnexa.com</div>
+
+                    <div class="vcb-chips">
+                        <em>Doctors</em>
+                        <em>Labs</em>
+                        <em>Radiology</em>
+                        <em>Blood Banks</em>
+                        <em>Beds</em>
+                    </div>
+
+                    <div class="vcb-strip"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="vc-actions">
+            <button class="vc-btn green" onclick="downloadImage('visitCardFront', 'Visiting_Card_Front_<?php echo $hospital_id; ?>', this)">
+                <i class="fas fa-download"></i> Download Front
+            </button>
+            <button class="vc-btn blue" onclick="downloadImage('visitCardBack', 'Visiting_Card_Back_<?php echo $hospital_id; ?>', this)">
+                <i class="fas fa-download"></i> Download Back
+            </button>
+            <button class="vc-btn white" onclick="downloadBothCards(this)">
+                <i class="fas fa-layer-group"></i> Download Both
             </button>
         </div>
     </div>
@@ -700,7 +1317,7 @@ $recent_reviews_result = mysqli_query($con, $recent_reviews_query);
         </div>
 
         <div class="modal-actions">
-            <button onclick="downloadImage('bannerPreview', 'Hospital_Banner_<?php echo $hospital_id; ?>')" class="btn btn-success" style="padding:10px 24px; border-radius:8px; font-weight:bold;">
+            <button onclick="downloadImage('bannerPreview', 'Hospital_Banner_<?php echo $hospital_id; ?>', this)" class="btn btn-success" style="padding:10px 24px; border-radius:8px; font-weight:bold;">
                 <i class="fas fa-download"></i> Download Banner
             </button>
         </div>
@@ -711,6 +1328,171 @@ $recent_reviews_result = mysqli_query($con, $recent_reviews_query);
 <?php include BASE_PATH . '/admin/inc/footer.php'; ?>
 
 <script>
+// ============================================
+// AVAILABILITY
+// ============================================
+var availabilityData = <?php echo json_encode($availability_view); ?>;
+
+function avEsc(s) {
+    var d = document.createElement('div');
+    d.textContent = s == null ? '' : s;
+    return d.innerHTML;
+}
+
+function renderAvailability(v) {
+    var box = document.getElementById('availStatus');
+    var cls = 'av-status';
+    var icon = 'fa-clock';
+    var main = 'Availability not set yet';
+    var sub  = 'Choose your hospital timing below';
+
+    if (v.type === '247') {
+        cls += ' s-247'; icon = 'fa-infinity';
+        main = 'Open 24/7';
+        sub  = 'Open 24 hours, all 7 days';
+    } else if (v.type === 'custom') {
+        cls += ' s-custom'; icon = 'fa-calendar-check';
+        main = v.days_label || 'Custom Hours';
+        sub  = v.time_label || '';
+    } else if (v.type === 'closed') {
+        cls += ' s-closed'; icon = 'fa-door-closed';
+        main = 'Temporarily Closed';
+        sub  = 'Currently not accepting visits';
+    }
+
+    var tags = '';
+    if (v.emergency) {
+        tags += '<span class="av-tag em"><i class="fas fa-ambulance"></i> Emergency 24/7</span>';
+    }
+    if (v.note) {
+        tags += '<span class="av-tag note"><i class="fas fa-info-circle"></i> ' + avEsc(v.note) + '</span>';
+    }
+
+    box.className = cls;
+    box.innerHTML =
+        '<div class="av-ic"><i class="fas ' + icon + '"></i></div>' +
+        '<div>' +
+            '<div class="av-main">' + avEsc(main) + '</div>' +
+            (sub ? '<div class="av-sub">' + avEsc(sub) + '</div>' : '') +
+            (tags ? '<div class="av-tags">' + tags + '</div>' : '') +
+        '</div>';
+}
+
+function fillAvailabilityForm(v) {
+    var radios = document.querySelectorAll('input[name="av_type"]');
+    radios.forEach(function (r) { r.checked = (r.value === v.type); });
+
+    var checks = document.querySelectorAll('.av-day-check');
+    checks.forEach(function (c) { c.checked = (v.days || []).indexOf(c.value) !== -1; });
+
+    document.getElementById('avFrom').value = v.from || '09:00';
+    document.getElementById('avTo').value   = v.to   || '17:00';
+    document.getElementById('avEmergency').checked = !!v.emergency;
+    document.getElementById('avNote').value = v.note || '';
+    toggleCustomBox();
+}
+
+function toggleCustomBox() {
+    var sel = document.querySelector('input[name="av_type"]:checked');
+    var box = document.getElementById('avCustomBox');
+    if (sel && sel.value === 'custom') {
+        box.classList.add('show');
+    } else {
+        box.classList.remove('show');
+    }
+}
+
+function avQuickDays(mode) {
+    var map = {
+        weekdays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
+        sixdays:  ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+        all:      ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+        none:     []
+    };
+    var list = map[mode] || [];
+    document.querySelectorAll('.av-day-check').forEach(function (c) {
+        c.checked = list.indexOf(c.value) !== -1;
+    });
+}
+
+function saveAvailability() {
+    var errBox   = document.getElementById('avError');
+    var btn      = document.getElementById('avSaveBtn');
+    var badge    = document.getElementById('avSavedBadge');
+    var badgeTxt = document.getElementById('avSavedText');
+    var lastSaved = document.getElementById('availLastSaved');
+
+    var sel = document.querySelector('input[name="av_type"]:checked');
+    errBox.style.display = 'none';
+
+    if (!sel) {
+        errBox.textContent = 'Please select an availability type.';
+        errBox.style.display = 'block';
+        return;
+    }
+
+    var fd = new FormData();
+    fd.append('action', 'save_availability');
+    fd.append('av_type', sel.value);
+    fd.append('from_time', document.getElementById('avFrom').value);
+    fd.append('to_time', document.getElementById('avTo').value);
+    fd.append('emergency', document.getElementById('avEmergency').checked ? '1' : '0');
+    fd.append('av_note', document.getElementById('avNote').value.trim());
+
+    var dayCount = 0;
+    document.querySelectorAll('.av-day-check:checked').forEach(function (c) {
+        fd.append('days[]', c.value);
+        dayCount++;
+    });
+
+    if (sel.value === 'custom' && dayCount === 0) {
+        errBox.textContent = 'Please select at least one working day.';
+        errBox.style.display = 'block';
+        return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+    badge.style.display = 'none';
+
+    fetch('<?= BASE_URL ?>hospital/index.php', {
+        method: 'POST',
+        body: fd
+    })
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-save"></i> Save Availability';
+
+        if (data.success) {
+            availabilityData = data.view;
+            renderAvailability(data.view);
+            fillAvailabilityForm(data.view);
+            badgeTxt.textContent = 'Saved!';
+            badge.style.display = 'flex';
+            lastSaved.innerHTML = '<i class="fas fa-clock"></i> Last saved: ' + data.time;
+            lastSaved.style.color = '#00A8CC';
+            setTimeout(function () { badge.style.display = 'none'; }, 3000);
+        } else {
+            errBox.textContent = data.message || 'Error occurred.';
+            errBox.style.display = 'block';
+        }
+    })
+    .catch(function () {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-save"></i> Save Availability';
+        errBox.textContent = 'Network error. Try again.';
+        errBox.style.display = 'block';
+    });
+}
+
+document.querySelectorAll('input[name="av_type"]').forEach(function (r) {
+    r.addEventListener('change', toggleCustomBox);
+});
+
+renderAvailability(availabilityData);
+fillAvailabilityForm(availabilityData);
+
 // ============================================
 // SAVE NOTE
 // ============================================
@@ -840,19 +1622,28 @@ function removeRadiology(radUserId) {
 // MODAL & IMAGE GENERATION LOGIC
 // ============================================
 let qrGenerated = false;
+const profileUrl = "<?php echo BASE_URL; ?>hospital-detail?hospital_id=<?php echo $hospital_id; ?>";
 
 function openModal(id) {
     document.getElementById(id).style.display = 'block';
-    
-    // Generate QR if opening Visiting Card and not generated yet
+
+    // Generate QR codes (front + back) once
     if (id === 'visitCardModal' && !qrGenerated) {
-        new QRCode(document.getElementById("qrcode"), {
-            text: "<?php echo BASE_URL; ?>hospital-detail?hospital_id=<?php echo $hospital_id; ?>",
-            width: 70,
-            height: 70,
-            colorDark : "#0D2B6E",
-            colorLight : "#ffffff",
-            correctLevel : QRCode.CorrectLevel.H
+        new QRCode(document.getElementById("qrFront"), {
+            text: profileUrl,
+            width: 172,
+            height: 172,
+            colorDark: "#0D2B6E",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.H
+        });
+        new QRCode(document.getElementById("qrBack"), {
+            text: profileUrl,
+            width: 240,
+            height: 240,
+            colorDark: "#0D2B6E",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.H
         });
         qrGenerated = true;
     }
@@ -869,32 +1660,56 @@ window.onclick = function(event) {
     }
 }
 
-// Download function using html2canvas
-function downloadImage(elementId, fileName) {
+// Core: capture element and download as PNG (returns Promise)
+function captureAndDownload(elementId, fileName) {
     let element = document.getElementById(elementId);
-    let btn = event.target;
-    let originalText = btn.innerHTML;
-    
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
-    btn.disabled = true;
-
-    // Options for high quality
-    html2canvas(element, {
-        scale: 2, // High res
+    return html2canvas(element, {
+        scale: 3,
         useCORS: true,
-        backgroundColor: null
+        allowTaint: false,
+        backgroundColor: null,
+        logging: false
     }).then(canvas => {
-        // Create download link
         let link = document.createElement('a');
         link.download = fileName + '.png';
         link.href = canvas.toDataURL('image/png');
+        document.body.appendChild(link);
         link.click();
-        
-        btn.innerHTML = originalText;
-        btn.disabled = false;
-    }).catch(err => {
+        document.body.removeChild(link);
+    });
+}
+
+// Download single element
+function downloadImage(elementId, fileName, btn) {
+    let originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+    btn.disabled = true;
+
+    captureAndDownload(elementId, fileName)
+    .catch(err => {
         console.error("Error generating image: ", err);
         alert("Failed to generate image. Please try again.");
+    })
+    .finally(() => {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    });
+}
+
+// Download both front & back
+function downloadBothCards(btn) {
+    let originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+    btn.disabled = true;
+
+    captureAndDownload('visitCardFront', 'Visiting_Card_Front_<?php echo $hospital_id; ?>')
+    .then(() => new Promise(resolve => setTimeout(resolve, 600)))
+    .then(() => captureAndDownload('visitCardBack', 'Visiting_Card_Back_<?php echo $hospital_id; ?>'))
+    .catch(err => {
+        console.error("Error generating image: ", err);
+        alert("Failed to generate image. Please try again.");
+    })
+    .finally(() => {
         btn.innerHTML = originalText;
         btn.disabled = false;
     });

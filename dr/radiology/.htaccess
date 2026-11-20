@@ -6,6 +6,7 @@ RewriteRule ^feedback$ feedback.php [L]
 RewriteRule ^profile$ profile.php [L]
 RewriteRule ^blood-banks$ blood-banks.php [L]
 RewriteRule ^labs$ labs.php [L]
+RewriteRule ^hospital/detail$ hospital-detail.php [L]
 
 
 

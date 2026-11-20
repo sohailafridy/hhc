@@ -31,22 +31,30 @@ $hospital_city_id = $hospital_data['city_id'];
 $hospital_name = $hospital_data['hospital_name'];
 
 // ============================================
-// AJAX: ASSIGN LAB TO HOSPITAL
+// AJAX: SEND JOIN REQUEST TO LAB
 // ============================================
-if (isset($_POST['action']) && $_POST['action'] == 'assign_hospital') {
+if (isset($_POST['action']) && $_POST['action'] == 'send_join_request') {
     header('Content-Type: application/json');
     $lab_user_id = (int)$_POST['lab_user_id'];
     
-    // Check if already assigned
-    $check = mysqli_query($con, "SELECT * FROM assign_hospital WHERE user_id = $lab_user_id AND hospital_id = $hospital_id");
+    // Check if already requested
+    $check = mysqli_query($con, "SELECT * FROM hospital_to_laboratory_join_requests WHERE userid = $lab_user_id AND hospital_id = $hospital_id");
     if (mysqli_num_rows($check) > 0) {
+        echo json_encode(['success' => false, 'message' => 'A request has already been sent to this lab.']);
+        exit();
+    }
+
+    // Check if already assigned (safety check)
+    $check_assign = mysqli_query($con, "SELECT * FROM assign_hospital WHERE user_id = $lab_user_id AND hospital_id = $hospital_id");
+    if (mysqli_num_rows($check_assign) > 0) {
         echo json_encode(['success' => false, 'message' => 'This lab is already registered in your hospital.']);
         exit();
     }
 
-    $insert = "INSERT INTO assign_hospital (user_id, hospital_id, status, created_at) VALUES ($lab_user_id, $hospital_id, 1, NOW())";
+    // Insert into join requests table
+    $insert = "INSERT INTO hospital_to_laboratory_join_requests (userid, hospital_id, created_at) VALUES ($lab_user_id, $hospital_id, NOW())";
     if (mysqli_query($con, $insert)) {
-        echo json_encode(['success' => true, 'message' => 'Lab successfully registered to your hospital!']);
+        echo json_encode(['success' => true, 'message' => 'Join request sent successfully! Waiting for lab approval.']);
     } else {
         echo json_encode(['success' => false, 'message' => 'Database error: ' . mysqli_error($con)]);
     }
@@ -54,7 +62,7 @@ if (isset($_POST['action']) && $_POST['action'] == 'assign_hospital') {
 }
 
 // ============================================
-// AJAX: REMOVE LAB FROM HOSPITAL (NEW)
+// AJAX: REMOVE LAB FROM HOSPITAL
 // ============================================
 if (isset($_POST['action']) && $_POST['action'] == 'remove_lab') {
     header('Content-Type: application/json');
@@ -90,8 +98,6 @@ while ($row = mysqli_fetch_assoc($cities_result)) {
 $search = isset($_GET['search']) ? mysqli_real_escape_string($con, $_GET['search']) : '';
 $search_reg_no = isset($_GET['reg_no']) ? mysqli_real_escape_string($con, $_GET['reg_no']) : '';
 $filter_city = isset($_GET['city']) ? (int)$_GET['city'] : $hospital_city_id;
-
-// Default is_registered is 0 if not set
 $is_registered = isset($_GET['is_registered']) ? (int)$_GET['is_registered'] : 0; 
 
 // ============================================
@@ -141,20 +147,22 @@ $total_pages = ceil($total_records / $per_page);
 // ============================================
 // FETCH LABORATORIES
 // ============================================
+// Note: Added LEFT JOIN for join requests to check if request is already sent
 $query = "SELECT l.*, c.city_name, u.status as ustatus,
                  (SELECT AVG(stars) FROM feedback WHERE user_id = l.user_id AND status = 1) as avg_rating,
-                 (SELECT COUNT(*) FROM feedback WHERE user_id = l.user_id AND status = 1) as total_reviews
+                 (SELECT COUNT(*) FROM feedback WHERE user_id = l.user_id AND status = 1) as total_reviews,
+                 req.id as request_id
           FROM laboratories l
           LEFT JOIN cities c ON l.city_id = c.city_id
           LEFT JOIN users u ON u.user_id = l.user_id
           LEFT JOIN assign_hospital ah ON ah.user_id = l.user_id AND ah.hospital_id = $hospital_id
+          LEFT JOIN hospital_to_laboratory_join_requests req ON req.userid = l.user_id AND req.hospital_id = $hospital_id
           WHERE $where
           ORDER BY l.lab_name ASC
           LIMIT $offset, $per_page";
 
 $lab_result = mysqli_query($con, $query);
 
-// Agar query fail ho toh error check karein
 if (!$lab_result) {
     die("SQL Error Main: " . mysqli_error($con));
 }
@@ -172,6 +180,7 @@ if (!$lab_result) {
 .btn-action-lab { flex: 1; padding: 8px; border-radius: 8px; font-weight: 600; font-size: 0.8rem; text-align: center; border: none; cursor: pointer; transition: all 0.2s; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 5px; }
 .btn-register { background: #e0f2fe; color: #0284c7; }
 .btn-register:hover { background: #0284c7; color: #fff; }
+.btn-requested { background: #fef08a; color: #854d0e; cursor: not-allowed; } /* Yellow for pending */
 .btn-detail { background: #f1f5f9; color: #475569; }
 .btn-detail:hover { background: #475569; color: #fff; }
 .btn-remove { background: #fee2e2; color: #ef4444; }
@@ -314,10 +323,16 @@ if (!$lab_result) {
                                     <i class="fas fa-trash"></i> Remove
                                 </button>
                             <?php else: ?>
-                                <!-- If showing unregistered labs (default), show register button -->
-                                <button type="button" class="btn-action-lab btn-register" onclick="registerLab(<?= $lab['user_id'] ?>)" style="width: 100%;">
-                                    <i class="fas fa-hospital-user"></i> Register In Hospital
-                                </button>
+                                <!-- If showing unregistered labs, check if request sent -->
+                                <?php if (!empty($lab['request_id'])): ?>
+                                    <button type="button" class="btn-action-lab btn-requested" style="width: 100%;" disabled>
+                                        <i class="fas fa-clock"></i> Request Sent
+                                    </button>
+                                <?php else: ?>
+                                    <button type="button" class="btn-action-lab btn-register" onclick="sendJoinRequest(<?= $lab['user_id'] ?>)" style="width: 100%;">
+                                        <i class="fas fa-paper-plane"></i> Register in Hospital
+                                    </button>
+                                <?php endif; ?>
                             <?php endif; ?>
                         </div>
 
@@ -379,14 +394,14 @@ if (!$lab_result) {
 <?php include BASE_PATH . '/admin/inc/footer.php'; ?>
 
 <!-- ============================================ -->
-<!-- JAVASCRIPT FOR AJAX REGISTER & REMOVE LAB -->
+<!-- JAVASCRIPT FOR AJAX SEND REQUEST & REMOVE LAB -->
 <!-- ============================================ -->
 <script>
-// Register Lab
-function registerLab(labUserId) {
-    if (confirm("Are you sure you want to register this lab in your hospital?")) {
+// Send Join Request
+function sendJoinRequest(labUserId) {
+    if (confirm("Are you sure you want to send a registration request to this lab?")) {
         let formData = new URLSearchParams();
-        formData.append('action', 'assign_hospital');
+        formData.append('action', 'send_join_request');
         formData.append('lab_user_id', labUserId);
 
         fetch(window.location.href, {

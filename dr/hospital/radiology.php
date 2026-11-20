@@ -27,39 +27,53 @@ $hospital_city_id = $hospital_data['city_id'];
 $hospital_name = $hospital_data['hospital_name'];
 
 // ============================================
-// AJAX: ASSIGN / REMOVE RADIOLOGY
+// AJAX: SEND JOIN REQUEST TO RADIOLOGY
 // ============================================
-if (isset($_POST['action']) && $_POST['action'] == 'toggle_radiology') {
+if (isset($_POST['action']) && $_POST['action'] == 'send_rad_join_request') {
     header('Content-Type: application/json');
-    
     $rad_user_id = (int)$_POST['rad_user_id'];
-    $assign_type = $_POST['assign_type']; // 'register' or 'remove'
     
-    if ($assign_type == 'register') {
-        // Check if already assigned
-        $check = mysqli_query($con, "SELECT assign_hosp_id FROM assign_hospital_radiology WHERE user_id = $rad_user_id AND hospital_id = $hospital_id");
-        if (mysqli_num_rows($check) > 0) {
-            // If exists but status = 0, update to 1
-            $existing = mysqli_fetch_assoc($check);
-            $update = "UPDATE assign_hospital_radiology SET status = 1, updated_at = NOW() WHERE assign_hosp_id = {$existing['assign_hosp_id']}";
-            mysqli_query($con, $update);
-            echo json_encode(['success' => true, 'message' => 'Radiology center re-activated successfully!']);
-        } else {
-            $insert = "INSERT INTO assign_hospital_radiology (user_id, hospital_id, status, created_at) VALUES ($rad_user_id, $hospital_id, 1, NOW())";
-            if (mysqli_query($con, $insert)) {
-                echo json_encode(['success' => true, 'message' => 'Radiology center successfully registered to your hospital!']);
-            } else {
-                echo json_encode(['success' => false, 'message' => 'Database error: ' . mysqli_error($con)]);
-            }
-        }
-    } elseif ($assign_type == 'remove') {
-        // Delete record
-        $delete = "DELETE FROM assign_hospital_radiology WHERE user_id = $rad_user_id AND hospital_id = $hospital_id";
+    // Check if already requested
+    $check = mysqli_query($con, "SELECT * FROM hospital_to_radiology_join_requests WHERE userid = $rad_user_id AND hospital_id = $hospital_id");
+    if (mysqli_num_rows($check) > 0) {
+        echo json_encode(['success' => false, 'message' => 'A request has already been sent to this radiology center.']);
+        exit();
+    }
+
+    // Check if already assigned (safety check)
+    $check_assign = mysqli_query($con, "SELECT * FROM assign_hospital_radiology WHERE user_id = $rad_user_id AND hospital_id = $hospital_id AND status = 1");
+    if (mysqli_num_rows($check_assign) > 0) {
+        echo json_encode(['success' => false, 'message' => 'This radiology center is already registered in your hospital.']);
+        exit();
+    }
+
+    // Insert into join requests table
+    $insert = "INSERT INTO hospital_to_radiology_join_requests (userid, hospital_id, created_at) VALUES ($rad_user_id, $hospital_id, NOW())";
+    if (mysqli_query($con, $insert)) {
+        echo json_encode(['success' => true, 'message' => 'Join request sent successfully! Waiting for radiology center approval.']);
+    } else {
+        echo json_encode(['success' => false, 'message' => 'Database error: ' . mysqli_error($con)]);
+    }
+    exit();
+}
+
+// ============================================
+// AJAX: REMOVE RADIOLOGY FROM HOSPITAL
+// ============================================
+if (isset($_POST['action']) && $_POST['action'] == 'remove_radiology') {
+    header('Content-Type: application/json');
+    $rad_user_id = (int)$_POST['rad_user_id'];
+
+    if ($rad_user_id > 0) {
+        // Delete from assign_hospital_radiology
+        $delete = "DELETE FROM assign_hospital_radiology WHERE hospital_id = $hospital_id AND user_id = $rad_user_id";
         if (mysqli_query($con, $delete)) {
-            echo json_encode(['success' => true, 'message' => 'Radiology center removed from your hospital.']);
+            echo json_encode(['success' => true, 'message' => 'Radiology center removed from your hospital successfully!']);
         } else {
             echo json_encode(['success' => false, 'message' => 'Database error: ' . mysqli_error($con)]);
         }
+    } else {
+        echo json_encode(['success' => false, 'message' => 'Invalid ID.']);
     }
     exit();
 }
@@ -127,14 +141,17 @@ $total_pages = ceil($total_records / $per_page);
 // ============================================
 // FETCH RADIOLOGY
 // ============================================
+// Note: Added LEFT JOIN for join requests to check if request is already sent
 $query = "SELECT r.*, c.city_name, u.status as ustatus,
                  (SELECT AVG(stars) FROM feedback WHERE user_id = r.user_id AND status = 1) as avg_rating,
                  (SELECT COUNT(*) FROM feedback WHERE user_id = r.user_id AND status = 1) as total_reviews,
-                 ahr.assign_hosp_id
+                 ahr.assign_hosp_id,
+                 req.id as request_id
           FROM radiology r
           LEFT JOIN cities c ON r.city_id = c.city_id
           LEFT JOIN users u ON u.user_id = r.user_id
           LEFT JOIN assign_hospital_radiology ahr ON ahr.user_id = r.user_id AND ahr.hospital_id = $hospital_id
+          LEFT JOIN hospital_to_radiology_join_requests req ON req.userid = r.user_id AND req.hospital_id = $hospital_id
           WHERE $where
           ORDER BY r.rad_name ASC
           LIMIT $offset, $per_page";
@@ -162,6 +179,7 @@ if (!$rad_result) {
 .btn-remove:hover { background: #ef4444; color: #fff; }
 .btn-detail { background: #f1f5f9; color: #475569; }
 .btn-detail:hover { background: #475569; color: #fff; }
+.btn-requested { background: #fef08a; color: #854d0e; cursor: not-allowed; } /* Yellow for pending */
 .btn-add-rad { background: linear-gradient(135deg,#1C3F8F,#00A8CC); color: #fff; padding: 8px 16px; border-radius: 8px; font-weight: 600; text-decoration: none; font-size: 0.9rem; border:none;}
 .btn-add-rad:hover { opacity: 0.9; color: #fff; }
 
@@ -292,18 +310,23 @@ if (!$rad_result) {
                         <div class="lab-actions">
                             <?php if ($is_registered == 1): ?>
                                 <!-- If showing registered, show Remove button -->
-                                <button type="button" class="btn-action-lab btn-remove" onclick="toggleRadiology(<?= $rad['user_id'] ?>, 'remove')">
-                                    <i class="fas fa-trash-alt"></i> Remove from Hospital
-                                </button>
                                 <a href="<?php echo BASE_URL; ?>hospital/radiology-detail?id=<?= $rad['rad_id'] ?>" class="btn-action-lab btn-detail">
                                     <i class="fas fa-eye"></i> Detail
                                 </a>
-                            <?php else: ?>
-                                <!-- If showing unregistered, show Register button -->
-                                <button type="button" class="btn-action-lab btn-register" onclick="toggleRadiology(<?= $rad['user_id'] ?>, 'register')">
-                                    <i class="fas fa-hospital-user"></i> Register In Hospital
+                                <button type="button" class="btn-action-lab btn-remove" onclick="removeRadiology(<?= $rad['user_id'] ?>)">
+                                    <i class="fas fa-trash-alt"></i> Remove
                                 </button>
-                                
+                            <?php else: ?>
+                                <!-- If showing unregistered, check if request sent -->
+                                <?php if (!empty($rad['request_id'])): ?>
+                                    <button type="button" class="btn-action-lab btn-requested" style="width: 100%;" disabled>
+                                        <i class="fas fa-clock"></i> Request Sent
+                                    </button>
+                                <?php else: ?>
+                                    <button type="button" class="btn-action-lab btn-register" onclick="sendRadJoinRequest(<?= $rad['user_id'] ?>)" style="width: 100%;">
+                                        <i class="fas fa-paper-plane"></i> Register In Hospital
+                                    </button>
+                                <?php endif; ?>
                             <?php endif; ?>
                         </div>
 
@@ -365,19 +388,43 @@ if (!$rad_result) {
 <?php include BASE_PATH . '/admin/inc/footer.php'; ?>
 
 <!-- ============================================ -->
-<!-- JAVASCRIPT FOR AJAX TOGGLE -->
+<!-- JAVASCRIPT FOR AJAX SEND REQUEST & REMOVE -->
 <!-- ============================================ -->
 <script>
-function toggleRadiology(radUserId, actionType) {
-    let confirmMsg = actionType === 'register' 
-        ? "Are you sure you want to register this radiology center in your hospital?" 
-        : "Are you sure you want to remove this radiology center from your hospital?";
-
-    if (confirm(confirmMsg)) {
+// Send Join Request
+function sendRadJoinRequest(radUserId) {
+    if (confirm("Are you sure you want to send a registration request to this radiology center?")) {
         let formData = new URLSearchParams();
-        formData.append('action', 'toggle_radiology');
+        formData.append('action', 'send_rad_join_request');
         formData.append('rad_user_id', radUserId);
-        formData.append('assign_type', actionType);
+
+        fetch(window.location.href, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: formData.toString()
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                location.reload(); 
+            } else {
+                alert("Error: " + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert("Something went wrong. Please try again.");
+        });
+    }
+}
+
+// Remove Radiology
+function removeRadiology(radUserId) {
+    if (confirm("Are you sure you want to remove this radiology center from your hospital?")) {
+        let formData = new URLSearchParams();
+        formData.append('action', 'remove_radiology');
+        formData.append('rad_user_id', radUserId);
 
         fetch(window.location.href, {
             method: 'POST',

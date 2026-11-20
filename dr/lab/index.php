@@ -16,10 +16,81 @@ $user_id = (int)$_SESSION['user_id'];
           WHERE l.user_id = $user_id AND l.approve = 1 LIMIT 1"; 
 $lab_r = mysqli_query($con, $lab_q);
 $lab   = mysqli_fetch_assoc($lab_r);
-$lab_name=  $lab['lab_name'];
 if (!$lab) { session_destroy(); header("Location: " . BASE_URL . "login"); exit(); }
+$lab_name = $lab['lab_name'];
 
 $lab_id = (int)$lab['lab_id'];
+
+// ── HOSPITAL JOIN REQUEST: ACCEPT / REJECT ─────────────────
+if (isset($_POST['handle_join_request'])) {
+    header('Content-Type: application/json; charset=utf-8');
+
+    $req_id   = (int)($_POST['request_id'] ?? 0);
+    $decision = $_POST['decision'] ?? '';
+
+    if ($req_id <= 0 || !in_array($decision, ['accept', 'reject'], true)) {
+        echo json_encode(['success' => false, 'message' => 'Invalid request.']);
+        exit();
+    }
+
+    mysqli_begin_transaction($con);
+    try {
+        // Request isi lab ki honi chahiye (security check)
+        $q = mysqli_prepare($con, "SELECT hospital_id FROM hospital_to_laboratory_join_requests WHERE id = ? AND userid = ? LIMIT 1");
+        mysqli_stmt_bind_param($q, 'ii', $req_id, $user_id);
+        mysqli_stmt_execute($q);
+        $req = mysqli_fetch_assoc(mysqli_stmt_get_result($q));
+        mysqli_stmt_close($q);
+
+        if (!$req) {
+            mysqli_rollback($con);
+            echo json_encode(['success' => false, 'message' => 'Request not found or already handled.']);
+            exit();
+        }
+
+        $hospital_id = (int)$req['hospital_id'];
+
+        if ($decision === 'accept') {
+            // Pehle se assign hai ya nahi
+            $chk = mysqli_prepare($con, "SELECT assign_id FROM assign_hospital WHERE user_id = ? AND hospital_id = ? LIMIT 1");
+            mysqli_stmt_bind_param($chk, 'ii', $user_id, $hospital_id);
+            mysqli_stmt_execute($chk);
+            $exists = mysqli_fetch_assoc(mysqli_stmt_get_result($chk));
+            mysqli_stmt_close($chk);
+
+            if ($exists) {
+                $upd = mysqli_prepare($con, "UPDATE assign_hospital SET status = 1, updated_at = CURDATE() WHERE assign_id = ?");
+                $aid = (int)$exists['assign_id'];
+                mysqli_stmt_bind_param($upd, 'i', $aid);
+                mysqli_stmt_execute($upd);
+                mysqli_stmt_close($upd);
+            } else {
+                $ins = mysqli_prepare($con, "INSERT INTO assign_hospital (user_id, hospital_id, status, created_at, updated_at) VALUES (?, ?, 1, NOW(), CURDATE())");
+                mysqli_stmt_bind_param($ins, 'ii', $user_id, $hospital_id);
+                mysqli_stmt_execute($ins);
+                mysqli_stmt_close($ins);
+            }
+        }
+
+        // Accept ho ya reject, request table se delete
+        $del = mysqli_prepare($con, "DELETE FROM hospital_to_laboratory_join_requests WHERE id = ? AND userid = ?");
+        mysqli_stmt_bind_param($del, 'ii', $req_id, $user_id);
+        mysqli_stmt_execute($del);
+        mysqli_stmt_close($del);
+
+        mysqli_commit($con);
+
+        echo json_encode([
+            'success'  => true,
+            'decision' => $decision,
+            'message'  => $decision === 'accept' ? 'Request accepted. Hospital added.' : 'Request rejected.'
+        ]);
+    } catch (Throwable $e) {
+        mysqli_rollback($con);
+        echo json_encode(['success' => false, 'message' => 'Something went wrong. Please try again.']);
+    }
+    exit();
+}
 
 // ── ADD / UPDATE TEST MASTER RECORD ─────────────────────────
 if (isset($_POST['save_master_test'])) {
@@ -196,19 +267,24 @@ $nearby_hosps = mysqli_query($con, "SELECT h.hospital_id, h.hospital_name, h.hos
     WHERE h.city_id={$lab['city_id']} AND u.status=1 AND h.approve=1
     ORDER BY h.hospital_name ASC LIMIT 8");
 
-
-
 //---Working in Hospitals
-$working_in_q =mysqli_query($con, "SELECT h.hospital_id, h.hospital_name, h.hospital_phone, c.city_name
-    from assign_hospital asg
+$working_in_q = mysqli_query($con, "SELECT h.hospital_id, h.hospital_name, h.hospital_phone, c.city_name
+    FROM assign_hospital asg
     LEFT JOIN hospitals h ON h.hospital_id=asg.hospital_id
     LEFT JOIN cities c ON h.city_id=c.city_id
     LEFT JOIN users u ON u.user_id=asg.user_id
-    WHERE u.status=1 AND h.approve=1 and asg.user_id = '". $user_id ."'
+    WHERE u.status=1 AND h.approve=1 AND asg.user_id = $user_id
     ORDER BY h.hospital_name");
 
-
-
+// ── HOSPITAL JOIN REQUESTS (notifications) ─────────────────
+$join_requests_q = mysqli_query($con, "SELECT r.id, r.hospital_id, r.created_at,
+           h.hospital_name, h.hospital_phone, c.city_name
+    FROM hospital_to_laboratory_join_requests r
+    LEFT JOIN hospitals h ON h.hospital_id = r.hospital_id
+    LEFT JOIN cities c ON c.city_id = h.city_id
+    WHERE r.userid = $user_id
+    ORDER BY r.created_at DESC");
+$join_requests_cnt = $join_requests_q ? mysqli_num_rows($join_requests_q) : 0;
 
 // ── RECENT REVIEWS ─────────────────────────────────────────
 $reviews_q = mysqli_query($con, "SELECT * FROM feedback WHERE user_id=$user_id AND status=1 ORDER BY created_at DESC LIMIT 5");
@@ -256,6 +332,32 @@ $available_tests_q = mysqli_query($con, "
 .hosp-chip-item .hc-icon { width:36px; height:36px; border-radius:10px; background:linear-gradient(135deg,#1C3F8F,#00A8CC); display:flex; align-items:center; justify-content:center; color:white; font-size:0.9rem; flex-shrink:0; }
 .hosp-chip-item .hc-name { font-weight:700; font-size:0.88rem; color:#0D2B6E; }
 .hosp-chip-item .hc-city { font-size:0.75rem; color:#64748b; }
+
+/* Join request notifications */
+.join-req-badge {
+    display:inline-flex; align-items:center; justify-content:center;
+    min-width:22px; height:22px; padding:0 7px; margin-left:6px;
+    background:#ef4444; color:#fff; border-radius:11px;
+    font-size:.72rem; font-weight:700;
+}
+.join-req-item {
+    display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+    padding:12px 14px; margin-bottom:10px;
+    background:#fffbeb; border:1px solid rgba(245,158,11,.35); border-radius:12px;
+    transition:opacity .3s, transform .3s;
+}
+.join-req-item:last-child { margin-bottom:0; }
+.join-req-item.removing { opacity:0; transform:translateX(20px); }
+.join-req-item .jr-icon { width:38px; height:38px; border-radius:10px; background:linear-gradient(135deg,#f59e0b,#f97316); display:flex; align-items:center; justify-content:center; color:#fff; flex-shrink:0; }
+.join-req-item .jr-info { flex:1; min-width:160px; }
+.join-req-item .jr-name { font-weight:700; font-size:.88rem; color:#0D2B6E; }
+.join-req-item .jr-meta { font-size:.75rem; color:#64748b; margin-top:2px; }
+.join-req-item .jr-actions { display:flex; gap:8px; }
+.jr-btn { border:0; border-radius:8px; padding:8px 14px; font-size:.8rem; font-weight:700; color:#fff; cursor:pointer; display:inline-flex; align-items:center; gap:6px; transition:opacity .2s; }
+.jr-btn:disabled { opacity:.55; cursor:not-allowed; }
+.jr-btn.accept { background:linear-gradient(135deg,#27C96A,#00C9A7); }
+.jr-btn.reject { background:linear-gradient(135deg,#ef4444,#dc2626); }
+.join-req-msg { display:none; margin-top:10px; font-size:.83rem; font-weight:600; }
 
 @media (max-width:992px) { .two-col-dashboard { grid-template-columns:1fr; } }
 
@@ -357,6 +459,53 @@ $available_tests_q = mysqli_query($con, "
         <!-- LEFT -->
         <div class="col-stack">
 
+            <!-- Hospital Join Requests (Notifications) -->
+            <div class="info-card">
+                <div class="info-card-header">
+                    <h5>
+                        <i class="fas fa-bell"></i> Hospital Requests
+                        <?php if ($join_requests_cnt > 0): ?>
+                            <span class="join-req-badge" id="joinReqCount"><?= $join_requests_cnt ?></span>
+                        <?php else: ?>
+                            <span class="join-req-badge" id="joinReqCount" style="display:none;">0</span>
+                        <?php endif; ?>
+                    </h5>
+                </div>
+                <div class="info-card-body">
+                    <div id="joinReqList">
+                    <?php if ($join_requests_cnt > 0):
+                        while ($jr = mysqli_fetch_assoc($join_requests_q)): ?>
+                        <div class="join-req-item" id="joinReq_<?= (int)$jr['id'] ?>" data-request-id="<?= (int)$jr['id'] ?>">
+                            <div class="jr-icon"><i class="fas fa-hospital"></i></div>
+                            <div class="jr-info">
+                                <div class="jr-name"><?= htmlspecialchars($jr['hospital_name'] ?? 'Unknown Hospital') ?></div>
+                                <div class="jr-meta">
+                                    <?php if (!empty($jr['city_name'])): ?>
+                                        <i class="fas fa-map-marker-alt me-1"></i><?= htmlspecialchars($jr['city_name']) ?> &nbsp;·&nbsp;
+                                    <?php endif; ?>
+                                    <?php if (!empty($jr['hospital_phone'])): ?>
+                                        <i class="fas fa-phone me-1"></i><?= htmlspecialchars($jr['hospital_phone']) ?> &nbsp;·&nbsp;
+                                    <?php endif; ?>
+                                    <i class="fas fa-clock me-1"></i><?= date('d M Y, h:i A', strtotime($jr['created_at'])) ?>
+                                </div>
+                                <div class="jr-meta" style="margin-top:4px;">wants you to join their hospital.</div>
+                            </div>
+                            <div class="jr-actions">
+                                <button type="button" class="jr-btn accept" onclick="handleJoinRequest(<?= (int)$jr['id'] ?>, 'accept', this)">
+                                    <i class="fas fa-check"></i> Accept
+                                </button>
+                                <button type="button" class="jr-btn reject" onclick="handleJoinRequest(<?= (int)$jr['id'] ?>, 'reject', this)">
+                                    <i class="fas fa-times"></i> Reject
+                                </button>
+                            </div>
+                        </div>
+                    <?php endwhile; endif; ?>
+                    </div>
+                    <p class="text-muted text-center py-2 mb-0" id="joinReqEmpty" style="<?= $join_requests_cnt > 0 ? 'display:none;' : '' ?>">No pending hospital requests.</p>
+                    <div id="joinReqMessage" class="join-req-msg" role="status"></div>
+                </div>
+            </div>
+
             <!-- Lab Info -->
             <div class="info-card">
                 <div class="info-card-header">
@@ -438,7 +587,7 @@ $available_tests_q = mysqli_query($con, "
                         </div>
                     </div>
                     <?php endwhile; else: ?>
-                        <p class="text-muted text-center py-2">No hospitals found in your city.</p>
+                        <p class="text-muted text-center py-2">You are not working in any hospital yet.</p>
                     <?php endif; ?>
                 </div>
             </div>
@@ -468,8 +617,6 @@ $available_tests_q = mysqli_query($con, "
                     <?php endif; ?>
                 </div>
             </div>
-
-            
 
         </div><!-- end LEFT -->
 
@@ -648,6 +795,62 @@ function saveNote() {
 document.getElementById('noteTextarea').addEventListener('keydown', e => {
     if ((e.ctrlKey||e.metaKey) && e.key==='s') { e.preventDefault(); saveNote(); }
 });
+
+// ── Hospital join requests: accept / reject ──────────────
+function handleJoinRequest(requestId, decision, button) {
+    var item = document.getElementById('joinReq_' + requestId);
+    var message = document.getElementById('joinReqMessage');
+    var buttons = item.querySelectorAll('.jr-btn');
+
+    buttons.forEach(function (b) { b.disabled = true; });
+    var originalHtml = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    message.style.display = 'none';
+
+    var fd = new FormData();
+    fd.append('handle_join_request', '1');
+    fd.append('request_id', requestId);
+    fd.append('decision', decision);
+
+    fetch('<?= BASE_URL ?>lab/index.php', { method: 'POST', body: fd })
+        .then(function (response) { return response.json(); })
+        .then(function (data) {
+            message.textContent = data.message || '';
+            message.style.color = data.success ? '#16a34a' : '#ef4444';
+            message.style.display = 'block';
+
+            if (!data.success) {
+                buttons.forEach(function (b) { b.disabled = false; });
+                button.innerHTML = originalHtml;
+                return;
+            }
+
+            // Item hata do + count update
+            item.classList.add('removing');
+            setTimeout(function () {
+                item.remove();
+                var remaining = document.querySelectorAll('#joinReqList .join-req-item').length;
+                var badge = document.getElementById('joinReqCount');
+                badge.textContent = remaining;
+                if (remaining === 0) {
+                    badge.style.display = 'none';
+                    document.getElementById('joinReqEmpty').style.display = 'block';
+                }
+            }, 300);
+
+            // Accept par "Working in" list update karne ke liye reload
+            if (decision === 'accept') {
+                setTimeout(function () { window.location.reload(); }, 900);
+            }
+        })
+        .catch(function () {
+            message.textContent = 'Something went wrong. Please try again.';
+            message.style.color = '#ef4444';
+            message.style.display = 'block';
+            buttons.forEach(function (b) { b.disabled = false; });
+            button.innerHTML = originalHtml;
+        });
+}
 
 document.querySelectorAll('.available-test-check').forEach(function (checkbox) {
     checkbox.addEventListener('change', function () {

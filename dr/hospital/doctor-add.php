@@ -81,6 +81,31 @@ if ($is_edit) {
     }
 }
 
+
+
+
+
+// ============================================
+// REGISTERED DOCTORS IDS
+// ============================================
+$dr_ids = 0;
+$doctor_ids_query = "SELECT doctor_id 
+                     FROM doctor_in_hospital
+                     WHERE hospital_id = $hospital_id AND inactive = 0";
+
+$doctor_ids_result = mysqli_query($con, $doctor_ids_query);
+
+$doctor_ids = [];
+while ($row = mysqli_fetch_assoc($doctor_ids_result)) {
+    $doctor_ids[] = $row['doctor_id'];
+}
+
+$dr_ids = implode(',', $doctor_ids);
+
+
+
+
+
 // ============================================
 // FETCH SPECIALIZATIONS
 // ============================================
@@ -384,7 +409,7 @@ if (!$edit_mode) {
                                FROM doctors d
                                LEFT JOIN dr_cat_types dct ON d.cat_type_id = dct.dr_cat_type_id
                                LEFT JOIN users u ON u.user_id = d.user_id
-                               WHERE d.city_id = $city_id AND d.approve = 1 AND u.status = 1
+                               WHERE d.city_id = $city_id AND d.approve = 1 AND u.status = 1 AND d.doctor_id NOT IN ($dr_ids)
                                ORDER BY d.doctor_name ASC";
     $existing_doctors_result = mysqli_query($con, $existing_doctors_query);
     while ($row = mysqli_fetch_assoc($existing_doctors_result)) {
