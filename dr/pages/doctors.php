@@ -193,8 +193,55 @@ include '../includes/header.php';
     }
     .adv-select-group select option { color: #0D2B6E; }
 
+    /* Hospital Search Input inside Advanced Filters */
+    .adv-hospital-search-wrap {
+        position: relative; flex: 1; min-width: 220px;
+        display: flex; align-items: center; gap: 8px;
+        background: #f8fafc;
+        border: 1.5px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 7px 12px;
+        transition: border-color .2s ease, background .2s ease;
+    }
+    .adv-hospital-search-wrap:focus-within {
+        border-color: #1C3F8F;
+        background: #fff;
+    }
+    .adv-hospital-search-wrap i.adv-hosp-icon { color: #1C3F8F; font-size: .85rem; }
+    .adv-hospital-search-wrap input {
+        flex: 1; border: none; outline: none; background: transparent;
+        font-size: .85rem; font-weight: 600; color: #0D2B6E;
+        padding-right: 24px;
+    }
+    .adv-hospital-search-wrap .adv-hosp-clear {
+        position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+        cursor: pointer; color: #94a3b8; font-size: .8rem;
+        display: none; transition: color .2s; z-index: 10;
+    }
+    .adv-hospital-search-wrap .adv-hosp-clear:hover { color: #ef4444; }
+    .adv-hosp-dropdown {
+        position: absolute; top: 100%; left: 0; right: 0;
+        background: #fff; border: 1.5px solid #e2e8f0; border-top: none;
+        border-radius: 0 0 10px 10px;
+        box-shadow: 0 8px 20px rgba(13,43,110,.1);
+        max-height: 240px; overflow-y: auto;
+        z-index: 1000; display: none;
+    }
+    .adv-hosp-dropdown .adv-hosp-item {
+        padding: 9px 14px; cursor: pointer;
+        border-bottom: 1px solid #f1f5f9;
+        transition: background .15s ease;
+    }
+    .adv-hosp-dropdown .adv-hosp-item:hover { background: #f8fafc; }
+    .adv-hosp-dropdown .adv-hosp-item:last-child { border-bottom: none; }
+    .adv-hosp-dropdown .adv-hosp-empty {
+        padding: 14px; text-align: center;
+        color: #94a3b8; font-size: .85rem;
+    }
+
     /* Hidden state for hospital select until city chosen */
-    .adv-select-wrap.is-hidden {
+    .adv-select-wrap.is-hidden,
+    .adv-hospital-search-wrap.is-hidden {
         display: none !important;
     }
     .adv-select-wrap.is-disabled {
@@ -219,7 +266,8 @@ include '../includes/header.php';
     .adv-specialization-wrap i.adv-spec-icon { color: #1C3F8F; font-size: .85rem; }
     .adv-specialization-wrap input[type="text"] {
         flex: 1; border: none; outline: none; background: transparent;
-        font-size: .85rem; font-weight: 600; color: #0D2B6E;
+        font-size: 16px; /* 16px prevents mobile zoom */
+        font-weight: 600; color: #0D2B6E;
         padding-right: 24px;
     }
     .adv-specialization-wrap .adv-spec-clear {
@@ -281,13 +329,25 @@ include '../includes/header.php';
     #doctorsContainer.is-loading .grid-loader { display: flex; }
     .grid-loader .spinner-border { width: 42px; height: 42px; color: #1C3F8F; }
 
+    /* Force 16px font size on inputs globally for mobile to prevent zoom */
+    @media (max-width: 768px) {
+        .adv-search-input-wrap input,
+        .adv-search-box input,
+        .adv-search-box select,
+        .adv-specialization-wrap input,
+        .adv-hospital-search-wrap input {
+            font-size: 16px !important;
+        }
+    }
+
     @media (max-width: 768px) {
         .adv-search-wrap { position: relative; top: auto; }
         .adv-search-count { display: none; }
         .adv-search-actions { margin-left: 0; width: 100%; }
         .adv-search-toggle { flex: 1; justify-content: center; }
         .adv-select-group .adv-select-wrap,
-        .adv-specialization-wrap { min-width: 100%; }
+        .adv-specialization-wrap,
+        .adv-hospital-search-wrap { min-width: 100%; }
     }
 </style>
 <body>
@@ -354,27 +414,15 @@ include '../includes/header.php';
                             </select>
                         </div>
 
-                        <!-- HOSPITAL (hidden until city chosen) -->
-                        <div class="adv-select-wrap is-hidden" id="advHospitalWrap">
-                            <i class="fas fa-hospital"></i>
-                            <select id="advHospitalSelect">
-                                <option value="">All Hospitals</option>
-                                <?php
-                                // Only render if city is set on page load
-                                if (!empty($city) && $city != 0) {
-                                    $adv_hosp_q = "SELECT DISTINCT h.hospital_id, h.hospital_name 
-                                                   FROM hospitals h 
-                                                   LEFT JOIN users u ON u.user_id = h.user_id
-                                                   WHERE u.status = 1 AND h.city_id = '$city'
-                                                   ORDER BY h.hospital_name ASC";
-                                    $adv_hosp_r = mysqli_query($con, $adv_hosp_q);
-                                    while($hr = mysqli_fetch_assoc($adv_hosp_r)) {
-                                        $sel = ($hospital == $hr['hospital_id']) ? 'selected' : '';
-                                        echo '<option value="'.$hr['hospital_id'].'" '.$sel.'>'.$hr['hospital_name'].'</option>';
-                                    }
-                                }
-                                ?>
-                            </select>
+                        <!-- HOSPITAL (Searchable Input Dropdown) -->
+                        <div class="adv-hospital-search-wrap is-hidden" id="advHospitalWrap">
+                            <i class="fas fa-hospital adv-hosp-icon"></i>
+                            <input type="text" id="advHospitalSearch" 
+                                   placeholder="Search hospital..." 
+                                   autocomplete="off">
+                            <i class="fas fa-times adv-hosp-clear" id="advHospitalClear" title="Clear"></i>
+                            <input type="hidden" id="advHospitalValue" value="">
+                            <div class="adv-hosp-dropdown" id="advHospitalDropdown"></div>
                         </div>
 
                         <!-- SPECIALIZATION -->
@@ -511,11 +559,12 @@ include '../includes/header.php';
                 <div class="grid-loader"><div class="spinner-border" role="status"></div></div>
                 <?php
                 $where_clause = ' AND d.approve = 1';
+                $join_clause  = '';
                 if (!empty($search)) {
                     $where_clause .= " AND d.doctor_name LIKE '%$search%' ";
                 }
                 if (!empty($hospital)) {
-                    $where_clause .= " AND d.hospital_id = '$hospital' ";
+                    $join_clause .= " INNER JOIN doctor_in_hospital dih ON dih.doctor_id = d.doctor_id AND dih.hospital_id = '$hospital' AND dih.inactive = 0 ";
                 }
                 if (!empty($specialization)) {
                     $where_clause .= " AND d.cat_type_id = '$specialization' ";
@@ -526,22 +575,24 @@ include '../includes/header.php';
                 if (!empty($lady_doctor) && $lady_doctor == 1) {
                     $where_clause .= " AND d.gender = 'Female' ";
                 }
-                   $query = "SELECT d.*, dct.type as doctor_of, c.city_name, h.hospital_name 
+                   $query = "SELECT DISTINCT d.*, dct.type as doctor_of, c.city_name, h.hospital_name 
                          FROM doctors d 
                          LEFT JOIN dr_cat_types dct ON d.cat_type_id = dct.dr_cat_type_id 
                          LEFT JOIN cities c ON d.city_id = c.city_id 
                          LEFT JOIN hospitals h ON d.hospital_id = h.hospital_id 
                          LEFT JOIN users u ON u.user_id = d.user_id
+                         $join_clause
                          WHERE u.status = 1 AND d.approve = 1 $where_clause
                          ORDER BY d.doctor_name ASC
                          LIMIT $per_page OFFSET $offset";
 
-                $all_doctors = mysqli_query($con,"SELECT d.*, dct.type as doctor_of, c.city_name, h.hospital_name 
+                $all_doctors = mysqli_query($con,"SELECT DISTINCT d.*, dct.type as doctor_of, c.city_name, h.hospital_name 
                          FROM doctors d 
                          LEFT JOIN dr_cat_types dct ON d.cat_type_id = dct.dr_cat_type_id 
                          LEFT JOIN cities c ON d.city_id = c.city_id 
                          LEFT JOIN users u ON d.user_id = u.user_id 
                          LEFT JOIN hospitals h ON d.hospital_id = h.hospital_id 
+                         $join_clause
                          WHERE u.status = 1 AND d.approve = 1 $where_clause");
 
                 $total_doctors = mysqli_num_rows($all_doctors);
@@ -871,8 +922,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const paginationEl = document.getElementById('paginationContainer');
 
     const advCitySelect   = document.getElementById('advCitySelect');
-    const advHospitalSel  = document.getElementById('advHospitalSelect');
     const advHospitalWrap = document.getElementById('advHospitalWrap');
+    const advHospSearch   = document.getElementById('advHospitalSearch');
+    const advHospClear    = document.getElementById('advHospitalClear');
+    const advHospValue    = document.getElementById('advHospitalValue');
+    const advHospDropdown = document.getElementById('advHospitalDropdown');
+
     const advSpecSearch   = document.getElementById('advSpecializationSearch');
     const advSpecClear    = document.getElementById('advSpecializationClear');
     const advSpecValue    = document.getElementById('advSpecializationValue');
@@ -884,6 +939,8 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentRequest = null;
     let debounceTimer  = null;
     let specDebounce   = null;
+    let hospDebounce   = null;
+    let advHospitalsList = [];
 
     /* ---------- Hospital wrap visibility based on city ---------- */
     function updateHospitalVisibility() {
@@ -894,8 +951,10 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             advHospitalWrap.classList.add('is-hidden');
             // reset hospital selection when city cleared
-            if (advHospitalSel) {
-                advHospitalSel.value = '';
+            if (advHospValue) {
+                advHospValue.value = '';
+                advHospSearch.value = '';
+                advHospClear.style.display = 'none';
                 const mainHosp = document.getElementById('hospitalSelect');
                 if (mainHosp) mainHosp.value = '';
             }
@@ -904,9 +963,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
     /* ---------- Load hospitals by city via AJAX ---------- */
     function loadHospitalsByCity(cityId, preselectHospitalId) {
-        if (!advHospitalSel) return;
-        // reset options
-        advHospitalSel.innerHTML = '<option value="">Loading...</option>';
+        if (!advHospSearch) return;
+        advHospSearch.value = 'Loading...';
+        advHospSearch.disabled = true;
+        advHospDropdown.style.display = 'none';
 
         const payload = new URLSearchParams();
         payload.set('ajax', '1');
@@ -916,25 +976,30 @@ document.addEventListener('DOMContentLoaded', function() {
         xhr.open('POST', '<?php echo BASE_URL; ?>ajax/get-hospitals.php', true);
         xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
         xhr.onload = function() {
-            advHospitalSel.innerHTML = '<option value="">All Hospitals</option>';
+            advHospSearch.disabled = false;
+            advHospSearch.value = '';
+            advHospValue.value = '';
+            advHospitalsList = [];
+            
             if (xhr.status !== 200) return;
             try {
                 const res = JSON.parse(xhr.responseText);
                 if (res.success && res.hospitals && res.hospitals.length > 0) {
-                    res.hospitals.forEach(function(h) {
-                        const opt = document.createElement('option');
-                        opt.value = h.hospital_id;
-                        opt.textContent = h.hospital_name;
-                        if (preselectHospitalId && preselectHospitalId == h.hospital_id) {
-                            opt.selected = true;
+                    advHospitalsList = res.hospitals;
+                    if (preselectHospitalId) {
+                        const found = res.hospitals.find(h => h.hospital_id == preselectHospitalId);
+                        if (found) {
+                            advHospValue.value = found.hospital_id;
+                            advHospSearch.value = found.hospital_name;
+                            advHospClear.style.display = 'block';
                         }
-                        advHospitalSel.appendChild(opt);
-                    });
+                    }
                 }
             } catch (e) { /* ignore */ }
         };
         xhr.onerror = function() {
-            advHospitalSel.innerHTML = '<option value="">All Hospitals</option>';
+            advHospSearch.disabled = false;
+            advHospSearch.value = '';
         };
         xhr.send(payload.toString());
     }
@@ -942,8 +1007,8 @@ document.addEventListener('DOMContentLoaded', function() {
     /* ---------- Init hospital wrap on page load ---------- */
     updateHospitalVisibility();
     if (advCitySelect && advCitySelect.value) {
-        const currentHosp = advHospitalSel ? advHospitalSel.value : '';
-        // already server-rendered; just ensure visible
+        // If page load has city selected, fetch hospitals for it
+        loadHospitalsByCity(advCitySelect.value, '<?php echo $hospital; ?>');
     }
 
     /* ---------- Build base params from current URL ---------- */
@@ -964,7 +1029,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const base = getBaseParams();
 
         const advCity   = advCitySelect  ? advCitySelect.value  : '';
-        const advHosp   = advHospitalSel ? advHospitalSel.value : '';
+        const advHosp   = advHospValue   ? advHospValue.value   : '';
         const advSpec   = advSpecValue   ? advSpecValue.value   : '';
 
         const payload = new URLSearchParams();
@@ -1102,25 +1167,101 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 // hide hospital select + clear
                 updateHospitalVisibility();
-                if (advHospitalSel) advHospitalSel.innerHTML = '<option value="">All Hospitals</option>';
             }
 
             fetchDoctors();
         });
     }
 
-    /* ---------- Advanced Hospital select ---------- */
-    if (advHospitalSel) {
-        advHospitalSel.addEventListener('change', function() {
-            const mainHosp = document.getElementById('hospitalSelect');
-            if (mainHosp) {
-                mainHosp.value = this.value;
-                if (window.jQuery && window.jQuery(mainHosp).data('select2')) {
-                    window.jQuery(mainHosp).trigger('change.select2');
-                }
-            }
-            fetchDoctors();
+    /* ---------- Advanced Hospital Dropdown (Searchable Input) ---------- */
+    function renderHospDropdown(filterTerm) {
+        if (!advHospDropdown) return;
+        const term = (filterTerm || '').toLowerCase().trim();
+        let filtered = advHospitalsList;
+        if (term) {
+            filtered = advHospitalsList.filter(h => (h.hospital_name || '').toLowerCase().includes(term));
+        }
+        if (filtered.length === 0) {
+            advHospDropdown.innerHTML = '<div class="adv-hosp-empty">No hospitals found</div>';
+            advHospDropdown.style.display = 'block';
+            return;
+        }
+        let html = '';
+        filtered.slice(0, 30).forEach(h => {
+            html += `<div class="adv-hosp-item" data-value="${h.hospital_id}" data-text="${h.hospital_name}">
+                        <div style="font-weight:700; color:#0D2B6E; font-size:.9rem;">${h.hospital_name}</div>
+                    </div>`;
         });
+        advHospDropdown.innerHTML = html;
+        advHospDropdown.style.display = 'block';
+    }
+
+    if (advHospSearch) {
+        advHospSearch.addEventListener('focus', function() {
+            renderHospDropdown(this.value);
+        });
+
+        advHospSearch.addEventListener('input', function() {
+            advHospClear.style.display = this.value ? 'block' : 'none';
+            // reset hidden value while typing new text
+            advHospValue.value = ''; 
+            clearTimeout(hospDebounce);
+            hospDebounce = setTimeout(() => {
+                renderHospDropdown(this.value);
+            }, 150);
+        });
+
+        advHospSearch.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                advHospDropdown.style.display = 'none';
+            }
+        });
+
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.adv-hospital-search-wrap')) {
+                advHospDropdown.style.display = 'none';
+            }
+        });
+
+        advHospDropdown.addEventListener('click', function(e) {
+            const item = e.target.closest('.adv-hosp-item');
+            if (item) {
+                advHospSearch.value = item.getAttribute('data-text');
+                advHospValue.value = item.getAttribute('data-value');
+                advHospDropdown.style.display = 'none';
+
+                // mirror to filterForm
+                const mainHosp = document.getElementById('hospitalSelect');
+                if (mainHosp) {
+                    mainHosp.value = item.getAttribute('data-value');
+                    if (window.jQuery && window.jQuery(mainHosp).data('select2')) {
+                        window.jQuery(mainHosp).trigger('change.select2');
+                    }
+                }
+
+                fetchDoctors();
+            }
+        });
+
+        if (advHospClear) {
+            advHospClear.addEventListener('click', function() {
+                advHospSearch.value = '';
+                advHospValue.value = '';
+                advHospDropdown.style.display = 'none';
+                advHospClear.style.display = 'none';
+                advHospSearch.focus();
+
+                const mainHosp = document.getElementById('hospitalSelect');
+                if (mainHosp) {
+                    mainHosp.value = '';
+                    if (window.jQuery && window.jQuery(mainHosp).data('select2')) {
+                        window.jQuery(mainHosp).trigger('change.select2');
+                    }
+                }
+
+                fetchDoctors();
+            });
+        }
     }
 
     /* ---------- Advanced Specialization dropdown ---------- */
