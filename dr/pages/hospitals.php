@@ -12,6 +12,7 @@ include '../includes/header.php';
     // Handle search and filters
     $search = isset($_GET['search']) ? mysqli_real_escape_string($con, $_GET['search']) : '';
     $city = isset($_GET['city']) ? (int)$_GET['city'] : $city_id;
+    $is_24_7 = isset($_GET['open_24_7']) && $_GET['open_24_7'] == 1 ? 1 : 0;
 
     // Pagination
     $page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
@@ -25,6 +26,10 @@ include '../includes/header.php';
     }
     if (!empty($city) && $city != 0) {
         $where_clause .= " AND h.city_id = '$city' ";
+    }
+    if ($is_24_7) {
+        // Check if availability string contains "24/7"
+        $where_clause .= " AND h.availability LIKE '%24/7%' ";
     }
 
     // Count total hospitals for pagination
@@ -76,11 +81,11 @@ include '../includes/header.php';
             <div class="filter-section" data-aos="fade-up">
                 <form method="GET" action="">
                     <div class="row g-3">
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <label class="form-label"><i class="fas fa-search"></i> Search by Hospital Name</label>
                             <input type="text" class="form-control" name="search" value="<?php echo htmlspecialchars($search); ?>" placeholder="Enter hospital name...">
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <label class="form-label"><i class="fas fa-map-marker-alt"></i> Filter by City</label>
                             <select class="form-select select2-bootstrap-5-theme" name="city" id="citySelect" data-dropdown-css-class="select2-bootstrap-5-dropdown">
                                 <option value="">All Cities</option>
@@ -93,6 +98,14 @@ include '../includes/header.php';
                                 }
                                 ?>
                             </select>
+                        </div>
+                        <div class="col-md-4 d-flex align-items-end pb-2">
+                            <div class="form-check custom-checkbox-toggle">
+                                <input class="form-check-input" type="checkbox" id="open_24_7" name="open_24_7" value="1" <?php echo ($is_24_7) ? 'checked' : ''; ?>>
+                                <label class="form-check-label" for="open_24_7" style="cursor: pointer;">
+                                    <i class="fas fa-clock text-primary"></i> 24 Hours Open
+                                </label>
+                            </div>
                         </div>
                         <div class="col-md-12">
                             <div class="d-flex gap-2 mt-2">
@@ -220,7 +233,7 @@ include '../includes/header.php';
                         <!-- Previous Button -->
                         <?php if ($page > 1): ?>
                             <li class="page-item">
-                                <a class="page-link" href="?page=<?php echo $page - 1; ?>&search=<?php echo urlencode($search); ?>&city=<?php echo $city; ?>">
+                                <a class="page-link" href="?page=<?php echo $page - 1; ?>&search=<?php echo urlencode($search); ?>&city=<?php echo $city; ?>&open_24_7=<?php echo $is_24_7; ?>">
                                     <i class="fas fa-chevron-left"></i>
                                 </a>
                             </li>
@@ -238,7 +251,7 @@ include '../includes/header.php';
                         $end_page = min($total_pages, $page + 2);
 
                         if ($start_page > 1) {
-                            echo '<li class="page-item"><a class="page-link" href="?page=1&search='.urlencode($search).'&city='.$city.'">1</a></li>';
+                            echo '<li class="page-item"><a class="page-link" href="?page=1&search='.urlencode($search).'&city='.$city.'&open_24_7='.$is_24_7.'">1</a></li>';
                             if ($start_page > 2) {
                                 echo '<li class="page-item disabled"><a class="page-link" href="#">...</a></li>';
                             }
@@ -248,7 +261,7 @@ include '../includes/header.php';
                             if ($i == $page) {
                                 echo '<li class="page-item active"><a class="page-link" href="#">'.$i.'</a></li>';
                             } else {
-                                echo '<li class="page-item"><a class="page-link" href="?page='.$i.'&search='.urlencode($search).'&city='.$city.'">'.$i.'</a></li>';
+                                echo '<li class="page-item"><a class="page-link" href="?page='.$i.'&search='.urlencode($search).'&city='.$city.'&open_24_7='.$is_24_7.'">'.$i.'</a></li>';
                             }
                         }
 
@@ -256,14 +269,14 @@ include '../includes/header.php';
                             if ($end_page < $total_pages - 1) {
                                 echo '<li class="page-item disabled"><a class="page-link" href="#">...</a></li>';
                             }
-                            echo '<li class="page-item"><a class="page-link" href="?page='.$total_pages.'&search='.urlencode($search).'&city='.$city.'">'.$total_pages.'</a></li>';
+                            echo '<li class="page-item"><a class="page-link" href="?page='.$total_pages.'&search='.urlencode($search).'&city='.$city.'&open_24_7='.$is_24_7.'">'.$total_pages.'</a></li>';
                         }
                         ?>
 
                         <!-- Next Button -->
                         <?php if ($page < $total_pages): ?>
                             <li class="page-item">
-                                <a class="page-link" href="?page=<?php echo $page + 1; ?>&search=<?php echo urlencode($search); ?>&city=<?php echo $city; ?>">
+                                <a class="page-link" href="?page=<?php echo $page + 1; ?>&search=<?php echo urlencode($search); ?>&city=<?php echo $city; ?>&open_24_7=<?php echo $is_24_7; ?>">
                                     <i class="fas fa-chevron-right"></i>
                                 </a>
                             </li>
